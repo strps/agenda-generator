@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from agenda.assembler import build_plan, summarize
 from agenda.configfile import ConfigFileError
 from agenda.gui import export_model as EM
+from agenda.gui import help_text as HT
 from agenda.gui import layout as L
 from agenda.gui import legend_model as LM
 from agenda.gui.export_job import ExportJob, ExportSignals
@@ -54,6 +55,8 @@ class MainWindow(QMainWindow):
         row = QHBoxLayout(toolbar)
         self.open_button = QPushButton("Open config")
         self.save_button = QPushButton("Save config")
+        self.open_button.setToolTip(HT.TOOLTIPS["open_config"])
+        self.save_button.setToolTip(HT.TOOLTIPS["save_config"])
         row.addWidget(self.open_button)
         row.addWidget(self.save_button)
         row.addStretch(1)
@@ -68,6 +71,7 @@ class MainWindow(QMainWindow):
         self.export_status = QLabel()
         erow.addWidget(self.export_status)
         erow.addWidget(self.export_progress)
+        self.export_button.setToolTip(HT.TOOLTIPS["export_pdf"])
         erow.addWidget(self.export_button)
         self.export_running = False
         self._export_pool = QThreadPool()
@@ -150,7 +154,10 @@ class MainWindow(QMainWindow):
 
     def _sync_export_button(self, valid: bool) -> None:
         self.export_button.setEnabled(valid and not self.export_running)
-        self.export_button.setToolTip("" if valid else "Fix the settings errors to export")
+        tip = HT.TOOLTIPS["export_pdf"]
+        if not valid:
+            tip = f"{tip}\n\n{HT.EXPORT_DISABLED_REASON}"
+        self.export_button.setToolTip(tip)
 
     def export_dialog(self) -> None:
         """Ask for a destination (default from the config), then export in the background."""
