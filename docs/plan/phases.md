@@ -111,7 +111,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Meals and groceries
 - [x] Gratitude journal
 - [x] Books, movies and series
-- [ ] Travel planner
+- [x] Travel planner
 - [ ] 30-day challenges
 - [ ] Idea map
 - [ ] QR codes from user URLs

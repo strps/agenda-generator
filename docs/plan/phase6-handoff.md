@@ -34,3 +34,7 @@ Short running notes between agents. Trim stale entries.
 - `Media(count=1)` (`media_log`, value_added/value_added; catalog gives value 3, no repetition, so `count=N`, negatives rejected). Type column = stacked Book/Movie/Series labels, title, date, 5 `draw_circle` rating.
 - `layout(rows, width, type_w, date_w, title_min, g) -> MediaLayout(rows, circle_d, show_date)`: rows = (rows-1)//3; shrinks circles (ratios of a baseline) before dropping the date column. Grid has 6 columns, so DATE_COLS=1, TITLE_COLS=2. Today all sizes keep the date.
 - Strings `media.title/type/book/movie/series/name/date/rating` (es, en).
+### Task 7: Travel planner
+- `Travel(count=1)` (`travel`, value_added/value_added; catalog gives value 4, no repetition, so `count=N`, negatives rejected). Fields destination, from|to, budget; itinerary "Day N" + rule rows; packing checkbox rows.
+- `layout(rows) -> TravelLayout(day_rows, pack_rows, pack_cols)`: `FIXED_ROWS` structure, free rows split 60% itinerary (capped at `MAX_DAYS`, extra goes to packing) / rest packing; 2 packing columns when rows >= 30 (a5, letter).
+- Strings `travel.title/destination/from/to/budget/itinerary/day/packing` (es, en).
