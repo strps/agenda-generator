@@ -98,7 +98,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Habit tracker (x12)
 - [x] Monthly review (x12)
 - [x] Schedule
-- [ ] Holidays list
+- [x] Holidays list
 - [ ] Passwords (with warning)
 
 **Done when:** each page renders at every supported size within the safe area.

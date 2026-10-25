@@ -13,12 +13,8 @@ Short running notes between agents. Trim stale entries.
 
 ## Log
 
-### Task 1: Goals
-- `Goals` (`goals`, optional/optional, 1 page): `Goals.layout(rows) -> (goals, steps)`: 6 goals, else 5, with up to 4 steps, min 2; block = title + steps + deadline + 1 gap row.
-
 ### Task 2: Important dates
 - `ImportantDates` (`important_dates`, optional/optional, 1 page): `layout(rows) -> entries` = `max(1, rows // 6 - 2)`; 12 month blocks (2 cols x 6 rows: title row, entries, gap row), each entry a short day rule + name rule.
-- Month names via `Strings.month_name(m)`; key `dates.title` only.
 
 ### Task 3: To-do list
 - `Todo(count=1)` (`todo`, optional/optional): `count` -> `instances()` N pages (negative raises), like Notes. No config field for count exists (Notes has none), so `config.pages` gives 1.
@@ -47,3 +43,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 8: Schedule
 - `Schedule` (`schedule`, optional/optional, 1 page): 7 weekday columns (short names, `config.week_start` order, weekend tint) all sizes; hour label column = half a grid column. Key `schedule.title`.
 - `Schedule.layout(rows) -> (hours, baselines per hour)`: tallest band of 3/2/1 rows keeping >= 10 hours, max 15 (7:00-21:00); b6 gives 13 hours x 2 rows.
+
+### Task 9: Holidays
+- `Holidays` (`holidays`, optional/optional, 1 page): `layout(rows, n) -> (cols, shown, per_col)`; cap = `rows // ROW_BASELINES`(2); n <= cap one column, else two columns showing first `min(n, 2*cap)` (truncated); n=0 or unsupported country (`ValueError` caught) => cap empty rows.
+- Es dates "1 ene", en "Jan 1"; names ellipsized via `_ellipsize(pdf, text, w)`. Reuses keys `holidays.title`.
