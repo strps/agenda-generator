@@ -116,3 +116,32 @@ def weeks_by_month(year: int, week_start: str = "monday") -> dict[int, list[Week
         y, m = week_month(week)
         result[m if y == year else 1].append(week)
     return result
+
+
+def _holiday_language(cls: type, language: str) -> str | None:
+    """Pick the country's supported language matching `language` (e.g. en -> en_US)."""
+    wanted = language.strip().lower().replace("-", "_")
+    for supported in cls.supported_languages:
+        if supported.lower() == wanted:
+            return supported
+    for supported in cls.supported_languages:
+        if supported.lower().split("_")[0] == wanted.split("_")[0]:
+            return supported
+    return cls.default_language  # unsupported: use the country's own default
+
+
+def holidays_for(year: int, country: str = "CR", language: str = "es") -> dict[date, str]:
+    """Public holidays of `country` in `year`, sorted by date, names in `language`.
+
+    Several holidays on one date are joined with "; " (sorted). An unsupported
+    language falls back to the country's default one. Bad country: ValueError.
+    """
+    import holidays as _holidays
+
+    code = country.strip().upper()
+    try:
+        cls = _holidays.country_holidays(code, years=year).__class__
+    except NotImplementedError:
+        raise ValueError(f"unknown holiday country code: {country!r}") from None
+    result = _holidays.country_holidays(code, years=year, language=_holiday_language(cls, language))
+    return {d: "; ".join(sorted(result.get_list(d))) for d in sorted(result)}

@@ -26,3 +26,8 @@ Short running notes between agents. Trim stale entries.
 - `calendar.py`: `week_month(week) -> (year, month)` of `week.start`; `weeks_by_month(y, ws) -> {1..12: [Week]}` (all keys present, partition of `weeks_of_year`, in order).
 - Week 1 starting in previous Dec (2026: Mon 12-29 / Sun 12-28) is filed under January of `y`, though `week_month` returns (y-1, 12). Last week starting in Dec stays in Dec.
 - Mar 30 - Apr 5 2026 is March's; April's first week starts Apr 6. Page order: month -> its weeks (spread + dailies).
+
+### Task 4: holidays
+- `calendar.py`: `holidays_for(year, country="CR", language="es") -> dict[date, str]`, sorted; same-day names joined "; ". Imports `holidays` lazily.
+- Language: `en`->`en_US` via prefix match; unsupported -> country default (no crash). Unknown country -> ValueError. Subdivisions not supported.
+- `Config.holiday_country` only uppercases; it does not validate the code (error surfaces at `holidays_for`).

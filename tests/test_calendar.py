@@ -150,3 +150,35 @@ def test_week_one_from_previous_december_goes_to_january():
     for ws, start in (("monday", date(2025, 12, 29)), ("sunday", date(2025, 12, 28))):
         first = weeks_by_month(2026, ws)[1][0]
         assert first.number == 1 and first.start == start
+
+
+def test_holidays_cr_2026_known_dates():
+    from agenda.calendar import holidays_for
+
+    h = holidays_for(2026, "CR", "es")
+    assert list(h) == sorted(h)
+    assert h[date(2026, 1, 1)] == "Año Nuevo"
+    assert h[date(2026, 4, 11)] == "Día de Juan Santamaría"
+    assert date(2026, 7, 25) in h and date(2026, 9, 15) in h
+    assert h[date(2026, 12, 25)] == "Navidad"
+    assert all(d.year == 2026 for d in h)
+
+
+def test_holidays_language_and_fallback():
+    from agenda.calendar import holidays_for
+
+    es, en = holidays_for(2026, "CR", "es"), holidays_for(2026, "CR", "en")
+    assert es.keys() == en.keys()
+    assert en[date(2026, 12, 25)] == "Christmas Day"
+    assert es[date(2026, 12, 25)] != en[date(2026, 12, 25)]
+    assert holidays_for(2026, "CR", "xx") == es  # CR default language is es
+    assert holidays_for(2026, "cr", "es") == es
+
+
+def test_holidays_other_country_and_invalid():
+    from agenda.calendar import holidays_for
+
+    us = holidays_for(2026, "US", "es")  # US has no es: falls back to English
+    assert us[date(2026, 7, 4)] == "Independence Day"
+    with pytest.raises(ValueError, match="XX"):
+        holidays_for(2026, "XX")
