@@ -15,16 +15,10 @@ Short running notes between agents. Trim stale entries.
 
 ## Log
 
-### Task 1: pyproject + entry point
-- Built `pyproject.toml`, `.gitignore`, `agenda/__init__.py` (`__version__`), `agenda/__main__.py` (`build_parser()`, `main(argv)`; only `--version` so far, prints "not implemented yet").
-- Later tasks extend `build_parser()`/`main()`; keep `main` returning an int exit code.
-
-### Task 2: package layout
-- Created stub modules (one-line docstring each) under `agenda/`: config, sizes, catalog, calendar, grid, tokens, draw, themes, assembler, imposition, exporter, i18n (not in plan §4, added for the i18n task), and `agenda/pages/{base,core,optional,value_added}.py`. Fill them in place; do not rename.
-- `tests/test_smoke.py` imports every module; when adding a module, add it to `MODULES`.
-- Decision: fonts stay in top-level `assets/fonts/` (plus `assets/icons/`), with `.gitkeep` placeholders; no package-data. Resolve with `Path(__file__).resolve().parents[1] / "assets" / "fonts"`. Works for the editable install; a built wheel would not ship them (revisit before packaging; then move into `agenda/assets` and add `[tool.setuptools.package-data]`).
-- Gotcha: `agenda/calendar.py` shadows stdlib only for relative imports inside the package; always use `from agenda import calendar` / absolute imports, never run scripts from inside `agenda/`.
-- No `main.py`/`config.yaml`/`output/` from plan §4 yet: entry is `agenda.__main__`.
+### Tasks 1-2: pyproject, layout
+- `agenda/__main__.py`: `build_parser()`, `main(argv) -> int`. Stub modules exist for everything in plan §4 plus `i18n`, `pages/{base,core,optional,value_added}`; fill in place. `tests/test_smoke.py` `MODULES` lists them; add new modules there.
+- Fonts: top-level `assets/fonts/` (+ `assets/icons/`), resolve via `Path(__file__).resolve().parents[1] / "assets" / "fonts"`. A wheel would not ship them (revisit when packaging).
+- Gotcha: `agenda/calendar.py` shadows stdlib only for relative imports; use `from agenda import calendar`, never run scripts from inside `agenda/`.
 
 ### Task 3: config model
 - `agenda/config.py`: `Config(BaseModel)` (extra="forbid", validate_assignment). All plan §2 params plus amendments: `bleed` (3 mm), `separate_covers`, `creep_mm`, `preset`, `page_numbers`, `debug_grid`. Property `pages_per_booklet`. Tests in `tests/test_config.py`.
@@ -38,3 +32,9 @@ Short running notes between agents. Trim stale entries.
 - Decision: orientation normalizes: portrait => width <= height, landscape => width >= height (so custom `200x100` portrait gives 100x200).
 - `Config.page_size` validator now calls `parse_size`; new property `Config.page_dimensions` -> final (w, h) mm. Use that for `FPDF(unit="mm", format=cfg.page_dimensions)` (next task).
 - Tests: `tests/test_sizes.py`.
+
+### Task 5: fpdf2 document
+- `agenda/exporter.py`: `new_document(cfg) -> FPDF` (mm, `format=cfg.page_dimensions`, auto page break off, margins 0, title/creator/author set), `add_blank_pages(pdf, n)`, `write_pdf(pdf, path=DEFAULT_OUTPUT)` (creates parent dirs), `export_blank(cfg, pages, path)`. `DEFAULT_OUTPUT = output/agenda.pdf` (`output/` is created on demand).
+- CLI temporary flags: `-o/--output`, `--pages` (default 4), `--page-size`, `--orientation`; builds `Config(**overrides)`, exit 2 on invalid config. Replace with the real CLI/config overlay later.
+- Page size verified via pypdf mediabox (pt / (72/25.4)) in `tests/test_exporter.py`.
+- Note: fpdf2 margins set to 0 on purpose; the margins/grid tasks own real margins (alternating inner/outer by page side).

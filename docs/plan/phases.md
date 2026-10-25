@@ -31,7 +31,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Package layout as in [plan §4](plan_script_agenda.md#4-project-architecture)
 - [x] Config model (pydantic) with all parameters and defaults ([plan §2](plan_script_agenda.md#2-configuration-parameters))
 - [x] `sizes.py`: named sizes + custom `WxH` in mm, orientation
-- [ ] fpdf2 document in mm (`FPDF(unit="mm", format=...)`)
+- [x] fpdf2 document in mm (`FPDF(unit="mm", format=...)`)
 - [ ] Bundle and register TTF fonts in `assets/fonts/`; fail if missing
 - [ ] `tokens.py` and `grid.py`: margins, 6 columns, 5 mm baseline ([layout-grid.md](../architecture/layout-grid.md))
 - [ ] Alternating inner/outer margins by page side
