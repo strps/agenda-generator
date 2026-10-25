@@ -12,6 +12,7 @@ import typer
 
 from agenda import __version__
 from agenda.config import Config
+from agenda.configfile import load_yaml, merge
 from agenda.exporter import DEFAULT_OUTPUT, FontsMissingError, export_agenda, export_blank
 
 app = typer.Typer(add_completion=False, help="Generate a printable agenda PDF.")
@@ -72,6 +73,9 @@ def run(
     version: Annotated[
         bool, typer.Option("--version", callback=_version, is_eager=True, help="Show version.")
     ] = False,
+    config: Annotated[
+        Path | None, typer.Option("--config", help="YAML settings file; flags override it.")
+    ] = None,
     # Page geometry
     page_size: Annotated[
         str | None, typer.Option("--page-size", "--size", help="Named size or WxH in mm.")
@@ -163,10 +167,11 @@ def run(
             output=output,
             debug_grid=debug_grid,
         )
-        cfg = Config(**overrides)
+        merged = merge(load_yaml(config) if config is not None else {}, overrides)
+        cfg = Config(**merged)
     except ValueError as exc:
         raise _fail(str(exc), 2) from None
-    target = output or DEFAULT_OUTPUT
+    target = cfg.output if "output" in merged else DEFAULT_OUTPUT
     try:
         if blank_pages is None:
             out = export_agenda(cfg, target)

@@ -16,3 +16,9 @@ Short running notes between agents. Trim stale entries.
 - `--pages` now means catalog ids (plan §8.1); the old blank-page option is `--blank-pages N`. Validation errors: stderr `agenda-gen: ...`, exit 2; missing fonts exit 1.
 - Unknown ids in `--pages` are not rejected by `Config` (silently ignored by `build_plan`): a Config-level check is still open.
 - typer 0.27 bundles click: do not import `click`. `typer>=0.12` added to pyproject.
+
+### Task 2: YAML loading
+- `agenda.configfile`: `load_yaml(path) -> dict` (flat Config kwargs; `booklet: {size,unit,folded}` -> `booklet_*` via `flatten`; empty file = `{}`), `merge(yaml, overrides)` (CLI wins per key), `ConfigFileError(ValueError)`.
+- `run --config PATH`: `Config(**merge(load_yaml, build_overrides))` is the single validation; unknown keys fail in Config (`extra=forbid`). All errors exit 2 with `agenda-gen: ...`.
+- Overrides replace whole values: `--pages`/`--category` replace the YAML `pages`; `--preset` is ignored if YAML sets `pages` (explicit pages win). Output path: flag, else YAML `output`, else `DEFAULT_OUTPUT`.
+- `Config.pages` still accepts unknown ids (left open; not Config-trivial because catalog imports config).

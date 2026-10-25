@@ -7,6 +7,7 @@ from agenda import __version__
 MODULES = [
     "config",
     "cli",
+    "configfile",
     "sizes",
     "catalog",
     "calendar",

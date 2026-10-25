@@ -124,7 +124,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 ## Phase 7 — CLI & YAML
 
 - [x] `typer` CLI mirroring the config model
-- [ ] YAML loading; CLI overrides YAML; single validation pass
+- [x] YAML loading; CLI overrides YAML; single validation pass
 - [ ] `--list` catalog with value scores
 - [ ] `--dry-run` prints the plan summary without rendering
 - [ ] Sample `config.yaml`
