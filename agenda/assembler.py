@@ -183,11 +183,12 @@ def build_plan(config: Any) -> PagePlan:
 
     Order: front matter (cover, personal info, yearly) -> per month: monthly, then per owned
     week its weekly spread and that week's dailies (dates inside ``config.year``) -> optional ->
-    value-added -> back matter (notes, contacts, back cover). A multi-page instance is
+    value-added -> back matter (notes, contacts, padding, back cover). A multi-page instance is
     ``cls.pages`` entries sharing one ctx. One blank filler (``kind="filler"``, section of the
     page it precedes) is inserted before an instance whose ``starts_on`` side doesn't match.
     """
     from agenda.calendar import weeks_by_month
+    from agenda.catalog import get_page
     from agenda.pages.core import (
         BackCover,
         Contacts,
@@ -202,12 +203,14 @@ def build_plan(config: Any) -> PagePlan:
 
     entries: list[PlanEntry] = []
 
-    def put(cls: type[BasePage], ctx: dict[str, Any]) -> None:
+    def put(cls: type[BasePage], ctx: dict[str, Any], kind: Kind = "page") -> None:
         want = cls.starts_on
         if want != "any" and side_for_page(len(entries) + 1) != want:
             entries.append(make_entry(None, {}, len(entries) + 1, cls.section, kind="filler"))
         for k in range(cls.pages):
-            entries.append(make_entry(cls, ctx, len(entries) + 1, cls.section, page_in_instance=k))
+            entries.append(
+                make_entry(cls, ctx, len(entries) + 1, cls.section, page_in_instance=k, kind=kind)
+            )
 
     for cls in (Cover, PersonalInfo, Yearly):
         put(cls, {})
@@ -226,10 +229,45 @@ def build_plan(config: Any) -> PagePlan:
         for cls in _extras(config, category):
             for ctx in cls().instances(config):
                 put(cls, ctx)
-    # Hook: task 5 (padding before the back cover) goes here.
-    for cls in (Notes, Contacts, BackCover):
+    for cls in (Notes, Contacts):
         put(cls, {})
     per = pages_per_booklet(config.booklet_size, config.booklet_unit, config.booklet_folded)
+    base = list(entries)
+    pad_cls = get_page(config.pad_with)
+    pad_ctxs = pad_cls().instances(config) or [{}]
+
+    def try_padding(units: int, blank: bool) -> int:
+        """Rebuild the tail with ``units`` padding units + back cover; return total pages."""
+        entries[:] = base
+        for u in range(units):
+            if blank:
+                entries.append(make_entry(None, {}, len(entries) + 1, "front_back", kind="padding"))
+            else:
+                put(pad_cls, dict(pad_ctxs[u % len(pad_ctxs)]), kind="padding")
+        put(BackCover, {})
+        return len(entries)
+
+    # Padding goes BEFORE the back cover so the cover stays the last page. The count comes from
+    # plan_booklets on the total (back matter included); searching unit by unit keeps it exact
+    # when the pad class is a multi-page spread or the back cover needs a starts_on filler.
+    # If no whole number of pad units fits exactly, fall back to blank pages (page_class=None).
+    nb = config.num_booklets
+    limit = 2 * per + 4 if nb == "auto" else int(nb) * per + 4
+    done = False
+    for blank in (False, True):
+        for units in range(limit):
+            total = try_padding(units, blank)
+            lay = plan_booklets(total, per, nb)
+            if lay.padding == 0 and lay.overflow == 0:
+                done = True
+                break
+            if units == 0 and lay.overflow > 0:
+                done = True  # too many pages for a fixed num_booklets: no padding (summary warns)
+                break
+        if done:
+            break
+    if not done:
+        try_padding(0, False)
     return PagePlan(
         tuple(replace(e, booklet_index=booklet_index_for(e.page_number, per)) for e in entries)
     )

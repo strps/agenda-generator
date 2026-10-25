@@ -86,3 +86,10 @@ def test_pages_unit_multiple_of_four():
 def test_country_and_num_booklets():
     assert Config(holiday_country="mx").holiday_country == "MX"
     assert Config(num_booklets=3).num_booklets == 3
+
+
+def test_pad_with_validated_against_catalog():
+    assert Config().pad_with == "notes"
+    assert Config(pad_with=" weekly ").pad_with == "weekly"
+    with pytest.raises(ValidationError, match="unknown page id"):
+        Config(pad_with="nope")

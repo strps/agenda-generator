@@ -29,7 +29,9 @@ def test_default_order():
     classes = [e.page_class for e in plan]
     assert classes[:3] == [Cover, PersonalInfo, Yearly]
     assert classes[3] is Monthly
-    assert classes[-3:] == [Notes, Contacts, BackCover]
+    assert classes[-1] is BackCover
+    nonpad = [e.page_class for e in plan if e.kind != "padding"]
+    assert nonpad[-3:] == [Notes, Contacts, BackCover]
     assert [e.page_number for e in plan] == list(range(1, len(plan) + 1))
     assert all(e.booklet_index is not None for e in plan)
     assert sum(e.page_class is Monthly for e in plan) == 12

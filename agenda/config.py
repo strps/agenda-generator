@@ -51,6 +51,7 @@ class Config(BaseModel):
     booklet_unit: Literal["sheets", "pages"] = "sheets"
     booklet_folded: bool = True
     num_booklets: int | Literal["auto"] = "auto"
+    pad_with: str = "notes"  # catalog page id used to fill the last booklet (see _check_pad_with)
     separate_covers: bool = False
     creep_mm: float = Field(0.0, ge=0)
 
@@ -104,6 +105,19 @@ class Config(BaseModel):
     def _check_num_booklets(cls, v: int | str) -> int | str:
         if isinstance(v, int) and v < 1:
             raise ValueError("num_booklets must be >= 1 or 'auto'")
+        return v
+
+    @field_validator("pad_with")
+    @classmethod
+    def _check_pad_with(cls, v: str) -> str:
+        """Must be a catalog page id. Lazy import: the catalog imports this module."""
+        from agenda.catalog import get_page
+
+        v = v.strip()
+        try:
+            get_page(v)
+        except KeyError as exc:
+            raise ValueError(exc.args[0]) from None
         return v
 
     @field_validator("holiday_country")
