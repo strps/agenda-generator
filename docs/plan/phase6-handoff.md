@@ -38,3 +38,7 @@ Short running notes between agents. Trim stale entries.
 - `Travel(count=1)` (`travel`, value_added/value_added; catalog gives value 4, no repetition, so `count=N`, negatives rejected). Fields destination, from|to, budget; itinerary "Day N" + rule rows; packing checkbox rows.
 - `layout(rows) -> TravelLayout(day_rows, pack_rows, pack_cols)`: `FIXED_ROWS` structure, free rows split 60% itinerary (capped at `MAX_DAYS`, extra goes to packing) / rest packing; 2 packing columns when rows >= 30 (a5, letter).
 - Strings `travel.title/destination/from/to/budget/itinerary/day/packing` (es, en).
+### Task 8: 30-day challenges
+- `Challenge30(count=1)` (`challenges30`, value_added/value_added; catalog gives value 4, no repetition, so `count=N`, negatives rejected). Fields "My challenge"/"Why", 30 hairline day cells (number top-left, `draw_circle` tick), "Reflection" rules.
+- `layout(rows) -> ChallengeLayout(cols, grid_rows, cell_rows, reflect_rows)`: cols 5x6 or 6x5 (tile 30 exactly); tallest cell (4..2 baselines) that leaves >= 2 reflection rules, ties to 5 cols. b6 = 6x5 cells of 4 rows; a5/letter = 5x6.
+- Strings `challenge.title/mine/why/reflection` (es, en).
