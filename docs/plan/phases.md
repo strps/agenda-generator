@@ -8,7 +8,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 
 | Phase | Status | Estimate | Started | Finished | Depends on | Notes |
 |---|---|---|---|---|---|---|
-| 1. Foundation | Not started | 1–2 days | | | — | |
+| 1. Foundation | In progress | 1–2 days | 2026-10-25 | | — | |
 | 2. Calendar | Not started | 1 day | | | 1 | |
 | 3. Core pages | Not started | 3–4 days | | | 1, 2, 4 | |
 | 4. Booklets & page plan | Not started | 1–2 days | | | 1, 2 | |
@@ -27,7 +27,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 
 **Goal:** an installable project that produces a blank, correctly sized PDF with alternating margins.
 
-- [ ] `pyproject.toml` with `agenda-gen` console entry point; `agenda/__main__.py`
+- [x] `pyproject.toml` with `agenda-gen` console entry point; `agenda/__main__.py`
 - [ ] Package layout as in [plan §4](plan_script_agenda.md#4-project-architecture)
 - [ ] Config model (pydantic) with all parameters and defaults ([plan §2](plan_script_agenda.md#2-configuration-parameters))
 - [ ] `sizes.py`: named sizes + custom `WxH` in mm, orientation
