@@ -17,9 +17,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from agenda.assembler import build_plan
+from agenda.assembler import build_plan, summarize
 from agenda.configfile import ConfigFileError
 from agenda.gui import layout as L
+from agenda.gui import legend_model as LM
+from agenda.gui.legend import Legend
 from agenda.gui.preview import PreviewWidget
 from agenda.gui.render_cache import Debounce
 from agenda.gui.section_bar import SectionBar
@@ -77,8 +79,15 @@ class MainWindow(QMainWindow):
         self.section_bar = SectionBar()
         self.regions[L.SECTION_BAR] = self.section_bar
         col.addWidget(self.section_bar)
-        col.addWidget(self._placeholder(L.LEGEND, "Legend", height=24))
-        col.addWidget(self._placeholder(L.SUMMARY, "Summary", height=24))
+        self.legend = Legend()
+        self.legend.setObjectName(L.LEGEND)
+        self.regions[L.LEGEND] = self.legend
+        col.addWidget(self.legend)
+        self.summary_label = QLabel()
+        self.summary_label.setObjectName(L.SUMMARY)
+        self.summary_label.setContentsMargins(4, 2, 4, 2)
+        self.regions[L.SUMMARY] = self.summary_label
+        col.addWidget(self.summary_label)
         self.setCentralWidget(root)
         self.debounce = Debounce(DEBOUNCE_S)
         self._timer = QTimer(self)
@@ -88,6 +97,7 @@ class MainWindow(QMainWindow):
         self.settings.changed.connect(self._on_settings_changed)
         self.preview.page_changed.connect(self.section_bar.set_position)
         self.section_bar.page_requested.connect(self.preview.goto)
+        self.legend.section_clicked.connect(self.section_bar.first_page_of)
         self.update_preview()
         self.open_button.clicked.connect(self.open_config_dialog)
         self.save_button.clicked.connect(self.save_config_dialog)
@@ -108,8 +118,15 @@ class MainWindow(QMainWindow):
         cfg, msg = self.settings.config()
         if cfg is None:
             self.preview.set_error(msg)
+            self.legend.set_entries([])
+            self.summary_label.setText(LM.NO_PLAN_TEXT)
+            self.summary_label.setToolTip("")
             return
         plan = build_plan(cfg)
+        info = summarize(plan, cfg)
+        self.legend.set_entries(LM.legend_entries(plan))
+        self.summary_label.setText(LM.summary_text(info))
+        self.summary_label.setToolTip(LM.summary_tooltip(info))
         self.section_bar.set_plan(plan)
         self.preview.set_plan(cfg, plan)
         self.section_bar.set_position(self.preview.index)

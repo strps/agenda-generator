@@ -19,3 +19,6 @@
 - `bar_model`: `BarGeometry.page_at(x)` (clamps; gap -> nearer page; None if empty), `tooltip_text(plan, i)` ("Page 143 · Weekly · Week 12 (Mar 16–22) · Booklet 8, sheet 2"), `key_target(key, index, plan)` (left/right = spread, pageup/pagedown = booklet start, home/end), `first_page_of(plan, section)`, `SECTION_LABELS` (T9 legend can reuse).
 - `SectionBar`: signal `page_requested(int)` (click, drag, keys; focusable), `tooltip_for(x)`, `first_page_of(section)` = legend-click hook (emits). `MainWindow` connects it to `preview.goto`.
 - Tests: `tests/test_gui_bar.py` (QTest click/drag/keys).
+### Task 9: legend + summary
+- `gui.legend_model` (`legend_entries(plan)` -> LegendEntry(key,label,count), `summary_text`/`summary_tooltip` from `summarize`, `NO_PLAN_TEXT`); `Legend` widget (`entries`, `buttons`, `set_entries`, `recolor`, signal `section_clicked(key)` -> `section_bar.first_page_of`).
+- `MainWindow.legend`, `.summary_label` (real widgets replacing placeholders); both updated in `update_preview`; config error -> empty legend + NO_PLAN_TEXT.

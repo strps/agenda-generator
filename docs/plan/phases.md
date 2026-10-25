@@ -143,7 +143,7 @@ Spec: [gui.md](../architecture/gui.md).
 - [x] Section bar: proportional segments, 2 px section gaps, padding hatch, booklet ticks, position marker
 - [x] Section colors for light and dark mode as specified
 - [x] Bar interaction: hover tooltip, click/drag navigation, keyboard, legend click
-- [ ] Legend with counts + summary line
+- [x] Legend with counts + summary line
 - [ ] Export with progress bar
 
 **Done when:** changing any setting updates the bar instantly and the preview within ~1 s, and export produces the same PDF as the CLI.

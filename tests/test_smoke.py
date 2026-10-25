@@ -10,6 +10,7 @@ MODULES = [
     "configfile",
     "gui.settings_model",
     "gui.preview_model",
+    "gui.legend_model",
     "gui.render_cache",
     "gui.bar_model",
     "gui.section_colors",
