@@ -11,6 +11,7 @@ MODULES = [
     "gui.settings_model",
     "gui.preview_model",
     "gui.render_cache",
+    "gui.bar_model",
     "sizes",
     "catalog",
     "calendar",

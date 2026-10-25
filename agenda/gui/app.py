@@ -22,6 +22,7 @@ from agenda.configfile import ConfigFileError
 from agenda.gui import layout as L
 from agenda.gui.preview import PreviewWidget
 from agenda.gui.render_cache import Debounce
+from agenda.gui.section_bar import SectionBar
 from agenda.gui.settings_panel import SettingsPanel
 
 DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-renders
@@ -73,7 +74,9 @@ class MainWindow(QMainWindow):
         col.addWidget(split, 1)
 
         # Bottom: section bar, legend, summary.
-        col.addWidget(self._placeholder(L.SECTION_BAR, "Section bar", height=40))
+        self.section_bar = SectionBar()
+        self.regions[L.SECTION_BAR] = self.section_bar
+        col.addWidget(self.section_bar)
         col.addWidget(self._placeholder(L.LEGEND, "Legend", height=24))
         col.addWidget(self._placeholder(L.SUMMARY, "Summary", height=24))
         self.setCentralWidget(root)
@@ -83,6 +86,7 @@ class MainWindow(QMainWindow):
         self._timer.setInterval(int(DEBOUNCE_S * 1000))
         self._timer.timeout.connect(self.update_preview)
         self.settings.changed.connect(self._on_settings_changed)
+        self.preview.page_changed.connect(self.section_bar.set_position)
         self.update_preview()
         self.open_button.clicked.connect(self.open_config_dialog)
         self.save_button.clicked.connect(self.save_config_dialog)
@@ -104,7 +108,10 @@ class MainWindow(QMainWindow):
         if cfg is None:
             self.preview.set_error(msg)
             return
-        self.preview.set_plan(cfg, build_plan(cfg))
+        plan = build_plan(cfg)
+        self.section_bar.set_plan(plan)
+        self.preview.set_plan(cfg, plan)
+        self.section_bar.set_position(self.preview.index)
 
     def load_config(self, path: str) -> str:
         """Load a YAML file into the settings panel. Returns "" or the error message."""

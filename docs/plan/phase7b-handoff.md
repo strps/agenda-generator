@@ -1,6 +1,5 @@
 # Phase 7b handoff
 
-Short running notes between agents. Trim stale entries.
 
 ## Conventions
 
@@ -13,7 +12,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 1: main window
 - `agenda.gui.layout` (Qt-free): `REGIONS`, `WindowLayout` (title, size, `splitter_sizes()`).
 - `agenda.gui.app`: `MainWindow` with `regions: dict[name, QWidget]` (toolbar, settings, preview, section_bar, legend, summary, export); buttons `open_button`, `save_button`, `export_button` (unwired). `main(argv)` is the `agenda-gui` entry point; also `python -m agenda.gui`.
-- Settings/preview/bar/legend/summary are `QFrame` placeholders with a label: replace them (keep the object names) in later tasks. Only `gui` and `gui.layout` are in the smoke MODULES (`gui.app` needs PySide6).
+- Settings/preview/bar/legend/summary are `QFrame` placeholders with a label: replace them (keep the object names) in later tasks.
 - Tests: `tests/test_gui_shell.py`.
 ### Task 2: settings panel
 - `gui.settings_model` (Qt-free, in smoke MODULES): `field_specs()` (FieldSpec kind/choices/default/min/max from `Config.model_fields`), `default_values`, `build_config(values) -> (Config|None, msg)`, `save_yaml(cfg, path)` (flat keys, None omitted), `load_values(path)` (defaults + `load_yaml`; unknown keys kept so Config rejects them).
@@ -36,3 +35,7 @@ Short running notes between agents. Trim stale entries.
 - `gui.workers`: `RenderJob` (QRunnable: render_pages + rasterise, one thread), `RenderSignals`, `rasterise`.
 - `PreviewWidget.refresh` is async: cache hit shows at once, else a job; `.busy`, `.cache` (64 pages), `wait_idle(timeout)` for tests. Fit zoom keys on viewport size.
 - `MainWindow`: `settings.changed` -> 300 ms QTimer (`DEBOUNCE_S`) -> `update_preview()`; `flush_preview()` skips the wait. build_plan still runs in the GUI thread (fast); the bar (task 6) should update from `update_preview` immediately.
+### Task 6: section bar
+- `gui.bar_model` (Qt-free, in smoke MODULES): `geometry(plan, width) -> BarGeometry` with `runs`, `segments()` (section/`padding`, first, count, x, width), `ticks()`, `marker_x(i)`, `page_width`; `GAP_PX`=2. Padding (`kind=="padding"`) is its own run keyed `PADDING`; blank fillers keep their section.
+- `gui.section_bar.SectionBar` (object name `section_bar`): `set_plan`, `set_position`, `geometry_for()`; paints from the model. One neutral `PLACEHOLDER` color: task 7 swaps in the palette; task 8 needs `page_at(x)` (not built). MainWindow feeds it in `update_preview` and from `preview.page_changed`.
+- Tests: `tests/test_gui_bar.py`.
