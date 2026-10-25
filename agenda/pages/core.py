@@ -7,7 +7,7 @@ from datetime import date
 from fpdf import FPDF
 
 from agenda import tokens
-from agenda.calendar import month_grid
+from agenda.calendar import month_grid, weeks_by_month
 from agenda.catalog import register
 from agenda.config import Config
 from agenda.draw import DayStyle, draw_mini_month
@@ -204,3 +204,100 @@ class Monthly(BasePage):
         for n in range(n0 + 2, g.rows + 1):
             y = g.row(n)
             pdf.line(x, y, x + w, y)
+
+
+@register
+class Weekly(BasePage):
+    """Weekly planner, a WO2P spread: 4 days on the left page, 3 days + notes on the right.
+
+    ctx keys: ``number`` (ISO week), ``iso_year``, ``days`` (7 dates in ``week_start`` order,
+    may belong to adjacent years) and ``month`` (owning month 1..12, see ``weeks_by_month``).
+    """
+
+    id = "weekly"
+    name = "Weekly planner"
+    category = "core"
+    section = "weekly"
+    pages = 2
+    starts_on = "left"
+
+    LEFT_DAYS = 4  # blocks per page; right page shows the remaining days plus a notes block
+    BLOCKS = 4
+
+    @staticmethod
+    def day_style(d: date) -> DayStyle | None:
+        """Hook for task 12 (weekend/holiday marking): return a ``DayStyle`` or None."""
+        return
+
+    def instances(self, config: Config) -> list[Ctx]:
+        by_month = weeks_by_month(config.year, config.week_start)
+        return [
+            {"number": w.number, "iso_year": w.iso_year, "days": list(w.days), "month": m}
+            for m, weeks in by_month.items()
+            for w in weeks
+        ]
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        s = Strings(config.language)
+        days: list[date] = ctx["days"]
+        last = pdf.page
+        pdf.page = last - 1  # left page
+        self._page(pdf, grids[0], s, days[: self.LEFT_DAYS], s("week.number", n=ctx["number"]))
+        pdf.page = last
+        months = []
+        for d in days:
+            name = s.month_name(d.month)
+            label = f"{name} {d.year}" if d.year != days[0].year else name
+            if label not in months:
+                months.append(label)
+        title = " – ".join(months)
+        if days[0].year == days[-1].year:
+            title += f" {days[0].year}"
+        self._page(pdf, grids[1], s, days[self.LEFT_DAYS :], title, notes=True)
+
+    def _page(
+        self,
+        pdf: FPDF,
+        g: Grid,
+        s: Strings,
+        days: list[date],
+        title: str,
+        notes: bool = False,
+    ) -> None:
+        x, w = g.col(0, g.columns)
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        h = g.header
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, title)
+
+        per = g.rows // self.BLOCKS  # rows per block: label row + write-in lines
+        pad = tokens.SPACING[0]
+        names = s.weekday_names("monday", "full")
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_HAIRLINE)
+        for i in range(self.BLOCKS):
+            r0 = i * per
+            y0 = g.row(r0)
+            if i < len(days):
+                d = days[i]
+                style = self.day_style(d)
+                if style and style.fill:
+                    pdf.set_fill_color(*style.fill)
+                    pdf.rect(x, y0, w, g.baseline, style="F")
+                pdf.set_text_color(*((style and style.color) or _INK))
+                pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+                pdf.set_xy(x + pad, y0)
+                pdf.cell(w - 2 * pad, g.baseline, f"{names[d.weekday()]} {d.day}")
+            elif notes:
+                pdf.set_text_color(*_ACCENT)
+                pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+                pdf.set_xy(x + pad, y0)
+                pdf.cell(w - 2 * pad, g.baseline, s("notes.title"))
+            else:
+                continue
+            pdf.line(x, y0, x + w, y0)  # block top rule
+            for n in range(r0 + 2, r0 + per + 1):
+                y = g.row(n)
+                pdf.line(x, y, x + w, y)

@@ -17,7 +17,6 @@ Short running notes between agents. Trim stale entries.
 - ctx = plain `dict` (e.g. `{"month": 3}`); `instances(config) -> list[ctx]` defaults to `[{}]`.
 - `draw(pdf, ctx, config, grids)`: caller adds `pages` pages with `exporter.add_page` and passes their grids in order; `pdf.page` is the last one, so a spread sets `pdf.page = pdf.page - 1` to draw the left page. Pages never add pages or fillers.
 - Instances are created without args: `Page().instances(cfg)`. `@register` (task 2) should validate nothing extra beyond unique `id`.
-
 ### Task 2: catalog
 - `agenda/catalog.py`: `register` (dup id -> ValueError, non-BasePage -> TypeError), `get_page` (unknown -> KeyError listing ids), `all_pages`, `pages_by_category`, `resolve_pages(config)` (None = core pages in registration order; presets not handled).
 - Page modules import `register` from `agenda.catalog`; the catalog imports them lazily in `load_pages()` (called by every lookup), so no cycle. `CATALOG` dict is the raw registry.
@@ -26,7 +25,7 @@ Short running notes between agents. Trim stale entries.
 
 ### Task 3: Cover
 - `agenda/pages/core.py`: `Cover` (`cover`, core, front_back, 1 page): tint panel (top 2/3 of content rows) with accent bar, title (18pt, `cover.title`) and year (28pt bold). Existing i18n keys reused, none added.
-- Safe-area check sees text origins only (not right edge); keep text cells within `safe`. Inter via `pdf.set_font("Inter", style, pt)`; set `pdf.c_margin = 0` for cells on the grid.
+- Safe-area check sees text origins only; keep cells within `safe`. Inter via `pdf.set_font("Inter", style, pt)`; set `pdf.c_margin = 0` for cells on the grid.
 
 ### Task 4: Personal information
 - `agenda/pages/core.py`: `PersonalInfo` (`personal_info`, core, front_back, 1 page); heading + `FIELDS` (i18n `personal.*` keys, none added). Label 1 row, write-in lines at row bottoms (hairline, `line` color), 2 rows for address, 1 gap row between fields.
@@ -40,3 +39,8 @@ Short running notes between agents. Trim stale entries.
 ### Task 6: Monthly
 - `Monthly` (`monthly`, core, section monthly, 1 page, starts_on any; 12 ctxs `{"month": m}`). Header `month.title`, weekday row (short), day boxes from `month_grid` (blank boxes for adjacent months), priorities block (1/5 of rows) at the bottom.
 - `Monthly.day_style(date)` hook like Yearly (None); fills boxes and colors the day number.
+
+### Task 7: Weekly
+- `Weekly` (`weekly`, core, section weekly, 2 pages, starts_on left). ctx: `number`, `iso_year`, `days` (7 dates, week_start order, may span years), `month` (owner, from `weeks_by_month`; instances in that page order).
+- Layout: 4 equal blocks per page; left = days 1-4, right = days 5-7 + notes block (`notes.title`). Header: week number (left), localized month(s)/year (right). `Weekly.day_style` hook (None) fills the day label row.
+- Draws left page via `pdf.page = last - 1`, then restores. Tests use a leading blank page (page 1 is right) via `render_spreads` in tests/test_weekly.py; `assert_in_safe_area(..., allow_blank=True)` added.
