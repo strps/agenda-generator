@@ -8,7 +8,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 
 | Phase | Status | Estimate | Started | Finished | Depends on | Notes |
 |---|---|---|---|---|---|---|
-| 1. Foundation | In progress | 1–2 days | 2026-10-25 | | — | |
+| 1. Foundation | Done | 1–2 days | 2026-10-25 | 2026-10-25 | — | |
 | 2. Calendar | Not started | 1 day | | | 1 | |
 | 3. Core pages | Not started | 3–4 days | | | 1, 2, 4 | |
 | 4. Booklets & page plan | Not started | 1–2 days | | | 1, 2 | |
@@ -36,7 +36,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] `tokens.py` and `grid.py`: margins, 6 columns, 5 mm baseline ([layout-grid.md](../architecture/layout-grid.md))
 - [x] Alternating inner/outer margins by page side
 - [x] `--debug-grid` overlay (margins, columns, baseline, mm rulers)
-- [ ] i18n string table (`es`, `en`)
+- [x] i18n string table (`es`, `en`)
 
 **Done when:** `agenda-gen --debug-grid` outputs a few half-letter pages whose grid overlay shows margins swapping between left and right pages.
 
@@ -175,3 +175,4 @@ Spec: [gui.md](../architecture/gui.md).
 | Date | Change |
 |---|---|
 | 2026-10-25 | Tracker created. Decisions so far: folded booklets by default (selectable), weekly + daily planners, `CR` holidays, fpdf2 rendering, PySide6 GUI with section bar. |
+| 2026-10-25 | Phase 1 done: package, config, sizes, fonts, grid, alternating margins, `--debug-grid`, i18n table (`es`, `en`). |

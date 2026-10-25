@@ -44,3 +44,15 @@ Short running notes between agents. Trim stale entries.
 - `agenda/draw.py::draw_debug_grid(pdf, grid, page_no=None)`: inner margin blue, outer orange, header/content/footer boxes, 6 columns (pink), 5 mm baselines, mm rulers on top/left edges (Inter 4 pt), label "p.N side". Restores colors/line width.
 - `add_page` calls it when `cfg.debug_grid` (drawn at page creation, so page content added later paints over it; if that matters, move the call to a finalize step). CLI `--debug-grid` sets `Config.debug_grid`.
 - Default size is half_letter, so `agenda-gen --debug-grid` yields 4 pages; visually verified pages 1-2 (margins swap, 15 mm inner / 10 mm outer). Render with `pdftoppm -r 110 -png`.
+
+### Task 10: i18n
+- `agenda/i18n.py`: `t(key, lang, **fmt)` (KeyError on missing key, ValueError on unsupported lang), `Strings(lang)` (callable; `.month_name`, `.weekday_names`), `month_name(m, lang, short=False)`, `weekday_names(lang, week_start, form)` with form `full|short|letter`, `weekday_name(idx, lang, form)` (Monday=0). Keys are dotted ids in `STRINGS` (e.g. `week.number`, `notes.title`, `month.title`); add new keys to both languages (parity test enforces it).
+- Names are capitalized (title form); use `.lower()` for running Spanish text. Spanish uses "Setiembre"/"Set" (CR usage).
+
+## Phase 1 wrap-up / open items for Phase 2+
+
+- Fonts (`assets/fonts/`) are top-level, not inside the package: not included in a built wheel; fix packaging before distribution.
+- CLI flags (`-o`, `--pages`, `--page-size`, `--orientation`, `--debug-grid`) are temporary argparse; Phase 7 replaces them with the real CLI/YAML.
+- Debug overlay is drawn at page-creation time, so later page content paints over it; move to a finalize step if needed.
+- Not done: YAML loading, presets, margin-vs-page-size validation. Holiday names must follow `Config.language` (Phase 2).
+- `ruff format --check .` flags `docs/plan/plan_script_agenda.md` code samples; check only `agenda tests`.
