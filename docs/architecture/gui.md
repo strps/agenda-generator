@@ -15,7 +15,7 @@ A desktop window to configure the agenda, preview pages as they will print, and 
 │   folded           │  │               │               │              │
 │ ─ Year, week start │  │               │               │              │
 │ ─ Planners         │  └───────────────┴───────────────┘              │
-│ ─ Pages (checklist │  ☐ debug grid   zoom [ fit ▾ ]                  │
+│ ─ Pages (checklist │  zoom [ fit ▾ ]                                 │
 │   by category)     │                                                 │
 │ ─ Theme, margins   │                                                 │
 ├────────────────────┴─────────────────────────────────────────────────┤
@@ -26,6 +26,7 @@ A desktop window to configure the agenda, preview pages as they will print, and 
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
+- **Tooltips:** every toolbar control has a detailed tooltip, with texts in `agenda/gui/help_text.py` (`TOOLTIPS`). This covers Open/Save config, Export PDF, prev/next, the Single/Spread/Sheet buttons and zoom. When the config is invalid, the Export tooltip also gives the reason it is disabled. A "debug grid" checkbox is not implemented.
 - **Settings panel (left):** generated from the same pydantic config model used by the CLI and YAML, so the three never drift apart. Loads and saves `config.yaml`.
 - **Preview (center):** three modes.
   - *Single:* one page.
@@ -80,7 +81,7 @@ PyMuPDF would also work for rasterising, but it is AGPL-licensed, which matters 
 - **Consecutive pages of the same section merge** into one segment. A **2 px gap** separates segments of different sections. The gap is required, not decorative (see 3.3).
 - **Booklet ticks** under the bar mark where each booklet starts.
 - **A position marker** shows the spread currently in the preview.
-- **A legend** lists every section shown, with a swatch, name and page count, plus a one-line summary (pages, sheets, booklets, padding).
+- **A legend** lists every section shown, with a swatch, name and page count, plus a one-line summary (pages, sheets, booklets, padding). Hovering a swatch, a section button or the "Legend:" title explains what the color means (`help_text.section_tooltip`); the padding swatch carries the same 45-degree hatch as the bar.
 
 ### Sections and colors
 

@@ -107,3 +107,19 @@ def test_legend_padding_description():
 
     lg = _legend_with([M.LegendEntry("padding", "Padding", 2)])
     assert SECTION_DESCRIPTIONS["padding"] in lg.buttons["padding"].toolTip()
+
+
+def _colors(widget):
+    img = widget.grab().toImage()
+    return {img.pixel(x, y) for x in range(img.width()) for y in range(img.height())}
+
+
+def test_padding_swatch_is_hatched():
+    from PySide6.QtWidgets import QLabel
+
+    lg = _legend_with([M.LegendEntry("padding", "Padding", 2), M.LegendEntry("monthly", "Monthly", 3)])
+    lg.show()
+    assert len(_colors(lg.findChild(QLabel, "swatch_padding"))) >= 2
+    assert len(_colors(lg.findChild(QLabel, "swatch_monthly"))) == 1
+    lg.recolor()
+    assert len(_colors(lg.findChild(QLabel, "swatch_padding"))) >= 2

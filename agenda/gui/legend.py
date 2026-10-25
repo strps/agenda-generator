@@ -1,7 +1,7 @@
 """Legend widget: colored swatch + label + count per section; click jumps to its first page."""
 
-from PySide6.QtCore import Signal
-from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QBrush, QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
 from agenda.gui import help_text
@@ -60,10 +60,24 @@ class Legend(QWidget):
         """Apply section colors for the current light/dark palette (text keeps normal color)."""
         for e in self.entries:
             sw = self.findChild(QLabel, f"swatch_{e.key}")
-            if sw is not None:
-                sw.setStyleSheet(
-                    f"background-color: {QColor(C.section_color(e.key, self.dark())).name()};"
-                )
+            if sw is None:
+                continue
+            color = QColor(C.section_color(e.key, self.dark()))
+            if e.key == "padding":
+                sw.setStyleSheet("")
+                sw.setPixmap(self._hatched(color))
+            else:
+                sw.setPixmap(QPixmap())
+                sw.setStyleSheet(f"background-color: {color.name()};")
+
+    def _hatched(self, color: QColor) -> QPixmap:
+        """Gray swatch with the same 45 degree hatch the section bar uses for padding."""
+        pm = QPixmap(12, 12)
+        pm.fill(color)
+        p = QPainter(pm)
+        p.fillRect(pm.rect(), QBrush(self.palette().window().color(), Qt.BrushStyle.BDiagPattern))
+        p.end()
+        return pm
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
