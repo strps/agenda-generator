@@ -2,7 +2,7 @@
 
 import sys
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QThreadPool, QTimer
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QSplitter,
     QVBoxLayout,
@@ -19,8 +20,10 @@ from PySide6.QtWidgets import (
 
 from agenda.assembler import build_plan, summarize
 from agenda.configfile import ConfigFileError
+from agenda.gui import export_model as EM
 from agenda.gui import layout as L
 from agenda.gui import legend_model as LM
+from agenda.gui.export_job import ExportJob, ExportSignals
 from agenda.gui.legend import Legend
 from agenda.gui.preview import PreviewWidget
 from agenda.gui.render_cache import Debounce
@@ -58,7 +61,18 @@ class MainWindow(QMainWindow):
         erow = QHBoxLayout(export)
         erow.setContentsMargins(0, 0, 0, 0)
         self.export_button = QPushButton("Export PDF")
+        self.export_progress = QProgressBar()
+        self.export_progress.setRange(0, 100)
+        self.export_progress.setFixedWidth(140)
+        self.export_progress.hide()
+        self.export_status = QLabel()
+        erow.addWidget(self.export_status)
+        erow.addWidget(self.export_progress)
         erow.addWidget(self.export_button)
+        self.export_running = False
+        self._export_pool = QThreadPool()
+        self._export_signals: ExportSignals | None = None
+        self._export_interactive = False
         row.addWidget(export)
         col.addWidget(toolbar)
 
@@ -101,6 +115,7 @@ class MainWindow(QMainWindow):
         self.update_preview()
         self.open_button.clicked.connect(self.open_config_dialog)
         self.save_button.clicked.connect(self.save_config_dialog)
+        self.export_button.clicked.connect(self.export_dialog)
 
     def _on_settings_changed(self) -> None:
         self.debounce.push()
@@ -121,6 +136,7 @@ class MainWindow(QMainWindow):
             self.legend.set_entries([])
             self.summary_label.setText(LM.NO_PLAN_TEXT)
             self.summary_label.setToolTip("")
+            self._sync_export_button(valid=False)
             return
         plan = build_plan(cfg)
         info = summarize(plan, cfg)
@@ -130,6 +146,71 @@ class MainWindow(QMainWindow):
         self.section_bar.set_plan(plan)
         self.preview.set_plan(cfg, plan)
         self.section_bar.set_position(self.preview.index)
+        self._sync_export_button(valid=True)
+
+    def _sync_export_button(self, valid: bool) -> None:
+        self.export_button.setEnabled(valid and not self.export_running)
+        self.export_button.setToolTip("" if valid else "Fix the settings errors to export")
+
+    def export_dialog(self) -> None:
+        """Ask for a destination (default from the config), then export in the background."""
+        cfg, _ = self.settings.config()
+        if cfg is None or self.export_running:
+            return
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export PDF", EM.default_path(cfg), "PDF (*.pdf)"
+        )
+        if path:
+            self.start_export(path, interactive=True)
+
+    def start_export(self, path: str, interactive: bool = False) -> bool:
+        """Export the current settings to ``path`` off the GUI thread. False if not started."""
+        cfg, _ = self.settings.config()
+        if cfg is None or self.export_running:
+            return False
+        self.export_running, self._export_interactive = True, interactive
+        self.export_result = ""
+        sig = self._export_signals = ExportSignals()
+        sig.progress.connect(self._on_export_progress)
+        sig.done.connect(self._on_export_done)
+        sig.failed.connect(self._on_export_failed)
+        self.export_progress.setValue(0)
+        self.export_progress.show()
+        self.export_status.setText("Exporting...")
+        self._sync_export_button(valid=True)
+        self._export_pool.start(ExportJob(cfg, str(EM.ensure_pdf(path)), sig))
+        return True
+
+    def wait_export(self, timeout: float = 120.0) -> bool:
+        """Process events until the export ends (for tests). False on timeout."""
+        import time
+
+        end = time.monotonic() + timeout
+        while self.export_running and time.monotonic() < end:
+            QApplication.processEvents()
+            time.sleep(0.005)
+        return not self.export_running
+
+    def _on_export_progress(self, done: int, total: int) -> None:
+        self.export_progress.setValue(EM.progress_percent(done, total))
+
+    def _finish_export(self, text: str, ok: bool) -> None:
+        self.export_running = False
+        self.export_progress.hide()
+        self.export_status.setText(text)
+        self.export_result = text
+        cfg, _ = self.settings.config()
+        self._sync_export_button(valid=cfg is not None)
+        if self._export_interactive:
+            box = QMessageBox.information if ok else QMessageBox.warning
+            box(self, "Export PDF", text)
+
+    def _on_export_done(self, path: str) -> None:
+        self.export_progress.setValue(100)
+        self._finish_export(f"Exported {path}", True)
+
+    def _on_export_failed(self, msg: str) -> None:
+        self._finish_export(f"Export failed: {msg}", False)
 
     def load_config(self, path: str) -> str:
         """Load a YAML file into the settings panel. Returns "" or the error message."""

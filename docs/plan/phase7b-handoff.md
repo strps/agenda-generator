@@ -22,3 +22,8 @@
 ### Task 9: legend + summary
 - `gui.legend_model` (`legend_entries(plan)` -> LegendEntry(key,label,count), `summary_text`/`summary_tooltip` from `summarize`, `NO_PLAN_TEXT`); `Legend` widget (`entries`, `buttons`, `set_entries`, `recolor`, signal `section_clicked(key)` -> `section_bar.first_page_of`).
 - `MainWindow.legend`, `.summary_label` (real widgets replacing placeholders); both updated in `update_preview`; config error -> empty legend + NO_PLAN_TEXT.
+### Task 10: export
+- Core: `export_agenda(cfg, path, progress=None)`; `progress(done, total)` after each page, output unchanged.
+- `gui.export_model` (`default_path`, `ensure_pdf`, `progress_fraction/percent`), `gui.export_job` (`ExportJob`, `ExportSignals`).
+- `MainWindow.start_export(path)` / `export_dialog()` / `wait_export()`, `export_progress`, `export_status`, `export_result`; button disabled while running or config invalid.
+- `tests/test_gui_export.py` compares GUI vs CLI (`--config`) by text + drawn points.

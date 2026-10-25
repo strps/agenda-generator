@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -100,12 +100,19 @@ def export_blank(cfg: Config, pages: int = 1, path: str | Path = DEFAULT_OUTPUT)
     return write_pdf(add_blank_pages(new_document(cfg), pages, cfg), path)
 
 
-def _render_plan(cfg: Config, plan: PagePlan, indices: Iterable[int] | None = None) -> FPDF:
+def _render_plan(
+    cfg: Config,
+    plan: PagePlan,
+    indices: Iterable[int] | None = None,
+    progress: Callable[[int, int], None] | None = None,
+) -> FPDF:
     """Draw plan entries into a new document; ``indices`` (0-based, ascending) or all.
 
     One PDF page per entry (blank for ``page_class=None``); each page instance is drawn
     once, after its last page is added, with the grids of all its pages. Every page gets its
     real plan page number. A multi-page instance is always drawn whole.
+
+    ``progress(done, total)`` is called after each page is added; it never changes the output.
     """
     chosen = range(len(plan)) if indices is None else indices
     todo = sorted({j for i in chosen for j in _instance_range(plan, i)})
@@ -120,6 +127,8 @@ def _render_plan(cfg: Config, plan: PagePlan, indices: Iterable[int] | None = No
         last = entry.page_in_instance == (entry.page_class.pages - 1 if entry.page_class else 0)
         if entry.page_class is not None and last:
             entry.page_class().draw(pdf, entry.ctx, cfg, grids)
+        if progress is not None:
+            progress(pdf.page, len(todo))
     return pdf
 
 
@@ -160,8 +169,15 @@ def _instance_range(plan: PagePlan, i: int) -> range:
     return range(start, start + size)
 
 
-def export_agenda(cfg: Config, path: str | Path = DEFAULT_OUTPUT) -> Path:
-    """Render the full agenda by iterating ``build_plan(cfg)`` (see ``_render_plan``)."""
+def export_agenda(
+    cfg: Config,
+    path: str | Path = DEFAULT_OUTPUT,
+    progress: Callable[[int, int], None] | None = None,
+) -> Path:
+    """Render the full agenda by iterating ``build_plan(cfg)`` (see ``_render_plan``).
+
+    Optional ``progress(done_pages, total_pages)`` is called while drawing (not while writing).
+    """
     from agenda.assembler import build_plan
 
-    return write_pdf(_render_plan(cfg, build_plan(cfg)), path)
+    return write_pdf(_render_plan(cfg, build_plan(cfg), progress=progress), path)

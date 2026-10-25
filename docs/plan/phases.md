@@ -15,7 +15,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 | 5. Optional pages | Done | 3 days | 2026-10-25 | 2026-10-25 | 3 | |
 | 6. Value-added pages | Done | 4 days | 2026-10-25 | 2026-10-25 | 3 | |
 | 7. CLI & YAML | Done | 1 day | 2026-10-25 | 2026-10-25 | 1, 4 | |
-| 7b. GUI | In progress | 4–5 days | 2026-10-25 | | 3, 4, 7 | |
+| 7b. GUI | Done | 4–5 days | 2026-10-25 | 2026-10-25 | 3, 4, 7 | |
 | 8. Imposition | Not started | 2 days | | | 4 | |
 | 9. Testing & polish | Not started | 2–3 days | | | all | |
 
@@ -144,7 +144,7 @@ Spec: [gui.md](../architecture/gui.md).
 - [x] Section colors for light and dark mode as specified
 - [x] Bar interaction: hover tooltip, click/drag navigation, keyboard, legend click
 - [x] Legend with counts + summary line
-- [ ] Export with progress bar
+- [x] Export with progress bar
 
 **Done when:** changing any setting updates the bar instantly and the preview within ~1 s, and export produces the same PDF as the CLI.
 
