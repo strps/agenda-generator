@@ -7,6 +7,7 @@ from datetime import date
 from fpdf import FPDF
 
 from agenda import tokens
+from agenda.calendar import month_grid
 from agenda.catalog import register
 from agenda.config import Config
 from agenda.draw import DayStyle, draw_mini_month
@@ -131,3 +132,75 @@ class Yearly(BasePage):
             draw_mini_month(
                 pdf, cell, config.year, m, config.language, config.week_start, self.day_style
             )
+
+
+@register
+class Monthly(BasePage):
+    """Monthly planner on one page: month header, weekday row, day boxes, priorities block."""
+
+    id = "monthly"
+    name = "Monthly planner"
+    category = "core"
+    section = "monthly"
+
+    @staticmethod
+    def day_style(d: date) -> DayStyle | None:
+        """Hook for task 12 (weekend/holiday marking): return a ``DayStyle`` or None."""
+        return
+
+    def instances(self, config: Config) -> list[Ctx]:
+        return [{"month": m} for m in range(1, 13)]
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        month = ctx["month"]
+        x, w = g.col(0, g.columns)
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[4])
+        h = g.header
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, s("month.title", month=s.month_name(month), year=config.year))
+
+        weeks = month_grid(config.year, month, config.week_start)
+        notes_rows = max(4, g.rows // 5)  # priorities block: label + write-in lines
+        grid_rows = g.rows - 1 - notes_rows - 1  # weekday row and a gap row excluded
+        top = g.row(1)
+        box_w = w / 7
+        box_h = grid_rows * g.baseline / len(weeks)
+
+        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        for i, name in enumerate(s.weekday_names(config.week_start, "short")):
+            pdf.set_xy(x + i * box_w, g.row(0))
+            pdf.cell(box_w, g.baseline, name, align="C")
+
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_HAIRLINE)
+        pad = tokens.SPACING[0]
+        for r, week in enumerate(weeks):
+            for i, d in enumerate(week):
+                bx, by = x + i * box_w, top + r * box_h
+                style = self.day_style(d) if d else None
+                if style and style.fill:
+                    pdf.set_fill_color(*style.fill)
+                    pdf.rect(bx, by, box_w, box_h, style="DF")
+                else:
+                    pdf.rect(bx, by, box_w, box_h)
+                if d is None:
+                    continue
+                pdf.set_text_color(*((style and style.color) or _INK))
+                pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+                pdf.set_xy(bx + pad, by + pad)
+                pdf.cell(box_w - 2 * pad, g.baseline, str(d.day))
+
+        # Priorities: label then write-in lines at row bottoms.
+        n0 = 1 + grid_rows + 1
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_xy(x, g.row(n0))
+        pdf.cell(w, g.baseline, s("priorities"))
+        for n in range(n0 + 2, g.rows + 1):
+            y = g.row(n)
+            pdf.line(x, y, x + w, y)

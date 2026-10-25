@@ -36,3 +36,7 @@ Short running notes between agents. Trim stale entries.
 - `Yearly` (`yearly`, core, front_back, 1 page; 3x4 mini months, each 2 grid columns; year in header band). Chose 1 page, so `starts_on="any"`.
 - Reusable: `agenda.draw.draw_mini_month(pdf, rect, year, month, lang, week_start, day_style, title_pt, body_pt)` (8 equal lines, 7 equal columns; adjacent-month days left blank) and `DayStyle(color, fill)`.
 - Task 12 hook: `Yearly.day_style(date) -> DayStyle | None` (staticmethod, returns None); pass the same callable to `draw_mini_month` on monthly.
+
+### Task 6: Monthly
+- `Monthly` (`monthly`, core, section monthly, 1 page, starts_on any; 12 ctxs `{"month": m}`). Header `month.title`, weekday row (short), day boxes from `month_grid` (blank boxes for adjacent months), priorities block (1/5 of rows) at the bottom.
+- `Monthly.day_style(date)` hook like Yearly (None); fills boxes and colors the day number.
