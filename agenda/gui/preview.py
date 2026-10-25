@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from agenda.assembler import PagePlan
 from agenda.config import Config
 from agenda.gui import preview_model as M
+from agenda.gui.help_text import TOOLTIPS
 from agenda.gui.render_cache import LatestGate, LruCache, cache_key, config_hash
 from agenda.gui.workers import RenderJob, RenderSignals, rasterise
 
@@ -53,6 +54,8 @@ class PreviewWidget(QFrame):
         bar = QHBoxLayout()
         self.prev_button = QPushButton("◀")
         self.next_button = QPushButton("▶")
+        self.prev_button.setToolTip(TOOLTIPS["prev"])
+        self.next_button.setToolTip(TOOLTIPS["next"])
         self.label = QLabel("")
         bar.addWidget(self.prev_button)
         bar.addWidget(self.label, 1)
@@ -61,6 +64,7 @@ class PreviewWidget(QFrame):
         group.setExclusive(True)
         for m in M.MODES:
             b = QPushButton(m.capitalize())
+            b.setToolTip(TOOLTIPS[f"mode_{m}"])
             b.setCheckable(True)
             b.setChecked(m == self.mode)
             group.addButton(b)
@@ -71,6 +75,7 @@ class PreviewWidget(QFrame):
         self.zoom_box = QComboBox()
         for z in M.ZOOM_CHOICES:
             self.zoom_box.addItem("fit" if z == M.FIT else f"{z}%", z)
+        self.zoom_box.setToolTip(TOOLTIPS["zoom"])
         bar.addWidget(self.zoom_box)
 
         self.canvas = QWidget()
