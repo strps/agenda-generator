@@ -1,6 +1,5 @@
 # Phase 6 handoff
 
-Short running notes between agents. Trim stale entries.
 
 ## Conventions
 
@@ -10,7 +9,6 @@ Short running notes between agents. Trim stale entries.
 - Header: `pdf.c_margin = 0`, Inter bold `TYPE_SIZES_PT[3]` accent in `g.header`; strings via `Strings(config.language)("key", n=...)`, keys in both es and en in `agenda/i18n.py`.
 - x12 pages: `instances` returns `month_ctxs(config)`. Helpers in `agenda/draw.py`: `draw_checkbox`, `draw_circle`, `draw_label_rule`, `draw_pattern`.
 - Tests: `from helpers import render_page, assert_in_safe_area, drawn_points`; no emoji, draw shapes. See `tests/test_monthly_quotes.py`.
-- Phase 5 open items: see the wrap-up in `phase5-handoff.md`.
 
 ## Log
 ### Task 1: Monthly quotes
@@ -46,3 +44,7 @@ Short running notes between agents. Trim stale entries.
 - `IdeaMap(count=1)` (`ideas`, value_added/value_added; catalog gives value 3, no repetition, so `count=N`, negatives rejected). Canvas = `g.content`; `layout(w, h) -> IdeaLayout(centre, centre_radii, sat_radii, satellites)` relative to canvas top-left.
 - Satellites evenly spaced by angle on an ellipse (first at top, clockwise); 8 when w >= 0.78*h (letter) else 6 (a5, b6). All radii are ratios of w/h; rules inside each shape.
 - Strings `ideas.title/main` (es, en).
+### Task 10: QR codes
+- `QRCodes` (`qr`, value_added/value_added); `qrcode` was already a dependency (no new one). New `Config.qr_urls: list[str]` (default empty; stripped, non-empty, <= `QR_MAX_CHARS`=200, <= `QR_MAX_COUNT`=24; any text allowed, not only http). Not added to the argparse CLI.
+- `layout(w, h, baseline, gutter) -> QRLayout(cols, rows, cell_w, cell_h, side)`: 2 cols, 3 rows if it keeps the QR square >= 0.8 cell width, else 2 (all sizes give 2x2). `instances` = ceil(urls/per_page) ctxs `{"urls": [...]}`; 0 URLs = 0 pages (build_plan fine).
+- Modules are filled `re` rects (ECC M, 4-module quiet zone); caption = shortened text + "Name" rule. Strings `qr.title/label` (es, en).

@@ -114,7 +114,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Travel planner
 - [x] 30-day challenges
 - [x] Idea map
-- [ ] QR codes from user URLs
+- [x] QR codes from user URLs
 - [ ] Physical extras guide
 - [ ] Niche packs (entrepreneur, student, fitness)
 - [ ] Presets by value score (`--preset essential|complete|premium`)

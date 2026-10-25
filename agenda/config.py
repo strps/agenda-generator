@@ -14,6 +14,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from agenda.sizes import SIZES, PageSize, parse_size, resolve_size
 
+QR_MAX_CHARS = 200
+QR_MAX_COUNT = 24
+
 
 def _parse_months(value: object) -> object:
     """Accept ``"1-12"``, ``"1,3,5-6"`` or a list of ints."""
@@ -62,6 +65,9 @@ class Config(BaseModel):
     preset: Literal["essential", "complete", "premium"] | None = None
     notes_pattern: Literal["lined", "dotted", "grid", "blank"] = "dotted"
     page_numbers: bool = False
+    # Texts or URLs for the `qr` page: one QR code each (<= QR_MAX_COUNT entries of
+    # <= QR_MAX_CHARS characters, the byte-mode capacity of a QR code with ~15% error correction).
+    qr_urls: list[str] = Field(default_factory=list)
 
     # Calendar / locale
     year: int = Field(default_factory=lambda: _dt.date.today().year, ge=1900, le=2200)
@@ -99,6 +105,18 @@ class Config(BaseModel):
     @classmethod
     def _dedupe_planners(cls, v: list[str]) -> list[str]:
         return list(dict.fromkeys(v))
+
+    @field_validator("qr_urls")
+    @classmethod
+    def _check_qr_urls(cls, v: list[str]) -> list[str]:
+        v = [u.strip() for u in v]
+        if any(not u for u in v):
+            raise ValueError("qr_urls entries must not be empty")
+        if any(len(u) > QR_MAX_CHARS for u in v):
+            raise ValueError(f"qr_urls entries must be at most {QR_MAX_CHARS} characters")
+        if len(v) > QR_MAX_COUNT:
+            raise ValueError(f"qr_urls accepts at most {QR_MAX_COUNT} entries")
+        return v
 
     @field_validator("num_booklets")
     @classmethod
