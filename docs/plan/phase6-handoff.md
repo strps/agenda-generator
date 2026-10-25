@@ -42,3 +42,7 @@ Short running notes between agents. Trim stale entries.
 - `Challenge30(count=1)` (`challenges30`, value_added/value_added; catalog gives value 4, no repetition, so `count=N`, negatives rejected). Fields "My challenge"/"Why", 30 hairline day cells (number top-left, `draw_circle` tick), "Reflection" rules.
 - `layout(rows) -> ChallengeLayout(cols, grid_rows, cell_rows, reflect_rows)`: cols 5x6 or 6x5 (tile 30 exactly); tallest cell (4..2 baselines) that leaves >= 2 reflection rules, ties to 5 cols. b6 = 6x5 cells of 4 rows; a5/letter = 5x6.
 - Strings `challenge.title/mine/why/reflection` (es, en).
+### Task 9: Idea map
+- `IdeaMap(count=1)` (`ideas`, value_added/value_added; catalog gives value 3, no repetition, so `count=N`, negatives rejected). Canvas = `g.content`; `layout(w, h) -> IdeaLayout(centre, centre_radii, sat_radii, satellites)` relative to canvas top-left.
+- Satellites evenly spaced by angle on an ellipse (first at top, clockwise); 8 when w >= 0.78*h (letter) else 6 (a5, b6). All radii are ratios of w/h; rules inside each shape.
+- Strings `ideas.title/main` (es, en).
