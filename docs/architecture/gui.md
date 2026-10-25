@@ -109,7 +109,7 @@ Colors come from the validated reference palette (dataviz skill). The assignment
 
 ### Interaction
 
-- **Hover:** a tooltip appears for the page under the cursor, e.g. `Page 143 · Weekly · Week 12 (Mar 16–22) · Booklet 8, sheet 2`. The hit area is the full bar height, not just the page's 2 px.
+- **Hover:** a tooltip appears for the page under the cursor, e.g. `Page 143 · Weekly · Week 12 (Mar 16–22) · Booklet 8, sheet 2`. The hit area is the full bar height, not just the page's 2 px. If the pointer stays over the same section for `HOVER_EXPAND_MS` (1500 ms, `section_bar.py`), the tooltip expands: the short text, a newline, then the section description (`help_text.section_tooltip`; padding pages use the padding description). Moving within a section keeps the expansion; moving to another section, leaving the bar, pressing or dragging, or a new plan resets it.
 - **Click:** jumps the preview to that page's spread. **Drag:** scrubs through pages.
 - **Keyboard:** arrow keys move by spread, Page Up/Down by booklet, Home/End to the start/end.
 - **Legend click:** jumps to the first page of that section.
