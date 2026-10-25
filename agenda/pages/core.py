@@ -7,7 +7,7 @@ from datetime import date
 from fpdf import FPDF
 
 from agenda import tokens
-from agenda.calendar import month_grid, weeks_by_month
+from agenda.calendar import days_of_year, month_grid, weeks_by_month
 from agenda.catalog import register
 from agenda.config import Config
 from agenda.draw import DayStyle, draw_mini_month
@@ -301,3 +301,94 @@ class Weekly(BasePage):
             for n in range(r0 + 2, r0 + per + 1):
                 y = g.row(n)
                 pdf.line(x, y, x + w, y)
+
+
+@register
+class Daily(BasePage):
+    """Daily planner, 1 page: date header, hourly schedule (left) and priorities/notes (right).
+
+    ctx keys: ``date``, ``week`` (ISO week number), ``iso_year``. One ctx per day of
+    ``config.year``; ``daily_months`` is not applied here (Phase 4).
+    Schedule hours: ``HOUR_START``..``HOUR_END`` (06:00-21:00), fewer if rows run short.
+    """
+
+    id = "daily"
+    name = "Daily planner"
+    category = "core"
+    section = "daily"
+
+    HOUR_START = 6
+    HOUR_END = 21
+
+    @staticmethod
+    def day_style(d: date) -> DayStyle | None:
+        """Hook for task 12 (weekend/holiday marking): return a ``DayStyle`` or None."""
+        return
+
+    def instances(self, config: Config) -> list[Ctx]:
+        out = []
+        for d in days_of_year(config.year):
+            iso = d.isocalendar()
+            out.append({"date": d, "week": iso.week, "iso_year": iso.year})
+        return out
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        d: date = ctx["date"]
+        pdf.c_margin = 0
+        h = g.header
+        style = self.day_style(d)
+        if style and style.fill:
+            pdf.set_fill_color(*style.fill)
+            pdf.rect(h.x, h.y, h.w, h.h, style="F")
+        pdf.set_text_color(*((style and style.color) or _ACCENT))
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        title = s(
+            "day.title",
+            weekday=s.weekday_names("monday", "full")[d.weekday()],
+            day=d.day,
+            month=s.month_name(d.month),
+        )
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, title)
+        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, s("week.number", n=ctx["week"]), align="R")
+
+        gap = 1
+        sched_cols = (g.columns + 1) // 2
+        sx, sw = g.col(0, sched_cols - gap if g.columns > 2 else sched_cols)
+        rx, rw = g.col(sched_cols, g.columns - sched_cols) if g.columns > 2 else (sx, sw)
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_HAIRLINE)
+
+        # Hourly schedule: label row, then one block of `per` rows per hour.
+        self._label(pdf, g, s("schedule"), sx, sw, 0)
+        n_hours = min(self.HOUR_END - self.HOUR_START + 1, g.rows - 1)
+        per = (g.rows - 1) // n_hours
+        label_w = 8.0
+        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        for i in range(n_hours):
+            r0 = 1 + i * per
+            pdf.set_xy(sx, g.row(r0))
+            pdf.cell(label_w, g.baseline, f"{self.HOUR_START + i:02d}:00")
+            y = g.row(r0 + per)
+            pdf.line(sx, y, sx + sw, y)
+
+        # Right column: priorities (top half) and notes (bottom half) with write-in lines.
+        half = g.rows // 2
+        for title_key, r0, r1 in (("priorities", 0, half), ("notes.title", half, g.rows)):
+            self._label(pdf, g, s(title_key), rx, rw, r0)
+            for n in range(r0 + 2, r1 + 1):
+                y = g.row(n)
+                pdf.line(rx, y, rx + rw, y)
+
+    @staticmethod
+    def _label(pdf: FPDF, g: Grid, text: str, x: float, w: float, row: int) -> None:
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_xy(x, g.row(row))
+        pdf.cell(w, g.baseline, text)
