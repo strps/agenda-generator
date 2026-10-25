@@ -1155,3 +1155,239 @@ class ExtrasGuide(BasePage):
                 pdf.set_draw_color(*tokens.COLORS["line"])
                 pdf.set_line_width(tokens.STROKE_HAIRLINE)
                 pdf.line(g.safe.x + g.baseline, y, g.safe.x2, y)
+
+
+class _Counted(BasePage):
+    """Shared ``count=N`` behaviour of the niche pack pages (default 1, negatives raise)."""
+
+    category = "value_added"
+    section = "value_added"
+
+    def __init__(self, count: int = 1) -> None:
+        if count < 0:
+            raise ValueError("count must be >= 0")
+        self.count = count
+
+    def instances(self, config: Config) -> list[Ctx]:
+        return [{} for _ in range(self.count)]
+
+    @staticmethod
+    def _header(pdf: FPDF, g: Grid, title: str) -> None:
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_xy(g.header.x, g.header.y)
+        pdf.cell(g.header.w, g.header.h, title)
+
+    @staticmethod
+    def _label(pdf: FPDF, g: Grid, x: float, w: float, row: int, text: str) -> None:
+        """Small bold muted label whose text cell starts at ``g.row(row)``."""
+        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+        pdf.set_xy(x, g.row(row))
+        pdf.cell(w, g.baseline, text)
+
+    @staticmethod
+    def _rules(pdf: FPDF, g: Grid, x: float, w: float, first: int, n: int) -> None:
+        """``n`` hairline write-in rules on lines ``first`` .. ``first + n - 1``."""
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_HAIRLINE)
+        for k in range(n):
+            pdf.line(x, g.row(first + k), x + w, g.row(first + k))
+
+
+class EntrepreneurLayout(NamedTuple):
+    metric_rows: int  # height of each big metric write-in box, in baselines
+    pipeline_rows: int  # rule rows under the pipeline column headings
+    decision_rows: int  # rule rows under "Decisions & lessons"
+
+
+@register
+class PackEntrepreneur(_Counted):
+    """Entrepreneur weekly dashboard, ``count`` pages (default 1; id ``niche_entrepreneur``).
+
+    The catalog lists the niche pages as ``niche_*`` (value score 5), so the three packs are
+    ``niche_entrepreneur``, ``niche_student`` and ``niche_fitness``. Top to bottom: goal of the
+    week (label + rule), 3 key metrics (label + big write-in box each, 2 columns wide), the
+    pipeline (leads / in progress / closed, one column of rules each) and decisions & lessons.
+
+    Fit rule (``layout(rows)``): ``FIXED_ROWS`` are structure (goal, metric label, pipeline
+    title + headings, decisions label, 3 gaps); the free rows give the metric boxes
+    ``free // METRIC_DIV`` rows clamped to 1..``METRIC_MAX``, the rest is split
+    ``PIPELINE_SHARE`` (rounded down) to the pipeline and the remainder to decisions.
+    """
+
+    id = "niche_entrepreneur"
+    name = "Entrepreneur pack"
+    FIXED_ROWS = 9
+    METRIC_DIV = 6
+    METRIC_MAX = 4
+    PIPELINE_SHARE = 0.6
+    STAGES = ("leads", "progress", "closed")
+
+    @classmethod
+    def layout(cls, rows: int) -> EntrepreneurLayout:
+        free = max(0, rows - cls.FIXED_ROWS)
+        metric = max(1, min(cls.METRIC_MAX, free // cls.METRIC_DIV))
+        rest = max(0, free - metric)
+        pipe = int(rest * cls.PIPELINE_SHARE)
+        return EntrepreneurLayout(metric, pipe, rest - pipe)
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        self._header(pdf, g, s("entre.title"))
+        x, w = g.safe.x, g.safe.w
+        metric, pipe, dec = self.layout(g.rows)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        goal = s("entre.goal")
+        draw_label_rule(pdf, x, w, g.row(1), goal, pdf.get_string_width(goal) + g.gutter)
+
+        row = 3
+        span = g.columns // 3
+        for i in range(3):
+            cx, cw = g.col(i * span, span)
+            self._label(pdf, g, cx, cw, row, f"{s('entre.metric')} {i + 1}")
+            pdf.set_draw_color(*tokens.COLORS["line"])
+            pdf.set_line_width(tokens.STROKE_LIGHT)
+            pdf.rect(
+                cx, g.row(row + 1) + g.baseline * 0.2, cw - g.gutter, (metric - 0.4) * g.baseline
+            )
+        row += metric + 2
+
+        self._label(pdf, g, x, w, row, s("entre.pipeline"))
+        for i, key in enumerate(self.STAGES):
+            cx, cw = g.col(i * span, span)
+            self._label(pdf, g, cx, cw, row + 1, s(f"entre.{key}"))
+            self._rules(pdf, g, cx, cw - g.gutter, row + 3, max(0, pipe - 1))
+        row += pipe + 3
+
+        self._label(pdf, g, x, w, row, s("entre.decisions"))
+        self._rules(pdf, g, x, w, row + 2, max(0, dec - 1))
+
+
+class StudentLayout(NamedTuple):
+    table_rows: int  # course rows in the tracker table
+    study: bool  # whether the study-hours block fits
+
+
+@register
+class PackStudent(_Counted):
+    """Student course/exam tracker, ``count`` pages (default 1; id ``niche_student``).
+
+    A heading row (course | exam or assignment | date | grade / weight) and course rows of
+    ``ROW_BASELINES`` baselines filling the page, then a study-hours block (title, 7 weekday
+    labels and 7 write-in boxes of ``STUDY_BOX_ROWS`` rows).
+
+    Fit rule (``layout(rows)``): the study block takes ``STUDY_ROWS`` plus a gap; the table gets
+    the rest after its heading row, in whole ``ROW_BASELINES`` rows. Pages too short for the
+    block (rows < ``STUDY_ROWS + 5``) drop it and use all rows for the table.
+    """
+
+    id = "niche_student"
+    name = "Student pack"
+    ROW_BASELINES = 2
+    STUDY_BOX_ROWS = 2
+    STUDY_ROWS = STUDY_BOX_ROWS + 2  # title, weekday labels, boxes
+    COLS = ((0, 2, "course"), (2, 2, "exam"), (4, 1, "date"), (5, 1, "grade"))
+    DAYS = 7
+
+    @classmethod
+    def layout(cls, rows: int) -> StudentLayout:
+        study = rows >= cls.STUDY_ROWS + 5
+        free = rows - 1 - (cls.STUDY_ROWS + 1 if study else 0)
+        return StudentLayout(max(0, free // cls.ROW_BASELINES), study)
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        self._header(pdf, g, s("student.title"))
+        x, w = g.safe.x, g.safe.w
+        table, study = self.layout(g.rows)
+        for col, span, key in self.COLS:
+            cx, cw = g.col(col, span)
+            self._label(pdf, g, cx, cw, 0, s(f"student.{key}"))
+        for k in range(table):
+            self._rules(pdf, g, x, w, 1 + (k + 1) * self.ROW_BASELINES - 1, 1)
+        if not study:
+            return
+        top = 1 + table * self.ROW_BASELINES + 1
+        self._label(pdf, g, x, w, top, s("student.study"))
+        gap = g.gutter / 2
+        bw = (w - gap * (self.DAYS - 1)) / self.DAYS
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_LIGHT)
+        days = s.weekday_names(config.week_start, "short")
+        for d in range(self.DAYS):
+            bx = x + d * (bw + gap)
+            self._label(pdf, g, bx, bw, top + 1, days[d])
+            pdf.set_draw_color(*tokens.COLORS["line"])
+            pdf.set_line_width(tokens.STROKE_LIGHT)
+            pdf.rect(bx, g.row(top + 2), bw, self.STUDY_BOX_ROWS * g.baseline)
+
+
+class FitnessLayout(NamedTuple):
+    exercise_rows: int  # exercise rows in the log
+    notes_rows: int  # rule rows under "Notes"
+
+
+@register
+class PackFitness(_Counted):
+    """Fitness workout log, ``count`` pages (default 1; id ``niche_fitness``).
+
+    Date row, then a heading row (exercise | sets | reps | weight) and exercise rows of
+    ``ROW_BASELINES`` baselines. Columns come from the grid: exercise = 2 columns, sets = 2
+    columns holding ``SET_CELLS`` small rects, reps and weight = 1 column each (a rule).
+    Notes (label + rules) close the page.
+
+    Fit rule (``layout(rows)``): ``FIXED_ROWS`` (date, heading, gap, notes label) are structure;
+    notes get ``NOTES_SHARE`` of the free rows (at least ``NOTES_MIN``) and the exercise log
+    takes the rest in whole ``ROW_BASELINES`` rows.
+    """
+
+    id = "niche_fitness"
+    name = "Fitness pack"
+    FIXED_ROWS = 4
+    ROW_BASELINES = 2
+    NOTES_SHARE = 0.2
+    NOTES_MIN = 2
+    SET_CELLS = 4
+    CELL_RATIO = 1.2  # set rect height / baseline
+    COLS = ((0, 2, "exercise"), (2, 2, "sets"), (4, 1, "reps"), (5, 1, "weight"))
+
+    @classmethod
+    def layout(cls, rows: int) -> FitnessLayout:
+        free = max(0, rows - cls.FIXED_ROWS)
+        notes = min(free, max(cls.NOTES_MIN, int(free * cls.NOTES_SHARE)))
+        return FitnessLayout((free - notes) // cls.ROW_BASELINES, notes)
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        self._header(pdf, g, s("fitness.title"))
+        x, w = g.safe.x, g.safe.w
+        ex, notes = self.layout(g.rows)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        date = s("fitness.date")
+        draw_label_rule(pdf, x, w, g.row(1), date, pdf.get_string_width(date) + g.gutter)
+        for col, span, key in self.COLS:
+            cx, cw = g.col(col, span)
+            self._label(pdf, g, cx, cw, 2, s(f"fitness.{key}"))
+        sx, sw = g.col(2, 2)
+        gap = g.gutter / 2
+        cell = (sw - g.gutter - gap * (self.SET_CELLS - 1)) / self.SET_CELLS
+        for k in range(ex):
+            bottom = 3 + (k + 1) * self.ROW_BASELINES - 1
+            self._rules(pdf, g, x, w, bottom, 1)
+            pdf.set_draw_color(*tokens.COLORS["muted"])
+            pdf.set_line_width(tokens.STROKE_LIGHT)
+            for c in range(self.SET_CELLS):
+                pdf.rect(
+                    sx + c * (cell + gap),
+                    g.row(bottom) - g.baseline * self.CELL_RATIO - g.baseline * 0.1,
+                    cell,
+                    g.baseline * self.CELL_RATIO,
+                )
+        top = 3 + ex * self.ROW_BASELINES + 1
+        self._label(pdf, g, x, w, top, s("fitness.notes"))
+        self._rules(pdf, g, x, w, top + 2, max(0, notes - 1))

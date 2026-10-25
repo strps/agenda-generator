@@ -19,7 +19,6 @@
 - `draw_mood(pdf, cx, cy, d, level 1..5)` and `MOOD_LEVELS` in `agenda/draw.py`: circle, dot eyes, polyline mouth; no glyphs.
 ### Task 4: Meals and groceries
 - `Meals` (`meals`, value_added/value_added, 1 page; the catalog gives no repetition). `layout(rows) -> MealsLayout(day_rows, grocery_rows, grocery_cols)`: planner takes 60% of rows (1 label row + 7 days of 1..4 baselines), groceries get the rest after gap + label rows; 2 columns when rows >= 30 (a5, letter), 1 on b6.
-- Strings `meals.title/breakfast/lunch/dinner/groceries` (es, en); weekday labels use short names.
 ### Task 5: Gratitude journal
 - `Gratitude(count=1)` (`gratitude`, value_added/value_added; catalog's 4 is the value score, no repetition, so `count=N` like Todo, negatives rejected). `layout(rows) -> GratitudeLayout(lines, last_lines)`: fixed rows = date + 5 labels + 4 gaps; rest split evenly per block (min 1), remainder to the final "intention" block.
 ### Task 6: Books, movies, series
@@ -45,3 +44,7 @@
 ### Task 11: Physical extras guide
 - `ExtrasGuide` (`physical_extras` from catalog §3.3, value 5; value_added/value_added, 1 page, no `count`). `layout(rows) -> ExtrasLayout(tips, supply_rows)`: each tip = `TIP_ROWS` (3) rows, `min(6, rows//3)` tips in order; leftover rows >= 2 give a "My supplies" checkbox list (<= 4). All sizes show 6 tips.
 - Icons drawn by `ExtrasGuide._icon(pdf, kind, x, y, d)` from rect/ellipse/line. Strings `extras.title/supplies/fold/stickers/tabs/ribbon/loop/pocket` (es, en); text clipped to 2 lines.
+### Task 12: Niche packs
+- Catalog lists `niche_*` (value 5), so ids are `niche_entrepreneur/student/fitness` (`PackEntrepreneur/PackStudent/PackFitness`, value_added/value_added, `count=N` via shared `_Counted` base, negatives raise). No config field; list ids in `config.pages`.
+- `layout(rows)`: entrepreneur -> `(metric_rows, pipeline_rows, decision_rows)`; student -> `(table_rows, study)` (study-hours block dropped on tiny pages); fitness -> `(exercise_rows, notes_rows)`. Rules in class docstrings.
+- Strings `entre.*`, `student.*`, `fitness.*` (es, en). Tests: `tests/test_niche_packs.py`.

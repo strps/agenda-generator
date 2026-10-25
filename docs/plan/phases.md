@@ -116,7 +116,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Idea map
 - [x] QR codes from user URLs
 - [x] Physical extras guide
-- [ ] Niche packs (entrepreneur, student, fitness)
+- [x] Niche packs (entrepreneur, student, fitness)
 - [ ] Presets by value score (`--preset essential|complete|premium`)
 
 **Done when:** each page renders at every supported size, and presets select the expected pages.
