@@ -213,3 +213,23 @@ def draw_pattern(pdf: FPDF, rect: Rect, pattern: str, pitch: float) -> None:
                 for c in range(cols + 1):
                     x, y = rect.x + c * pitch, rect.y + r * pitch
                     pdf.line(x, y, x + 0.01, y)
+
+
+def draw_checkbox(pdf: FPDF, x: float, y: float, size: float) -> None:
+    """Empty square checkbox with top-left corner ``(x, y)`` and side ``size`` mm."""
+    pdf.set_draw_color(*tokens.COLORS["muted"])
+    pdf.set_line_width(tokens.STROKE_LIGHT)
+    pdf.rect(x, y, size, size)
+
+
+def draw_label_rule(pdf: FPDF, x: float, w: float, y: float, label: str, label_w: float) -> None:
+    """Muted ``label`` ending on baseline ``y`` followed by a hairline rule to ``x + w``.
+
+    The label cell sits one row above ``y`` (row height = text box); uses the current font.
+    """
+    pdf.set_text_color(*tokens.COLORS["muted"])
+    pdf.set_xy(x, y - tokens.BASELINE)
+    pdf.cell(label_w, tokens.BASELINE, label)
+    pdf.set_draw_color(*tokens.COLORS["line"])
+    pdf.set_line_width(tokens.STROKE_HAIRLINE)
+    pdf.line(x + label_w, y, x + w, y)
