@@ -1,0 +1,1 @@
+"""Registry of available pages."""

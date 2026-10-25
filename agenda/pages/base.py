@@ -1,0 +1,1 @@
+"""BasePage base class."""
