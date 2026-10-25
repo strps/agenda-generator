@@ -27,3 +27,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 3: Cover
 - `agenda/pages/core.py`: `Cover` (`cover`, core, front_back, 1 page): tint panel (top 2/3 of content rows) with accent bar, title (18pt, `cover.title`) and year (28pt bold). Existing i18n keys reused, none added.
 - Safe-area check sees text origins only (not right edge); keep text cells within `safe`. Inter via `pdf.set_font("Inter", style, pt)`; set `pdf.c_margin = 0` for cells on the grid.
+
+### Task 4: Personal information
+- `agenda/pages/core.py`: `PersonalInfo` (`personal_info`, core, front_back, 1 page); heading + `FIELDS` (i18n `personal.*` keys, none added). Label 1 row, write-in lines at row bottoms (hairline, `line` color), 2 rows for address, 1 gap row between fields.
+- Fields that don't fit the page rows are dropped (all fit on B6/A5/half-letter/A4). Lines span full content width, so no helper added to draw.py.

@@ -47,3 +47,48 @@ class Cover(BasePage):
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[5])
         pdf.set_xy(panel.x + tokens.SPACING[3], title_y + 2 * g.baseline)
         pdf.cell(panel.w - 2 * tokens.SPACING[3], 3 * g.baseline, str(config.year))
+
+
+@register
+class PersonalInfo(BasePage):
+    """Personal information: heading and labeled write-in lines on the baseline grid."""
+
+    id = "personal_info"
+    name = "Personal information"
+    category = "core"
+    section = "front_back"
+
+    # (i18n key, rows available for writing)
+    FIELDS = (
+        ("personal.name", 1),
+        ("personal.address", 2),
+        ("personal.phone", 1),
+        ("personal.email", 1),
+        ("personal.emergency", 1),
+        ("personal.blood_type", 1),
+    )
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        x, w = g.col(0, g.columns)
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[4])
+        pdf.set_xy(x, g.row(0))
+        pdf.cell(w, 2 * g.baseline, s("personal.title"))
+
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_HAIRLINE)
+        row = 3
+        for key, lines in self.FIELDS:
+            if row + 1 + lines > g.rows:  # no room left: drop the remaining fields
+                break
+            pdf.set_text_color(*_INK)
+            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
+            pdf.set_xy(x, g.row(row))
+            pdf.cell(w, g.baseline, s(key))
+            for i in range(lines):
+                y = g.row(row + 2 + i)  # bottom edge of the write-in row
+                pdf.line(x, y, x + w, y)
+            row += 1 + lines + 2

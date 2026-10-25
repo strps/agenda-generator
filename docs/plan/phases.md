@@ -59,7 +59,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] `BasePage` with `id`, `name`, `category`, `section`, `pages`, `starts_on`, `instances()`, `draw()`
 - [x] `@register` catalog
 - [x] Cover
-- [ ] Personal information
+- [x] Personal information
 - [ ] Yearly calendar
 - [ ] Monthly planner
 - [ ] Weekly planner (WO2P spread, always starting on a left page)
