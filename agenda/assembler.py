@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal
 
 from agenda.grid import Side, side_for_page
@@ -27,7 +28,7 @@ class PlanEntry:
     ctx: dict[str, Any]
     page_number: int  # 1-based
     side: Side  # always from grid.side_for_page(page_number)
-    booklet_index: int | None  # None until the booklet task assigns it (1-based after)
+    booklet_index: int | None  # 1-based; None only for hand-built entries
     section: str
     page_in_instance: int = 0
     kind: Kind = "page"
@@ -111,6 +112,63 @@ class PagePlan:
         return runs
 
 
+def pages_per_sheet(folded: bool = True) -> int:
+    """Pages on one physical sheet: 4 folded (saddle stitch), 2 flat (double-sided)."""
+    return 4 if folded else 2
+
+
+def pages_per_booklet(size: int, unit: str = "sheets", folded: bool = True) -> int:
+    """Pages in one booklet. ``unit="pages"`` returns ``size`` as is (even if not a multiple
+    of 4 when folded; that is rejected by validation, not here)."""
+    return size * pages_per_sheet(folded) if unit == "sheets" else size
+
+
+@dataclass(frozen=True)
+class BookletLayout:
+    """Result of ``plan_booklets``: ``count`` booklets of ``pages_per_booklet`` pages.
+
+    ``padding`` = blank pages needed to fill the last booklet (0 if exact fit);
+    ``overflow`` = pages that don't fit when a fixed ``num_booklets`` is too small.
+    """
+
+    total_pages: int
+    pages_per_booklet: int
+    count: int
+    padding: int
+    overflow: int = 0
+
+
+def booklet_index_for(page_number: int, pages_per_booklet: int) -> int:
+    """1-based booklet holding ``page_number`` (1-based)."""
+    return (page_number - 1) // pages_per_booklet + 1
+
+
+def plan_booklets(
+    total_pages: int, pages_per_booklet: int, num_booklets: int | str = "auto"
+) -> BookletLayout:
+    """Booklet count and padding for ``total_pages`` (>= 0).
+
+    ``"auto"``: ``ceil(total / per_booklet)`` booklets (at least 1). An int fixes the count;
+    padding is then ``n * per_booklet - total``, or 0 with ``overflow`` > 0 when the pages
+    don't fit (no truncation; the caller/validation decides). Fillers count as pages.
+    """
+    if pages_per_booklet < 1:
+        raise ValueError("pages_per_booklet must be >= 1")
+    n = (
+        max(1, math.ceil(total_pages / pages_per_booklet))
+        if num_booklets == "auto"
+        else int(num_booklets)
+    )
+    capacity = n * pages_per_booklet
+    return BookletLayout(
+        total_pages,
+        pages_per_booklet,
+        n,
+        max(0, capacity - total_pages),
+        max(0, total_pages - capacity),
+    )
+
+
 def _extras(config: Any, category: str) -> list[type[BasePage]]:
     """Optional/value-added classes enabled by ``config.pages`` (ids), in catalog order."""
     from agenda.catalog import pages_by_category
@@ -121,7 +179,7 @@ def _extras(config: Any, category: str) -> list[type[BasePage]]:
 
 
 def build_plan(config: Any) -> PagePlan:
-    """Ordered ``PagePlan`` for ``config`` (page numbers 1..N, ``booklet_index`` None).
+    """Ordered ``PagePlan`` for ``config`` (page numbers 1..N, 1-based ``booklet_index``).
 
     Order: front matter (cover, personal info, yearly) -> per month: monthly, then per owned
     week its weekly spread and that week's dailies (dates inside ``config.year``) -> optional ->
@@ -171,4 +229,7 @@ def build_plan(config: Any) -> PagePlan:
     # Hook: task 5 (padding before the back cover) goes here.
     for cls in (Notes, Contacts, BackCover):
         put(cls, {})
-    return PagePlan(tuple(entries))
+    per = pages_per_booklet(config.booklet_size, config.booklet_unit, config.booklet_folded)
+    return PagePlan(
+        tuple(replace(e, booklet_index=booklet_index_for(e.page_number, per)) for e in entries)
+    )

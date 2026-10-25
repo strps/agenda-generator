@@ -31,7 +31,7 @@ def test_default_order():
     assert classes[3] is Monthly
     assert classes[-3:] == [Notes, Contacts, BackCover]
     assert [e.page_number for e in plan] == list(range(1, len(plan) + 1))
-    assert all(e.booklet_index is None for e in plan)
+    assert all(e.booklet_index is not None for e in plan)
     assert sum(e.page_class is Monthly for e in plan) == 12
     assert sum(e.page_class is Weekly for e in plan) % 2 == 0
     assert _runs(plan)[0] == "front_back" and _runs(plan)[-1] == "front_back"
