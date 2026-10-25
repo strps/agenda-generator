@@ -49,6 +49,16 @@ def sheet_rows(index: int, booklet_of: Sequence[int | None]) -> list[list[int]]:
     return [[members[p - 1] for p in side if 1 <= p <= n] for side in (front, back)]
 
 
+def sheet_number(index: int, booklet_of: Sequence[int | None]) -> int | None:
+    """1-based sheet of ``index`` within its booklet (None outside booklets)."""
+    b = booklet_of[index]
+    if b is None:
+        return None
+    members = [i for i, x in enumerate(booklet_of) if x == b]
+    n, k = len(members), members.index(index) + 1
+    return (k + 1) // 2 if k <= n // 2 else (n - k) // 2 + 1
+
+
 def display_rows(
     mode: str, index: int, total: int, booklet_of: Sequence[int | None], folded: bool
 ) -> list[list[int]]:

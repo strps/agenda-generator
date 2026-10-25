@@ -87,6 +87,7 @@ class MainWindow(QMainWindow):
         self._timer.timeout.connect(self.update_preview)
         self.settings.changed.connect(self._on_settings_changed)
         self.preview.page_changed.connect(self.section_bar.set_position)
+        self.section_bar.page_requested.connect(self.preview.goto)
         self.update_preview()
         self.open_button.clicked.connect(self.open_config_dialog)
         self.save_button.clicked.connect(self.save_config_dialog)

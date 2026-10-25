@@ -8,37 +8,14 @@
 - Pure logic (layout math, state) in Qt-free modules with unit tests; widget tests use a plain `QApplication` fixture with `QT_QPA_PLATFORM=offscreen`, skipped if PySide6 is missing.
 
 ## Log
-### Task 1: main window
-- `agenda.gui.layout` (Qt-free): `REGIONS`, `WindowLayout` (title, size, `splitter_sizes()`).
-- `agenda.gui.app`: `MainWindow` with `regions: dict[name, QWidget]` (toolbar, settings, preview, section_bar, legend, summary, export); buttons `open_button`, `save_button`, `export_button` (unwired). `main(argv)` is the `agenda-gui` entry point; also `python -m agenda.gui`.
-- Settings/preview/bar/legend/summary are `QFrame` placeholders with a label: replace them (keep the object names) in later tasks.
-- Tests: `tests/test_gui_shell.py`.
-### Task 2: settings panel
-- `gui.settings_model` (Qt-free, in smoke MODULES): `field_specs()` (FieldSpec kind/choices/default/min/max from `Config.model_fields`), `default_values`, `build_config(values) -> (Config|None, msg)`, `save_yaml(cfg, path)` (flat keys, None omitted), `load_values(path)` (defaults + `load_yaml`; unknown keys kept so Config rejects them).
-- `gui.settings_panel.SettingsPanel` (`QFrame`, object name `settings`): `editors[name]`, `values()`, `set_values()`, `config()`, `load_file`/`save_file`, signal `changed` (fires per edit and after set_values; task 5 debounces it). Pages = checklist by category; none checked = `pages: None`.
-- `MainWindow.settings`, `load_config(path)`/`save_config(path)` return "" or an error; buttons open QFileDialog.
-- Tests: `tests/test_gui_settings.py`.
-### Task 3: render_pages
-- `agenda.exporter.render_pages(cfg, plan, indices) -> bytes`: 0-based plan indices, plan order, dupes ignored; empty -> ValueError, out of range -> IndexError.
-- Shares `_render_plan` with `export_agenda` (all pages = same output). `add_page(pdf, cfg, page_number=None)` takes the real page number.
-- A spread (2-page instance) is drawn whole and the unrequested page dropped with pypdf, so one index = one PDF page.
-- Tests: `tests/test_render_pages.py` (compares text + `drawn_points`; raw streams differ by font subset).
-### Task 4: preview
-- `gui.preview_model` (Qt-free, in smoke MODULES): `display_rows(mode, index, total, booklet_of, folded)` -> rows of 0-based plan indices (single / spread (even,odd) / sheet rows [front, back], saddle-stitch order); `render_indices`, `pdf_position`, `step` (by page/spread/sheet), `zoom_scale` (fit or % ; 100% = 96 dpi), `label`, `effective_mode` (sheet falls back to spread if not folded).
-- `gui.preview.PreviewWidget` (object name `preview`): `set_plan(cfg, plan)`, `set_error(text)`, `set_mode`, `set_zoom`, `goto`, `move`, `refresh`, signal `page_changed(index)`; `rasterise` (now in `gui.workers`) (BGR888 QImage). Page labels live in `.grid`.
-- `MainWindow.preview`; see task 5 for how it updates.
-- Sheet mode is computed from `booklet_index` (no imposition module yet); pages outside booklets show as a spread. Debug-grid checkbox from gui.md not added (it is a Config field in settings).
-- Tests: `tests/test_gui_preview.py`.
-### Task 5: worker + cache + debounce
-- `gui.render_cache` (Qt-free, in smoke MODULES): `config_hash(cfg)` (model_dump_json sha1), `cache_key`, `LruCache`, `Debounce` (injectable clock), `LatestGate` (stale ids dropped).
-- `gui.workers`: `RenderJob` (QRunnable: render_pages + rasterise, one thread), `RenderSignals`, `rasterise`.
-- `PreviewWidget.refresh` is async: cache hit shows at once, else a job; `.busy`, `.cache` (64 pages), `wait_idle(timeout)` for tests. Fit zoom keys on viewport size.
-- `MainWindow`: `settings.changed` -> 300 ms QTimer (`DEBOUNCE_S`) -> `update_preview()`; `flush_preview()` skips the wait. build_plan still runs in the GUI thread (fast); the bar (task 6) should update from `update_preview` immediately.
-### Task 6: section bar
-- `gui.bar_model` (Qt-free, in smoke MODULES): `geometry(plan, width) -> BarGeometry` with `runs`, `segments()` (section/`padding`, first, count, x, width), `ticks()`, `marker_x(i)`, `page_width`; `GAP_PX`=2. Padding (`kind=="padding"`) is its own run keyed `PADDING`; blank fillers keep their section.
-- `gui.section_bar.SectionBar` (object name `section_bar`): `set_plan`, `set_position`, `geometry_for()`; paints from the model. Task 8 needs `page_at(x)` (not built). MainWindow feeds it in `update_preview` and from `preview.page_changed`.
-- Tests: `tests/test_gui_bar.py`.
-### Task 7: section colors
-- `gui.section_colors` (Qt-free, in smoke MODULES): `PALETTE` (key -> light, dark hex per gui.md), `section_color(key, dark) -> "#rrggbb"` (unknown -> gray), `is_dark(lightness)`. Padding is gray; the bar adds the hatch.
-- `SectionBar.dark()` (window lightness < 128), `color_for(key) -> QColor`; the legend (task 9) should reuse `section_color`.
-- Tests: `tests/test_gui_colors.py`.
+- T1 main window: `gui.layout` (REGIONS, WindowLayout); `MainWindow.regions`, buttons open/save/export; legend/summary are placeholder QFrames (keep object names). Tests `test_gui_shell.py`.
+- T2 settings: `gui.settings_model` (field_specs, build_config, save_yaml, load_values); `SettingsPanel` (`editors`, `values`, `config`, signal `changed`); `MainWindow.load_config/save_config`.
+- T3 `exporter.render_pages(cfg, plan, indices)`: 0-based, plan order, one index = one PDF page.
+- T4 preview: `gui.preview_model` (display_rows, step, sheet_rows, sheet_number, label, zoom_scale); `PreviewWidget` (`set_plan`, `goto`, `move`, `refresh`, signal `page_changed(index)`).
+- T5 `gui.render_cache` (config_hash, LruCache, Debounce, LatestGate), `gui.workers` (RenderJob); refresh is async (`wait_idle` in tests); settings.changed -> 300 ms -> `update_preview()`; `flush_preview()` skips wait.
+- T6 `gui.bar_model` (geometry, segments, ticks, marker_x, GAP_PX=2, PADDING key); `SectionBar` (`set_plan`, `set_position`, `geometry_for`).
+- T7 `gui.section_colors` (PALETTE, `section_color(key, dark)`, `is_dark`); `SectionBar.color_for`. Legend (T9) should reuse `section_color`.
+### Task 8: bar interaction
+- `bar_model`: `BarGeometry.page_at(x)` (clamps; gap -> nearer page; None if empty), `tooltip_text(plan, i)` ("Page 143 · Weekly · Week 12 (Mar 16–22) · Booklet 8, sheet 2"), `key_target(key, index, plan)` (left/right = spread, pageup/pagedown = booklet start, home/end), `first_page_of(plan, section)`, `SECTION_LABELS` (T9 legend can reuse).
+- `SectionBar`: signal `page_requested(int)` (click, drag, keys; focusable), `tooltip_for(x)`, `first_page_of(section)` = legend-click hook (emits). `MainWindow` connects it to `preview.goto`.
+- Tests: `tests/test_gui_bar.py` (QTest click/drag/keys).

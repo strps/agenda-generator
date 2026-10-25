@@ -142,7 +142,7 @@ Spec: [gui.md](../architecture/gui.md).
 - [x] Background worker + cache keyed by config hash, page, zoom; 300 ms debounce
 - [x] Section bar: proportional segments, 2 px section gaps, padding hatch, booklet ticks, position marker
 - [x] Section colors for light and dark mode as specified
-- [ ] Bar interaction: hover tooltip, click/drag navigation, keyboard, legend click
+- [x] Bar interaction: hover tooltip, click/drag navigation, keyboard, legend click
 - [ ] Legend with counts + summary line
 - [ ] Export with progress bar
 
