@@ -29,3 +29,7 @@ Short running notes between agents. Trim stale entries.
 
 ### Task 4: `--dry-run`
 - `run --dry-run`: after the single Config validation, prints `summarize(build_plan(cfg), cfg).format()` and exits 0; no export call, no fonts, no file. Validation errors still exit 2. Works with `--config`/`--preset`/`--pages`. Tests in `test_cli.py`. Plan §8.1 has no dry-run example.
+
+### Task 5: sample config.yaml
+- `config.yaml` at repo root (plan 8.3 plus comments; extras commented out). Test `test_sample_config_yaml_is_valid_and_dry_runs` in `test_cli.py`: load_yaml, Config, `--dry-run --config`.
+- All plan 8.1 examples have tests in `test_cli.py` (defaults, custom selection, category, imposition+crop-marks, `--list`). Phase 7 closed in phases.md; no README exists.

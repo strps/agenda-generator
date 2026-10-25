@@ -173,3 +173,15 @@ def test_dry_run_with_config_and_override(captured, tmp_path):
 def test_dry_run_needs_no_fonts_and_still_validates(monkeypatch):
     monkeypatch.setattr(cli, "export_agenda", lambda *a: pytest.fail("rendered"))
     assert runner.invoke(app, ["--dry-run", "--year", "1800"]).exit_code == 2
+
+
+def test_sample_config_yaml_is_valid_and_dry_runs(captured):
+    from agenda.config import Config
+    from agenda.configfile import load_yaml
+
+    path = Path(__file__).resolve().parent.parent / "config.yaml"
+    cfg = Config(**load_yaml(path))
+    assert cfg.year == 2027 and cfg.pages[0] == "cover"
+    res = runner.invoke(app, ["--dry-run", "--config", str(path)])
+    assert res.exit_code == 0, res.output
+    assert "cfg" not in captured

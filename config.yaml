@@ -1,0 +1,44 @@
+# Sample agenda-gen configuration (plan 8.3).
+# Use:  agenda-gen --config config.yaml        (CLI flags override these values)
+#       agenda-gen --config config.yaml --dry-run   (print the plan, render nothing)
+# Every key is optional; omitted keys use the defaults. Unknown keys are errors.
+
+page_size: half_letter      # half_letter | a5 | a6 | letter | ...
+year: 2027
+week_start: monday          # monday | sunday
+language: es                # es | en
+holiday_country: CR         # ISO country code for holidays
+
+# Booklet layout (folded booklets are printed as sheets folded in half).
+booklet:
+  size: 5                   # how many units per booklet
+  unit: sheets              # sheets | pages
+  folded: true              # false = flat (unfolded) booklets
+
+planners: [weekly, daily]   # which planners to include
+notes_pattern: dotted       # lined | dotted | grid | blank
+pad_with: notes             # page id used to fill the last booklet
+
+# Pages in order, by catalog id (see: agenda-gen --list).
+# Remove `pages` and use `preset: essential | complete | premium` instead
+# to pick a ready-made selection.
+pages:
+  - cover
+  - personal_info
+  - yearly
+  - monthly
+  - weekly
+  - habits
+  - health
+  - qr
+  - notes
+  - contacts
+  - back_cover
+
+# Other options (defaults shown, uncomment to change):
+# qr_urls: ["https://example.com"]   # URLs for the qr page
+# page_numbers: false
+# theme: minimal
+# imposition: false
+# crop_marks: false
+# output: agenda.pdf
