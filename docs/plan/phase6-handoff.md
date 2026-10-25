@@ -30,3 +30,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 5: Gratitude journal
 - `Gratitude(count=1)` (`gratitude`, value_added/value_added; catalog's 4 is the value score, no repetition, so `count=N` like Todo, negatives rejected). `layout(rows) -> GratitudeLayout(lines, last_lines)`: fixed rows = date + 5 labels + 4 gaps; rest split evenly per block (min 1), remainder to the final "intention" block.
 - 3 "grateful" blocks have the row number as muted text (no glyph art); best-moment and intention blocks plain rules. Strings `gratitude.title/date/grateful/best/intention` (es, en).
+### Task 6: Books, movies, series
+- `Media(count=1)` (`media_log`, value_added/value_added; catalog gives value 3, no repetition, so `count=N`, negatives rejected). Type column = stacked Book/Movie/Series labels, title, date, 5 `draw_circle` rating.
+- `layout(rows, width, type_w, date_w, title_min, g) -> MediaLayout(rows, circle_d, show_date)`: rows = (rows-1)//3; shrinks circles (ratios of a baseline) before dropping the date column. Grid has 6 columns, so DATE_COLS=1, TITLE_COLS=2. Today all sizes keep the date.
+- Strings `media.title/type/book/movie/series/name/date/rating` (es, en).
