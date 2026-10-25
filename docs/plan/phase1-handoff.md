@@ -28,7 +28,13 @@ Short running notes between agents. Trim stale entries.
 
 ### Task 3: config model
 - `agenda/config.py`: `Config(BaseModel)` (extra="forbid", validate_assignment). All plan §2 params plus amendments: `bleed` (3 mm), `separate_covers`, `creep_mm`, `preset`, `page_numbers`, `debug_grid`. Property `pages_per_booklet`. Tests in `tests/test_config.py`.
-- Hook for task 4: `page_size` is a raw `str` (name lowercased, or custom "WxH"); the validator only checks the shape (name in the five known, or regex `WxH`). `sizes.py` must do the real parse and may tighten validation. `orientation` is separate.
+- `page_size` stays a raw normalized `str` (lowercased name, or custom "WxH" as typed); `orientation` separate.
 - `daily_months` accepts `"1-3,6"` or a list; stored as sorted unique ints. `year` defaults to the current year. `pages=None` means "all core pages" (catalog resolves it). `num_booklets: int | "auto"`.
 - Model validators: `imposition` needs `booklet_folded`; folded + unit=pages needs size % 4 == 0.
 - Not done (later phases): YAML loading, CLI overlay, presets expansion, margin-vs-page-size checks.
+
+### Task 4: sizes
+- `agenda/sizes.py`: `SIZES` (portrait mm, five names), `PageSize(width, height)` NamedTuple, `parse_size(spec)` (name case-insensitive or `WxH`, each side 50-1000 mm, else ValueError), `resolve_size(spec, orientation)`.
+- Decision: orientation normalizes: portrait => width <= height, landscape => width >= height (so custom `200x100` portrait gives 100x200).
+- `Config.page_size` validator now calls `parse_size`; new property `Config.page_dimensions` -> final (w, h) mm. Use that for `FPDF(unit="mm", format=cfg.page_dimensions)` (next task).
+- Tests: `tests/test_sizes.py`.

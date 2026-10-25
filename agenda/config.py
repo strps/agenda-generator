@@ -7,15 +7,12 @@ Size strings are kept raw here; ``agenda.sizes`` parses them.
 from __future__ import annotations
 
 import datetime as _dt
-import re
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-PageSizeName = Literal["half_letter", "a5", "letter", "a4", "b6"]
-_CUSTOM_SIZE_RE = re.compile(r"^\s*\d+(\.\d+)?\s*[xX]\s*\d+(\.\d+)?\s*$")
-_SIZE_NAMES = {"half_letter", "a5", "letter", "a4", "b6"}
+from agenda.sizes import SIZES, PageSize, parse_size, resolve_size
 
 
 def _parse_months(value: object) -> object:
@@ -82,11 +79,8 @@ class Config(BaseModel):
     @classmethod
     def _check_page_size(cls, v: str) -> str:
         v = v.strip()
-        if v.lower() in _SIZE_NAMES:
-            return v.lower()
-        if _CUSTOM_SIZE_RE.match(v):
-            return v
-        raise ValueError(f"page_size must be one of {sorted(_SIZE_NAMES)} or 'WxH' in mm")
+        parse_size(v)  # raises ValueError on bad names / out-of-range custom sizes
+        return v.lower() if v.lower() in SIZES else v
 
     @field_validator("daily_months", mode="before")
     @classmethod
@@ -124,6 +118,11 @@ class Config(BaseModel):
         if self.booklet_unit == "pages" and self.booklet_folded and self.booklet_size % 4:
             raise ValueError("folded booklets need a page count that is a multiple of 4")
         return self
+
+    @property
+    def page_dimensions(self) -> PageSize:
+        """Final page (width, height) in mm after orientation."""
+        return resolve_size(self.page_size, self.orientation)
 
     @property
     def pages_per_booklet(self) -> int:
