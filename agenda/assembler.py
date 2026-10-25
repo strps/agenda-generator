@@ -183,7 +183,10 @@ def build_plan(config: Any) -> PagePlan:
 
     Order: front matter (cover, personal info, yearly) -> per month: monthly, then per owned
     week its weekly spread and that week's dailies (dates inside ``config.year``) -> optional ->
-    value-added -> back matter (notes, contacts, padding, back cover). A multi-page instance is
+    value-added -> back matter (notes, contacts, padding, back cover). With
+    ``config.separate_covers`` the cover is page 1 followed by a blank inside-cover filler, and a
+    blank inside-back filler precedes the back cover; those 4 pages have ``booklet_index`` None and
+    padding/booklets are computed on the inner block (pages 3..N-2, which starts on a right page). A multi-page instance is
     ``cls.pages`` entries sharing one ctx. One blank filler (``kind="filler"``, section of the
     page it precedes) is inserted before an instance whose ``starts_on`` side doesn't match.
     """
@@ -212,8 +215,14 @@ def build_plan(config: Any) -> PagePlan:
                 make_entry(cls, ctx, len(entries) + 1, cls.section, page_in_instance=k, kind=kind)
             )
 
+    sep = bool(config.separate_covers)
+    lead = 0  # pages before the inner block (not in any booklet)
     for cls in (Cover, PersonalInfo, Yearly):
         put(cls, {})
+        if sep and cls is Cover:
+            # Blank inside-cover page so the inner block starts on a right page.
+            entries.append(make_entry(None, {}, len(entries) + 1, Cover.section, kind="filler"))
+            lead = len(entries)
     weekly_ctx = {(c["iso_year"], c["number"]): c for c in Weekly().instances(config)}
     daily_ctx = {c["date"]: c for c in Daily().instances(config)}
     for month, weeks in weeks_by_month(config.year, config.week_start).items():
@@ -244,6 +253,11 @@ def build_plan(config: Any) -> PagePlan:
                 entries.append(make_entry(None, {}, len(entries) + 1, "front_back", kind="padding"))
             else:
                 put(pad_cls, dict(pad_ctxs[u % len(pad_ctxs)]), kind="padding")
+        inner = len(entries) - lead  # pages counted in booklets
+        if sep:  # inside back cover (blank), then the cover; neither is in a booklet
+            entries.append(make_entry(None, {}, len(entries) + 1, BackCover.section, kind="filler"))
+            put(BackCover, {})
+            return inner
         put(BackCover, {})
         return len(entries)
 
@@ -268,6 +282,11 @@ def build_plan(config: Any) -> PagePlan:
             break
     if not done:
         try_padding(0, False)
-    return PagePlan(
-        tuple(replace(e, booklet_index=booklet_index_for(e.page_number, per)) for e in entries)
-    )
+    inner_end = len(entries) - 2 if sep else len(entries)  # last inner page number
+
+    def index(e: PlanEntry) -> int | None:
+        if sep and not lead < e.page_number <= inner_end:
+            return None
+        return booklet_index_for(e.page_number - lead, per)
+
+    return PagePlan(tuple(replace(e, booklet_index=index(e)) for e in entries))

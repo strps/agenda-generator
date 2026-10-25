@@ -81,3 +81,55 @@ def test_fixed_num_booklets_fills_and_overflow_adds_none():
     assert len(build_plan(cfg)) == 30 * _per(cfg)
     small = _cfg(planners=["weekly"], num_booklets=1)
     assert not _padding(build_plan(small))
+
+
+# separate_covers
+
+
+def _inner(plan):
+    return [e for e in plan if e.booklet_index is not None]
+
+
+def test_separate_covers_default_unchanged():
+    assert build_plan(_cfg()).entries[1].page_class is not None
+    assert all(e.booklet_index for e in build_plan(_cfg()))
+
+
+def _check_sep(cfg):
+    plan = build_plan(cfg)
+    per = _per(cfg)
+    assert plan[0].page_class.__name__ == "Cover" and plan[0].booklet_index is None
+    assert plan[1].is_blank and plan[1].booklet_index is None
+    assert plan[-1].page_class is BackCover and plan[-1].booklet_index is None
+    assert plan[-2].is_blank and plan[-2].booklet_index is None
+    inner = _inner(plan)
+    assert len(inner) % per == 0
+    assert inner[0].page_number == 3 and inner[0].side == "right"
+    assert inner[0].booklet_index == 1
+    assert inner[-1].booklet_index == len(inner) // per
+    return plan
+
+
+def test_separate_covers_folded():
+    cfg = _cfg(planners=["weekly"], separate_covers=True)
+    plan = _check_sep(cfg)
+    assert len(plan) == len(_inner(plan)) + 4
+
+
+def test_separate_covers_flat():
+    cfg = _cfg(planners=["weekly"], separate_covers=True, booklet_folded=False)
+    _check_sep(cfg)
+
+
+def test_separate_covers_padding_differs():
+    a = build_plan(_cfg(planners=["weekly"]))
+    b = build_plan(_cfg(planners=["weekly"], separate_covers=True))
+    assert len(_inner(b)) % _per(_cfg()) == 0
+    # inner block excludes the 2 covers: padding differs from the default by the cover pages
+    assert len(_padding(a)) != len(_padding(b))
+
+
+def test_separate_covers_fixed_num_booklets():
+    cfg = _cfg(planners=["weekly"], separate_covers=True, num_booklets=8)
+    plan = _check_sep(cfg)
+    assert _inner(plan)[-1].booklet_index == 8

@@ -80,7 +80,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] `starts_on` handling: insert filler when a spread would start on the wrong side
 - [x] Booklet math, folded (default, 4 pages/sheet) and flat (2 pages/sheet); `sheets`/`pages` units
 - [x] Padding with `pad_with` pages, placed before the back cover
-- [ ] `separate_covers` option
+- [x] `separate_covers` option
 - [ ] `daily_months` filter
 - [ ] Validation: imposition requires folded; folded page counts multiple of 4
 - [ ] Summary: pages, sheets, booklets, padding, page-count warning
