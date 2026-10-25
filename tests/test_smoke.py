@@ -5,9 +5,23 @@ import pytest
 from agenda import __version__
 
 MODULES = [
-    "config", "sizes", "catalog", "calendar", "grid", "tokens", "draw", "themes",
-    "assembler", "imposition", "exporter", "i18n",
-    "pages", "pages.base", "pages.core", "pages.optional", "pages.value_added",
+    "config",
+    "sizes",
+    "catalog",
+    "calendar",
+    "grid",
+    "tokens",
+    "draw",
+    "themes",
+    "assembler",
+    "imposition",
+    "exporter",
+    "i18n",
+    "pages",
+    "pages.base",
+    "pages.core",
+    "pages.optional",
+    "pages.value_added",
 ]
 
 

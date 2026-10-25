@@ -15,42 +15,27 @@ Short running notes between agents. Trim stale entries.
 
 ## Log
 
-### Tasks 1-2: pyproject, layout
-- `agenda/__main__.py`: `build_parser()`, `main(argv) -> int`. Stub modules exist for everything in plan §4 plus `i18n`, `pages/{base,core,optional,value_added}`; fill in place. `tests/test_smoke.py` `MODULES` lists them; add new modules there.
-- Fonts: top-level `assets/fonts/` (+ `assets/icons/`), resolve via `Path(__file__).resolve().parents[1] / "assets" / "fonts"`. A wheel would not ship them (revisit when packaging).
+### Tasks 1-2: layout
+- `agenda/__main__.py`: `build_parser()`, `main(argv) -> int`. Stub modules exist for everything in plan §4 plus `i18n`, `pages/*`; fill in place. `tests/test_smoke.py` `MODULES` lists them; add new modules there.
 - Gotcha: `agenda/calendar.py` shadows stdlib only for relative imports; use `from agenda import calendar`, never run scripts from inside `agenda/`.
 
-### Task 3: config model
-- `agenda/config.py`: `Config(BaseModel)` (extra="forbid", validate_assignment). All plan §2 params plus amendments: `bleed` (3 mm), `separate_covers`, `creep_mm`, `preset`, `page_numbers`, `debug_grid`. Property `pages_per_booklet`. Tests in `tests/test_config.py`.
-- `page_size` stays a raw normalized `str` (lowercased name, or custom "WxH" as typed); `orientation` separate.
-- `daily_months` accepts `"1-3,6"` or a list; stored as sorted unique ints. `year` defaults to the current year. `pages=None` means "all core pages" (catalog resolves it). `num_booklets: int | "auto"`.
-- Model validators: `imposition` needs `booklet_folded`; folded + unit=pages needs size % 4 == 0.
-- Not done (later phases): YAML loading, CLI overlay, presets expansion, margin-vs-page-size checks.
+### Task 3-4: config, sizes
+- `agenda/config.py`: `Config` (pydantic, extra="forbid"); `page_size` is a normalized str; `Config.page_dimensions` -> final (w, h) mm. `agenda/sizes.py`: `parse_size`, `resolve_size`; orientation normalizes w/h.
+- Not done (later): YAML loading, CLI overlay, presets, margin-vs-page-size checks.
 
-### Task 4: sizes
-- `agenda/sizes.py`: `SIZES` (portrait mm, five names), `PageSize(width, height)` NamedTuple, `parse_size(spec)` (name case-insensitive or `WxH`, each side 50-1000 mm, else ValueError), `resolve_size(spec, orientation)`.
-- Decision: orientation normalizes: portrait => width <= height, landscape => width >= height (so custom `200x100` portrait gives 100x200).
-- `Config.page_size` validator now calls `parse_size`; new property `Config.page_dimensions` -> final (w, h) mm. Use that for `FPDF(unit="mm", format=cfg.page_dimensions)` (next task).
-- Tests: `tests/test_sizes.py`.
-
-### Task 5: fpdf2 document
-- `agenda/exporter.py`: `new_document(cfg) -> FPDF` (mm, `format=cfg.page_dimensions`, auto page break off, margins 0, title/creator/author set), `add_blank_pages(pdf, n)`, `write_pdf(pdf, path=DEFAULT_OUTPUT)` (creates parent dirs), `export_blank(cfg, pages, path)`. `DEFAULT_OUTPUT = output/agenda.pdf` (`output/` is created on demand).
-- CLI temporary flags: `-o/--output`, `--pages` (default 4), `--page-size`, `--orientation`; builds `Config(**overrides)`, exit 2 on invalid config. Replace with the real CLI/config overlay later.
-- Page size verified via pypdf mediabox (pt / (72/25.4)) in `tests/test_exporter.py`.
-- Note: fpdf2 margins set to 0 on purpose; the margins/grid tasks own real margins (alternating inner/outer by page side).
-
-### Task 6: fonts
-- Bundled Inter 4.0 static TTFs (OFL, `assets/fonts/Inter-LICENSE.txt`): Regular, Bold, Italic, BoldItalic (~1.6 MB). Docs (improvements.md) suggested Inter.
-- `agenda/exporter.py`: `FONT_DIR`, `FONT_FAMILY = "Inter"`, `FONT_FILES` (style -> file), `register_fonts(pdf, font_dir)`, `FontsMissingError` (lists missing files + dir). `new_document(cfg, font_dir=FONT_DIR)` calls it.
-- Use `pdf.set_font("Inter", "", 10)`; styles `""`, `"B"`, `"I"`, `"BI"`. Any other weight needs a new file added to `FONT_FILES`.
-- CLI prints the error to stderr and returns exit code 1 (2 stays for invalid config).
-- Tests in `tests/test_exporter.py` (accent text extracted from PDF, missing-dir error, CLI exit code).
-- Gotcha: fpdf2 `cell()` defaults to staying on the line; pass `new_x="LMARGIN", new_y="NEXT"` for line breaks (margins are 0).
+### Tasks 5-6: exporter, fonts
+- `agenda/exporter.py`: `new_document(cfg)` (mm, auto page break off, margins 0, Inter registered), `write_pdf`, `export_blank`. Fonts: `pdf.set_font("Inter", "", 10)`; styles `""`, `"B"`, `"I"`, `"BI"`; missing files raise `FontsMissingError` (CLI exit 1; invalid config exit 2).
+- CLI temp flags `-o`, `--pages`, `--page-size`, `--orientation`; replace with real CLI later.
+- Gotcha: fpdf2 `cell()` stays on the line by default; pass `new_x="LMARGIN", new_y="NEXT"` for line breaks.
 
 ### Task 7: tokens + grid
-- `agenda/tokens.py`: constants `COLUMNS=6`, `GUTTER=3`, `BASELINE=5`, `MARGIN_TOP/BOTTOM=10`, `HEADER_HEIGHT=12`, `FOOTER_HEIGHT=6`, `SPACING`, `TYPE_SIZES_PT`, `STROKE_*`, `RADII`, `DOT_SIZE`, `COLORS` (RGB dict), `pt_to_mm()`.
-- `agenda/grid.py`: frozen dataclass `Grid` + `Rect(x, y, w, h)` NamedTuple (`.x2/.y2`); origin top-left. `Grid.from_config(cfg, side="right")`, `grid.for_side(side)` (copy for other side).
-- `side` = physical page side: "right" (recto) => left margin = inner; "left" (verso) => right margin = inner. Left/right margins already swap via `side`; task 8 only needs to pick the side per page number (odd = right) and call `for_side`/`from_config`. Nothing else to implement in grid for it.
-- API: `safe`, `header`, `footer`, `content` (height is floored to whole baseline rows), `col_width`, `col_x(i)`, `col(i, span) -> (x, w)`, `span_width`, `rows`, `row(n)` (y of baseline line n from content top), `snap(y)`, `rows_in(h)`, `span(col, cols, row, rows) -> Rect`. Columns 0-based.
-- Top/bottom margins, header/footer heights are tokens, not Config fields (Config only has inner/outer). Overlay (task 9) can draw from these properties.
-- Tests: `tests/test_grid.py` (half_letter, a5, both sides).
+- `agenda/tokens.py`: constants (`COLUMNS=6`, `GUTTER=3`, `BASELINE=5`, `MARGIN_TOP/BOTTOM=10`, `HEADER_HEIGHT`, `FOOTER_HEIGHT`, colors, type sizes...).
+- `agenda/grid.py`: frozen `Grid` + `Rect(x,y,w,h)`; origin top-left. Props `safe`, `header`, `footer`, `content`, `col_width`, `rows`; methods `col_x(i)`, `col(i, span)`, `row(n)`, `snap(y)`, `span(col, cols, row, rows)`. Columns 0-based. Top/bottom/header/footer come from tokens, not Config.
+
+### Task 8: alternating margins
+- `grid.side_for_page(n)`: 1-based; odd = "right" (recto, page 1), even = "left". Single source of truth; matches layout-grid.md (inner = binding side) and booklet convention (cover is recto).
+- `Grid.for_page(cfg, n)`; `Grid.from_config(cfg, side)` / `for_side(side)` verified: right => left margin = inner, left => right margin = inner.
+- `exporter.add_page(pdf, cfg) -> Grid`: adds the next page (n = pdf.page + 1), sets fpdf `l_margin`/`r_margin` to grid.left/right (top/bottom margins stay 0), moves cursor to `grid.safe` top-left, returns the page's Grid. `add_blank_pages(pdf, n, cfg)` now requires cfg. Always use `add_page` instead of `pdf.add_page()`.
+- Task 9 overlay: call `grid = add_page(pdf, cfg)` per page and draw from `grid.safe/header/footer/content/col_x/row`.
+- Gotcha: if a filler/blank page is inserted, page number = physical position, so side follows automatically.
+- `ruff format` applied to all Python files (use `ruff format --check agenda tests`).

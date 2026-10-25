@@ -26,7 +26,7 @@ def test_default_size_and_page_count(tmp_path):
 
 def test_landscape_custom(tmp_path):
     out = export_blank(Config(page_size="200x100", orientation="landscape"), 1, tmp_path / "b.pdf")
-    (sw, sh), = _sizes(out)
+    ((sw, sh),) = _sizes(out)
     assert (round(sw), round(sh)) == (200, 100)
 
 
@@ -75,3 +75,17 @@ def test_cli_exits_nonzero_when_fonts_missing(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(ex.new_document, "__defaults__", (tmp_path,))
     assert main(["-o", str(tmp_path / "x.pdf")]) == 1
     assert "Missing font files" in capsys.readouterr().err
+
+
+def test_add_page_sets_per_page_grid_and_margins():
+    from agenda.config import Config
+    from agenda.exporter import add_page, new_document
+
+    cfg = Config(inner_margin=15, outer_margin=10)
+    pdf = new_document(cfg)
+    for n in range(1, 5):
+        grid = add_page(pdf, cfg)
+        assert grid.side == ("right" if n % 2 else "left")
+        assert pdf.l_margin == grid.left
+        assert pdf.r_margin == grid.right
+        assert pdf.get_x() == grid.safe.x

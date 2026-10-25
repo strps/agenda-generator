@@ -67,3 +67,22 @@ def test_span_and_errors():
         Grid(100, 100, 15, 10, side="middle")
     with pytest.raises(ValueError):
         Grid(60, 60, 30, 30)
+
+
+def test_side_for_page_alternates_from_recto():
+    from agenda.grid import side_for_page
+
+    assert [side_for_page(n) for n in range(1, 6)] == ["right", "left", "right", "left", "right"]
+    with pytest.raises(ValueError):
+        side_for_page(0)
+
+
+def test_for_page_inner_margin_on_binding_side():
+    from agenda.config import Config
+    from agenda.grid import Grid
+
+    cfg = Config(inner_margin=15, outer_margin=10)
+    odd, even = Grid.for_page(cfg, 1), Grid.for_page(cfg, 2)
+    assert (odd.left, odd.right) == (15, 10)  # recto: binding on the left
+    assert (even.left, even.right) == (10, 15)  # verso: binding on the right
+    assert Grid.for_page(cfg, 3) == odd

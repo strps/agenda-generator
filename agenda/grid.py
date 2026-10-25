@@ -6,7 +6,8 @@ with the origin at the top-left of the page (fpdf2 convention).
 
 ``side`` is the physical page side: ``"right"`` (recto, odd page; binding on the left, so the
 inner margin is the left one) or ``"left"`` (verso; inner margin on the right). The side swap
-for alternating pages is decided by the caller (``Grid.for_page`` is the natural hook).
+for alternating pages comes from ``side_for_page`` (single source of truth) via
+``Grid.for_page``.
 """
 
 from __future__ import annotations
@@ -20,6 +21,16 @@ from agenda.config import Config
 
 Side = Literal["left", "right"]
 _EPS = 1e-9
+
+
+def side_for_page(n: int) -> Side:
+    """Physical side of 1-based page ``n``. Page 1 is a right (recto) page; odd = right, even = left.
+
+    Consistent with booklet folding: the front cover is a recto and spreads are (even, odd).
+    """
+    if n < 1:
+        raise ValueError(f"page numbers are 1-based, got {n}")
+    return "right" if n % 2 == 1 else "left"
 
 
 class Rect(NamedTuple):
@@ -64,6 +75,11 @@ class Grid:
     def from_config(cls, cfg: Config, side: Side = "right") -> Grid:
         w, h = cfg.page_dimensions
         return cls(w, h, cfg.inner_margin, cfg.outer_margin, side=side)
+
+    @classmethod
+    def for_page(cls, cfg: Config, n: int) -> Grid:
+        """Grid for 1-based page number ``n`` (inner margin on the binding side)."""
+        return cls.from_config(cfg, side_for_page(n))
 
     def for_side(self, side: Side) -> Grid:
         """Same grid for the other page side (hook for alternating margins)."""

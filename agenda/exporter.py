@@ -8,6 +8,7 @@ from fpdf import FPDF
 
 from agenda import __version__
 from agenda.config import Config
+from agenda.grid import Grid
 
 DEFAULT_OUTPUT = Path("output") / "agenda.pdf"
 
@@ -55,9 +56,22 @@ def new_document(cfg: Config, font_dir: str | Path = FONT_DIR) -> FPDF:
     return pdf
 
 
-def add_blank_pages(pdf: FPDF, n: int) -> FPDF:
+def add_page(pdf: FPDF, cfg: Config) -> Grid:
+    """Add the next page and return its Grid (side from the 1-based page number).
+
+    fpdf2 l/r margins are set to the grid's safe-area margins for that page (top/bottom stay 0).
+    """
+    grid = Grid.for_page(cfg, pdf.page + 1)
+    pdf.add_page()
+    pdf.set_left_margin(grid.left)
+    pdf.set_right_margin(grid.right)
+    pdf.set_xy(grid.safe.x, grid.safe.y)
+    return grid
+
+
+def add_blank_pages(pdf: FPDF, n: int, cfg: Config) -> FPDF:
     for _ in range(n):
-        pdf.add_page()
+        add_page(pdf, cfg)
     return pdf
 
 
@@ -70,4 +84,4 @@ def write_pdf(pdf: FPDF, path: str | Path = DEFAULT_OUTPUT) -> Path:
 
 
 def export_blank(cfg: Config, pages: int = 1, path: str | Path = DEFAULT_OUTPUT) -> Path:
-    return write_pdf(add_blank_pages(new_document(cfg), pages), path)
+    return write_pdf(add_blank_pages(new_document(cfg), pages, cfg), path)

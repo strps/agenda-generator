@@ -14,9 +14,13 @@ from agenda.exporter import DEFAULT_OUTPUT, FontsMissingError, export_blank
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="agenda-gen", description="Generate a printable agenda PDF.")
+    parser = argparse.ArgumentParser(
+        prog="agenda-gen", description="Generate a printable agenda PDF."
+    )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
-    parser.add_argument("-o", "--output", default=None, help="output PDF path (default output/agenda.pdf)")
+    parser.add_argument(
+        "-o", "--output", default=None, help="output PDF path (default output/agenda.pdf)"
+    )
     parser.add_argument("--pages", type=int, default=4, help="number of blank pages (temporary)")
     parser.add_argument("--page-size", default=None, help="named size or WxH in mm")
     parser.add_argument("--orientation", choices=["portrait", "landscape"], default=None)
@@ -25,7 +29,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    overrides = {k: v for k, v in (("page_size", args.page_size), ("orientation", args.orientation)) if v}
+    overrides = {
+        k: v for k, v in (("page_size", args.page_size), ("orientation", args.orientation)) if v
+    }
     try:
         cfg = Config(**overrides)
     except ValueError as exc:
