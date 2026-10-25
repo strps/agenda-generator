@@ -139,7 +139,7 @@ Spec: [gui.md](../architecture/gui.md).
 - [x] Settings panel generated from the config model; open/save YAML
 - [x] `render_pages(config, plan, indices)` in the core
 - [x] Preview: single, spread and sheet modes; zoom; pypdfium2 rasterising
-- [ ] Background worker + cache keyed by config hash, page, zoom; 300 ms debounce
+- [x] Background worker + cache keyed by config hash, page, zoom; 300 ms debounce
 - [ ] Section bar: proportional segments, 2 px section gaps, padding hatch, booklet ticks, position marker
 - [ ] Section colors for light and dark mode as specified
 - [ ] Bar interaction: hover tooltip, click/drag navigation, keyboard, legend click

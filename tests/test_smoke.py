@@ -10,6 +10,7 @@ MODULES = [
     "configfile",
     "gui.settings_model",
     "gui.preview_model",
+    "gui.render_cache",
     "sizes",
     "catalog",
     "calendar",

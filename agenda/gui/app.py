@@ -2,7 +2,7 @@
 
 import sys
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -21,7 +21,10 @@ from agenda.assembler import build_plan
 from agenda.configfile import ConfigFileError
 from agenda.gui import layout as L
 from agenda.gui.preview import PreviewWidget
+from agenda.gui.render_cache import Debounce
 from agenda.gui.settings_panel import SettingsPanel
+
+DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-renders
 
 
 class MainWindow(QMainWindow):
@@ -74,13 +77,29 @@ class MainWindow(QMainWindow):
         col.addWidget(self._placeholder(L.LEGEND, "Legend", height=24))
         col.addWidget(self._placeholder(L.SUMMARY, "Summary", height=24))
         self.setCentralWidget(root)
-        self.settings.changed.connect(self.update_preview)
+        self.debounce = Debounce(DEBOUNCE_S)
+        self._timer = QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.setInterval(int(DEBOUNCE_S * 1000))
+        self._timer.timeout.connect(self.update_preview)
+        self.settings.changed.connect(self._on_settings_changed)
         self.update_preview()
         self.open_button.clicked.connect(self.open_config_dialog)
         self.save_button.clicked.connect(self.save_config_dialog)
 
+    def _on_settings_changed(self) -> None:
+        self.debounce.push()
+        self._timer.start()
+
+    def flush_preview(self) -> None:
+        """Apply a pending settings change now (skips the debounce wait)."""
+        if self.debounce.pending:
+            self.update_preview()
+
     def update_preview(self) -> None:
-        """Rebuild the plan from the current settings and redraw the preview (synchronous)."""
+        """Rebuild the plan from the current settings; pages render in the worker thread."""
+        self._timer.stop()
+        self.debounce.flush()
         cfg, msg = self.settings.config()
         if cfg is None:
             self.preview.set_error(msg)

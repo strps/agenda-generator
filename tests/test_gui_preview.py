@@ -105,6 +105,7 @@ def _widget():
     w = PreviewWidget()
     w.resize(900, 700)
     w.set_plan(cfg, build_plan(cfg))
+    assert w.wait_idle()
     return w
 
 
@@ -115,23 +116,30 @@ def _shown(w):
 def test_widget_modes_show_expected_page_counts(qapp):
     w = _widget()
     w.goto(10)
+    assert w.wait_idle()
     assert len(_shown(w)) == 2 and w.label.text().startswith("Spread")
     pix = _shown(w)[0].pixmap()
     assert not pix.isNull() and pix.width() > 50
     w.set_mode(M.SINGLE)
+    assert w.wait_idle()
     assert len(_shown(w)) == 1
     w.set_mode(M.SHEET)
+    assert w.wait_idle()
     assert len(_shown(w)) == 4
     w.move(1)
+    assert w.wait_idle()
     assert w.index != 10
 
 
 def test_widget_zoom_changes_pixmap_size_and_error_message(qapp):
     w = _widget()
     w.set_mode(M.SINGLE)
+    assert w.wait_idle()
     w.set_zoom(50)
+    assert w.wait_idle()
     small = _shown(w)[0].pixmap().width()
     w.set_zoom(200)
+    assert w.wait_idle()
     assert _shown(w)[0].pixmap().width() == pytest.approx(small * 4, abs=4)
     w.set_error("bad year")
     assert w.message.text() == "bad year" and not _shown(w)
@@ -143,4 +151,96 @@ def test_main_window_preview_follows_settings(qapp):
     win = MainWindow()
     assert win.preview.plan is not None
     win.settings.set_values({**win.settings.values(), "year": 2031})
+    win.flush_preview()
+    assert win.preview.wait_idle()
     assert win.preview.cfg.year == 2031
+
+
+def test_config_hash_and_cache_key():
+    from agenda.config import Config
+    from agenda.gui.render_cache import cache_key, config_hash
+
+    a, b = Config(), Config(year=2031)
+    assert config_hash(a) == config_hash(Config())
+    assert config_hash(a) != config_hash(b)
+    assert cache_key("h", 3, 100) != cache_key("h", 3, 50)
+
+
+def test_lru_cache_evicts_least_recently_used():
+    from agenda.gui.render_cache import LruCache
+
+    c = LruCache(2)
+    c.put("a", 1)
+    c.put("b", 2)
+    assert c.get("a") == 1  # a is now most recent
+    c.put("c", 3)
+    assert "b" not in c and "a" in c and "c" in c and len(c) == 2
+    assert c.get("zzz") is None
+    c.clear()
+    assert len(c) == 0
+    with pytest.raises(ValueError):
+        LruCache(0)
+
+
+def test_debounce_waits_for_quiet_period_and_keeps_latest():
+    from agenda.gui.render_cache import Debounce
+
+    t = [0.0]
+    d = Debounce(0.3, clock=lambda: t[0])
+    assert d.take() == (False, None)
+    d.push("a")
+    t[0] = 0.2
+    d.push("b")  # restarts the wait
+    t[0] = 0.4
+    assert d.take() == (False, None)
+    t[0] = 0.5
+    assert d.take() == (True, "b")
+    assert d.take() == (False, None) and not d.pending
+    d.push("c")
+    assert d.flush() == (True, "c")
+
+
+def test_latest_gate_drops_outdated_results():
+    from agenda.gui.render_cache import LatestGate
+
+    g = LatestGate()
+    first, second = g.issue(), g.issue()
+    assert not g.is_current(first) and g.is_current(second)
+
+
+def test_widget_caches_images_and_navigation_reuses_them(qapp):
+    w = _widget()
+    w.set_mode(M.SINGLE)
+    w.set_zoom(50)
+    assert w.wait_idle()
+    w.goto(5)
+    assert w.wait_idle()
+    n = len(w.cache)
+    w.goto(6)
+    w.goto(5)  # back: fully cached, no render
+    assert not w.busy and len(w.cache) >= n
+
+
+def test_widget_drops_stale_result(qapp):
+    w = _widget()
+    w.set_mode(M.SINGLE)
+    w.set_zoom(50)
+    assert w.wait_idle()
+    w.goto(20)  # request queued...
+    w.goto(30)  # ...and superseded before it is delivered
+    assert w.wait_idle()
+    assert w.rows() == [[30]]
+    assert len(_shown(w)) == 1
+
+
+def test_main_window_debounces_settings_changes(qapp):
+    from agenda.gui.app import MainWindow
+
+    win = MainWindow()
+    assert win.preview.wait_idle()
+    for year in (2030, 2031, 2032):
+        win.settings.set_values({**win.settings.values(), "year": year})
+    assert win.debounce.pending and win.preview.cfg.year != 2032
+    win.flush_preview()
+    assert not win.debounce.pending and win.preview.cfg.year == 2032
+    assert win.preview.wait_idle()

@@ -27,7 +27,12 @@ Short running notes between agents. Trim stale entries.
 - Tests: `tests/test_render_pages.py` (compares text + `drawn_points`; raw streams differ by font subset).
 ### Task 4: preview
 - `gui.preview_model` (Qt-free, in smoke MODULES): `display_rows(mode, index, total, booklet_of, folded)` -> rows of 0-based plan indices (single / spread (even,odd) / sheet rows [front, back], saddle-stitch order); `render_indices`, `pdf_position`, `step` (by page/spread/sheet), `zoom_scale` (fit or % ; 100% = 96 dpi), `label`, `effective_mode` (sheet falls back to spread if not folded).
-- `gui.preview.PreviewWidget` (object name `preview`): `set_plan(cfg, plan)`, `set_error(text)`, `set_mode`, `set_zoom`, `goto`, `move`, `refresh`, signal `page_changed(index)`; `rasterise(pdf_bytes, scale)` via pypdfium2 (BGR888 QImage). Page labels live in `.grid`.
-- `MainWindow.preview` + `update_preview()` run on `settings.changed`, synchronously (build_plan + render_pages in the GUI thread): task 5 moves this to a worker + cache + debounce.
+- `gui.preview.PreviewWidget` (object name `preview`): `set_plan(cfg, plan)`, `set_error(text)`, `set_mode`, `set_zoom`, `goto`, `move`, `refresh`, signal `page_changed(index)`; `rasterise` (now in `gui.workers`) (BGR888 QImage). Page labels live in `.grid`.
+- `MainWindow.preview`; see task 5 for how it updates.
 - Sheet mode is computed from `booklet_index` (no imposition module yet); pages outside booklets show as a spread. Debug-grid checkbox from gui.md not added (it is a Config field in settings).
 - Tests: `tests/test_gui_preview.py`.
+### Task 5: worker + cache + debounce
+- `gui.render_cache` (Qt-free, in smoke MODULES): `config_hash(cfg)` (model_dump_json sha1), `cache_key`, `LruCache`, `Debounce` (injectable clock), `LatestGate` (stale ids dropped).
+- `gui.workers`: `RenderJob` (QRunnable: render_pages + rasterise, one thread), `RenderSignals`, `rasterise`.
+- `PreviewWidget.refresh` is async: cache hit shows at once, else a job; `.busy`, `.cache` (64 pages), `wait_idle(timeout)` for tests. Fit zoom keys on viewport size.
+- `MainWindow`: `settings.changed` -> 300 ms QTimer (`DEBOUNCE_S`) -> `update_preview()`; `flush_preview()` skips the wait. build_plan still runs in the GUI thread (fast); the bar (task 6) should update from `update_preview` immediately.

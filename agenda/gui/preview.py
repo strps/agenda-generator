@@ -1,9 +1,11 @@
-"""Preview widget: single, spread and sheet modes rasterised with pypdfium2 (synchronous)."""
+"""Preview widget: single, spread and sheet modes; pages render in a worker thread, cached."""
 
-import pypdfium2 as pdfium
-from PySide6.QtCore import Qt, Signal
+import time
+
+from PySide6.QtCore import Qt, QThreadPool, Signal
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QComboBox,
     QFrame,
@@ -18,22 +20,11 @@ from PySide6.QtWidgets import (
 
 from agenda.assembler import PagePlan
 from agenda.config import Config
-from agenda.exporter import render_pages
 from agenda.gui import preview_model as M
+from agenda.gui.render_cache import LatestGate, LruCache, cache_key, config_hash
+from agenda.gui.workers import RenderJob, RenderSignals, rasterise
 
-
-def rasterise(pdf_bytes: bytes, scale: float) -> list[QImage]:
-    """Every page of ``pdf_bytes`` as a QImage at ``scale`` (1.0 = 72 dpi)."""
-    doc = pdfium.PdfDocument(pdf_bytes)
-    try:
-        images = []
-        for i in range(len(doc)):
-            bmp = doc[i].render(scale=scale)
-            img = QImage(bmp.buffer, bmp.width, bmp.height, bmp.stride, QImage.Format.Format_BGR888)
-            images.append(img.copy())  # detach from the pdfium buffer
-        return images
-    finally:
-        doc.close()
+__all__ = ["PreviewWidget", "rasterise"]
 
 
 class PreviewWidget(QFrame):
@@ -50,6 +41,14 @@ class PreviewWidget(QFrame):
         self.mode = M.SPREAD
         self.zoom: str | int = M.FIT
         self._booklet_of: list[int | None] = []
+        self.cache = LruCache(64)
+        self._gate = LatestGate()
+        self._pool = QThreadPool(self)
+        self._pool.setMaxThreadCount(1)
+        self._signals = RenderSignals(self)
+        self._signals.done.connect(self._on_done)
+        self._signals.failed.connect(self._on_failed)
+        self.busy = False
 
         bar = QHBoxLayout()
         self.prev_button = QPushButton("◀")
@@ -108,6 +107,8 @@ class PreviewWidget(QFrame):
     def set_error(self, text: str) -> None:
         """Show ``text`` instead of the pages (e.g. an invalid config)."""
         self.cfg = self.plan = None
+        self._gate.issue()
+        self.busy = False
         self.message.setText(text)
         self._clear()
         self.label.setText("")
@@ -149,21 +150,54 @@ class PreviewWidget(QFrame):
         mode = M.effective_mode(self.mode, self.cfg.booklet_folded)
         self.label.setText(M.label(rows, len(self.plan), mode))
         self.mode_buttons[M.SHEET].setEnabled(self.cfg.booklet_folded)
-        pdf = render_pages(self.cfg, self.plan, M.render_indices(rows))
-        doc = pdfium.PdfDocument(pdf)
-        try:
-            w, h = doc[0].get_size()
-        finally:
-            doc.close()
+        self._rows = rows
+        need = M.render_indices(rows)
         cols = max(len(r) for r in rows)
         view = self.scroll.viewport()
-        scale = M.zoom_scale(self.zoom, (w, h), len(rows), cols, (view.width(), view.height()))
-        images = rasterise(pdf, scale)
+        avail = (view.width(), view.height())
+        self._zkey = (self.zoom, avail, len(rows), cols) if self.zoom == M.FIT else self.zoom
+        self._hash = config_hash(self.cfg)
+        missing = [i for i in need if cache_key(self._hash, i, self._zkey) not in self.cache]
+        if not missing:
+            self._gate.issue()  # drop any render still in flight
+            self.busy = False
+            self._show(rows)
+            return
+        self.busy = True
+        job = RenderJob(
+            self._gate.issue(), self._gate, self._signals, self.cfg, self.plan, missing,
+            self.zoom, (len(rows), cols, avail),
+        )  # fmt: skip
+        self._pool.start(job)
+
+    def wait_idle(self, timeout: float = 30.0) -> bool:
+        """Process events until no render is pending (for tests/exports). False on timeout."""
+        end = time.monotonic() + timeout
+        while self.busy and time.monotonic() < end:
+            QApplication.processEvents()
+            time.sleep(0.005)
+        return not self.busy
+
+    def _on_done(self, request_id: int, images: dict[int, QImage]) -> None:
+        if not self._gate.is_current(request_id):
+            return  # result for an outdated request
+        for i, img in images.items():
+            self.cache.put(cache_key(self._hash, i, self._zkey), img)
+        self.busy = False
+        self._show(self._rows)
+
+    def _on_failed(self, request_id: int, text: str) -> None:
+        if self._gate.is_current(request_id):
+            self.busy = False
+            self.message.setText(text)
+
+    def _show(self, rows: list[list[int]]) -> None:
         self._clear()
         for r, row in enumerate(rows):
             for c, idx in enumerate(row):
                 pic = QLabel()
-                pic.setPixmap(QPixmap.fromImage(images[M.pdf_position(rows, idx)]))
+                img = self.cache.get(cache_key(self._hash, idx, self._zkey))
+                pic.setPixmap(QPixmap.fromImage(img))
                 self.grid.addWidget(pic, r, c)
         self.page_changed.emit(self.index)
 
