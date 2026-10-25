@@ -136,7 +136,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 Spec: [gui.md](../architecture/gui.md).
 
 - [x] PySide6 main window and layout
-- [ ] Settings panel generated from the config model; open/save YAML
+- [x] Settings panel generated from the config model; open/save YAML
 - [ ] `render_pages(config, plan, indices)` in the core
 - [ ] Preview: single, spread and sheet modes; zoom; pypdfium2 rasterising
 - [ ] Background worker + cache keyed by config hash, page, zoom; 300 ms debounce

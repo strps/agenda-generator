@@ -5,17 +5,21 @@ import sys
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
+    QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QSplitter,
     QVBoxLayout,
     QWidget,
 )
 
+from agenda.configfile import ConfigFileError
 from agenda.gui import layout as L
+from agenda.gui.settings_panel import SettingsPanel
 
 
 class MainWindow(QMainWindow):
@@ -52,7 +56,9 @@ class MainWindow(QMainWindow):
 
         # Middle: settings (left) | preview (center).
         split = QSplitter(Qt.Orientation.Horizontal)
-        split.addWidget(self._placeholder(L.SETTINGS, "Settings"))
+        self.settings = SettingsPanel()
+        self.regions[L.SETTINGS] = self.settings
+        split.addWidget(self.settings)
         split.addWidget(self._placeholder(L.PREVIEW, "Preview"))
         split.setStretchFactor(0, 0)
         split.setStretchFactor(1, 1)
@@ -64,6 +70,30 @@ class MainWindow(QMainWindow):
         col.addWidget(self._placeholder(L.LEGEND, "Legend", height=24))
         col.addWidget(self._placeholder(L.SUMMARY, "Summary", height=24))
         self.setCentralWidget(root)
+        self.open_button.clicked.connect(self.open_config_dialog)
+        self.save_button.clicked.connect(self.save_config_dialog)
+
+    def load_config(self, path: str) -> str:
+        """Load a YAML file into the settings panel. Returns "" or the error message."""
+        try:
+            self.settings.load_file(path)
+        except ConfigFileError as exc:
+            return str(exc)
+        return ""
+
+    def save_config(self, path: str) -> str:
+        """Save the settings as YAML. Returns "" or the error message."""
+        return self.settings.save_file(path)
+
+    def open_config_dialog(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(self, "Open config", "", "YAML (*.yaml *.yml)")
+        if path and (err := self.load_config(path)):
+            QMessageBox.warning(self, "Open config", err)
+
+    def save_config_dialog(self) -> None:
+        path, _ = QFileDialog.getSaveFileName(self, "Save config", "config.yaml", "YAML (*.yaml)")
+        if path and (err := self.save_config(path)):
+            QMessageBox.warning(self, "Save config", err)
 
     def _region(self, name: str) -> QWidget:
         w = QWidget()

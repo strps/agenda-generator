@@ -8,6 +8,7 @@ MODULES = [
     "config",
     "cli",
     "configfile",
+    "gui.settings_model",
     "sizes",
     "catalog",
     "calendar",
