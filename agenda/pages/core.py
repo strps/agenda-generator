@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from fpdf import FPDF
 
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
+from agenda.draw import DayStyle, draw_mini_month
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -92,3 +95,39 @@ class PersonalInfo(BasePage):
                 y = g.row(row + 2 + i)  # bottom edge of the write-in row
                 pdf.line(x, y, x + w, y)
             row += 1 + lines + 2
+
+
+@register
+class Yearly(BasePage):
+    """Yearly calendar on one page: 12 mini months in a 3 x 4 grid (2 grid columns each)."""
+
+    id = "yearly"
+    name = "Yearly calendar"
+    category = "core"
+    section = "front_back"
+
+    MONTH_COLS = 3
+    MONTH_ROWS = 4
+
+    @staticmethod
+    def day_style(d: date) -> DayStyle | None:
+        """Hook for task 12 (weekend/holiday marking): return a ``DayStyle`` or None."""
+        return
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[4])
+        h = g.header
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, str(config.year))
+
+        span = g.columns // self.MONTH_COLS
+        per = g.rows // self.MONTH_ROWS  # baseline rows per block, one of them is the gap
+        for m in range(1, 13):
+            r, c = divmod(m - 1, self.MONTH_COLS)
+            cell = g.span(c * span, span, r * per, per - 1)
+            draw_mini_month(
+                pdf, cell, config.year, m, config.language, config.week_start, self.day_style
+            )

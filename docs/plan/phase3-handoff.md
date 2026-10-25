@@ -31,3 +31,8 @@ Short running notes between agents. Trim stale entries.
 ### Task 4: Personal information
 - `agenda/pages/core.py`: `PersonalInfo` (`personal_info`, core, front_back, 1 page); heading + `FIELDS` (i18n `personal.*` keys, none added). Label 1 row, write-in lines at row bottoms (hairline, `line` color), 2 rows for address, 1 gap row between fields.
 - Fields that don't fit the page rows are dropped (all fit on B6/A5/half-letter/A4). Lines span full content width, so no helper added to draw.py.
+
+### Task 5: Yearly
+- `Yearly` (`yearly`, core, front_back, 1 page; 3x4 mini months, each 2 grid columns; year in header band). Chose 1 page, so `starts_on="any"`.
+- Reusable: `agenda.draw.draw_mini_month(pdf, rect, year, month, lang, week_start, day_style, title_pt, body_pt)` (8 equal lines, 7 equal columns; adjacent-month days left blank) and `DayStyle(color, fill)`.
+- Task 12 hook: `Yearly.day_style(date) -> DayStyle | None` (staticmethod, returns None); pass the same callable to `draw_mini_month` on monthly.

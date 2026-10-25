@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from datetime import date
+from typing import NamedTuple
+
 from fpdf import FPDF
 
-from agenda.grid import Grid
+from agenda import tokens
+from agenda.calendar import month_grid
+from agenda.grid import Grid, Rect
+from agenda.i18n import Strings
 
 _INNER_FILL = (200, 220, 255)  # blue: inner (binding) margin
 _OUTER_FILL = (255, 225, 190)  # orange: outer margin
@@ -86,3 +93,53 @@ def draw_debug_grid(pdf: FPDF, grid: Grid, page_no: int | None = None) -> None:
     pdf.set_text_color(0, 0, 0)
     pdf.set_fill_color(0, 0, 0)
     pdf.set_line_width(0.2)
+
+
+def draw_mini_month(
+    pdf: FPDF,
+    rect: Rect,
+    year: int,
+    month: int,
+    lang: str = "es",
+    week_start: str = "monday",
+    day_style: Callable[[date], DayStyle | None] | None = None,
+    title_pt: float = tokens.TYPE_SIZES_PT[1],
+    body_pt: float = tokens.TYPE_SIZES_PT[0],
+) -> None:
+    """Mini month calendar filling ``rect``: month name, weekday initials, then the day grid.
+
+    The block is split into 8 equal lines (title, weekday row, 6 weeks) and 7 equal columns.
+    ``day_style(date)`` is a hook returning ``DayStyle`` (text color, fill color; either may be
+    None) or None for the default look; holiday/weekend marking plugs in here.
+    """
+    s = Strings(lang)
+    line_h = rect.h / 8
+    col_w = rect.w / 7
+    pdf.c_margin = 0
+    pdf.set_text_color(*tokens.COLORS["accent"])
+    pdf.set_font("Inter", "B", title_pt)
+    pdf.set_xy(rect.x, rect.y)
+    pdf.cell(rect.w, line_h, s.month_name(month))
+    pdf.set_text_color(*tokens.COLORS["muted"])
+    pdf.set_font("Inter", "", body_pt)
+    for i, name in enumerate(s.weekday_names(week_start, "letter")):
+        pdf.set_xy(rect.x + i * col_w, rect.y + line_h)
+        pdf.cell(col_w, line_h, name, align="C")
+    for r, week in enumerate(month_grid(year, month, week_start)):
+        y = rect.y + (2 + r) * line_h
+        for i, d in enumerate(week):
+            if d is None:
+                continue
+            style = day_style(d) if day_style else None
+            x = rect.x + i * col_w
+            if style and style.fill:
+                pdf.set_fill_color(*style.fill)
+                pdf.rect(x, y, col_w, line_h, style="F")
+            pdf.set_text_color(*((style and style.color) or tokens.COLORS["ink"]))
+            pdf.set_xy(x, y)
+            pdf.cell(col_w, line_h, str(d.day), align="C")
+
+
+class DayStyle(NamedTuple):
+    color: tuple[int, int, int] | None = None
+    fill: tuple[int, int, int] | None = None

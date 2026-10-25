@@ -60,7 +60,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] `@register` catalog
 - [x] Cover
 - [x] Personal information
-- [ ] Yearly calendar
+- [x] Yearly calendar
 - [ ] Monthly planner
 - [ ] Weekly planner (WO2P spread, always starting on a left page)
 - [ ] Daily planner
