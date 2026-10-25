@@ -240,3 +240,41 @@ def draw_circle(pdf: FPDF, cx: float, cy: float, d: float) -> None:
     pdf.set_draw_color(*tokens.COLORS["muted"])
     pdf.set_line_width(tokens.STROKE_LIGHT)
     pdf.ellipse(cx - d / 2, cy - d / 2, d, d, style="D")
+
+
+MOOD_LEVELS = (1, 2, 3, 4, 5)
+_MOOD_CURVE = {1: -0.24, 2: -0.1, 3: 0.0, 4: 0.1, 5: 0.24}  # mouth bend / d; + smiles
+
+
+def draw_mood(pdf: FPDF, cx: float, cy: float, d: float, level: int) -> None:
+    """Mood face centred on ``(cx, cy)``, diameter ``d`` mm: ``level`` 1 (very sad) to 5 (very happy).
+
+    Drawn from an outline circle, two dot eyes and a mouth polyline whose bend goes from a deep
+    frown (1) through a straight line (3) to a wide smile (5); level 1 adds slanted brows and
+    level 5 closes the mouth with a chord. No glyphs.
+    """
+    if level not in _MOOD_CURVE:
+        raise ValueError(f"mood level must be 1..5, got {level}")
+    ink = tokens.COLORS["muted"]
+    pdf.set_draw_color(*ink)
+    pdf.set_fill_color(*ink)
+    pdf.set_line_width(tokens.STROKE_LIGHT)
+    pdf.ellipse(cx - d / 2, cy - d / 2, d, d, style="D")
+    eye = d * 0.07
+    for sx in (-1, 1):
+        ex, ey = cx + sx * d * 0.18, cy - d * 0.12
+        pdf.ellipse(ex - eye, ey - eye, 2 * eye, 2 * eye, style="F")
+        if level == 1:  # worried brows, inner ends raised
+            pdf.line(ex + sx * d * 0.1, ey - d * 0.12, ex - sx * d * 0.1, ey - d * 0.2)
+    steps = 8
+    curve = _MOOD_CURVE[level] * d
+    y0 = cy + d * 0.22
+    pts = []
+    for i in range(steps + 1):
+        u = 2 * i / steps - 1
+        pts.append((cx + u * d * 0.24, y0 + curve * (1 - u * u)))
+    if level == 3:
+        pts = [pts[0], pts[-1]]
+    pdf.polyline(pts, style="D")
+    if level == 5:
+        pdf.line(*pts[0], *pts[-1])

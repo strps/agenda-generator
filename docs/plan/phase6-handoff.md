@@ -20,3 +20,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 2: Vision board
 - `VisionBoard` (`vision_board`, value_added/value_added, 1 page); `layout(rows, width_rows) -> VisionLayout(word_rows, cols, nrows, cell_rows)` in baseline units, derived from the safe area (see class docstring).
 - Strings `vision.title/subtitle/word` (es, en). Empty framed cells + caption rule; no emoji.
+### Task 3: Health tracker
+- `HealthTracker` (`health`, value_added/value_added, 1 page x12 via `month_ctxs`; the catalog gives no repetition, chosen monthly like Habits). `layout(rows)` = tracker rows that fit (2 baselines each, never shrunk; trackers dropped from the end); all 5 fit on a5/b6/letter.
+- `draw_mood(pdf, cx, cy, d, level 1..5)` and `MOOD_LEVELS` in `agenda/draw.py`: circle, dot eyes, polyline mouth; no glyphs.
+- Strings `health.title/mood/water/sleep/exercise/other` (es, en). Each day cell is a hairline rect (test counts `re` ops).
