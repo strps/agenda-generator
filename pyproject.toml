@@ -24,6 +24,7 @@ dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]
 agenda-gen = "agenda.__main__:main"
+agenda-gui = "agenda.gui.app:main"
 
 [tool.setuptools.packages.find]
 include = ["agenda*"]

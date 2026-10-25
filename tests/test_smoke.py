@@ -24,6 +24,8 @@ MODULES = [
     "pages.core",
     "pages.optional",
     "pages.value_added",
+    "gui",
+    "gui.layout",
 ]
 
 

@@ -15,7 +15,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 | 5. Optional pages | Done | 3 days | 2026-10-25 | 2026-10-25 | 3 | |
 | 6. Value-added pages | Done | 4 days | 2026-10-25 | 2026-10-25 | 3 | |
 | 7. CLI & YAML | Done | 1 day | 2026-10-25 | 2026-10-25 | 1, 4 | |
-| 7b. GUI | Not started | 4–5 days | | | 3, 4, 7 | |
+| 7b. GUI | In progress | 4–5 days | 2026-10-25 | | 3, 4, 7 | |
 | 8. Imposition | Not started | 2 days | | | 4 | |
 | 9. Testing & polish | Not started | 2–3 days | | | all | |
 
@@ -135,7 +135,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 
 Spec: [gui.md](../architecture/gui.md).
 
-- [ ] PySide6 main window and layout
+- [x] PySide6 main window and layout
 - [ ] Settings panel generated from the config model; open/save YAML
 - [ ] `render_pages(config, plan, indices)` in the core
 - [ ] Preview: single, spread and sheet modes; zoom; pypdfium2 rasterising
