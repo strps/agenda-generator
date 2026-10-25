@@ -19,7 +19,7 @@ def test_overlay_does_not_raise(size, side):
 
 def test_cli_debug_grid_pages(tmp_path):
     out = tmp_path / "g.pdf"
-    assert main(["--debug-grid", "--pages", "3", "-o", str(out)]) == 0
+    assert main(["--debug-grid", "--blank-pages", "3", "-o", str(out)]) == 0
     assert len(PdfReader(str(out)).pages) == 3
 
 

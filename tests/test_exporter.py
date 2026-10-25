@@ -38,7 +38,7 @@ def test_no_auto_page_break_and_metadata():
 
 def test_cli_writes_pdf(tmp_path):
     out = tmp_path / "c.pdf"
-    assert main(["-o", str(out), "--pages", "2", "--page-size", "a5"]) == 0
+    assert main(["-o", str(out), "--blank-pages", "2", "--page-size", "a5"]) == 0
     sizes = _sizes(out)
     assert len(sizes) == 2
     assert round(sizes[0][0]) == 148 and round(sizes[0][1]) == 210
