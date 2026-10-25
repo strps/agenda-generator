@@ -15,6 +15,32 @@ from agenda.pages.base import BasePage, Ctx
 _ACCENT = tokens.COLORS["accent"]
 
 
+def _draw_task_list(
+    pdf: FPDF, g: Grid, row: int, n: int, labels: tuple[str, str], box: float, due_cols: int
+) -> None:
+    """Label row at baseline row ``row``, then ``n`` rows of checkbox + task rule + due rule.
+
+    The due column is the last ``due_cols`` grid columns; the task rule ends one gutter before.
+    """
+    x = g.safe.x
+    dx, dw = g.col(g.columns - due_cols, due_cols)
+    task_w = dx - g.gutter - x
+    box = min(box, g.baseline - 1.0)
+    pdf.set_text_color(*tokens.COLORS["muted"])
+    pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+    pdf.set_xy(x, g.row(row))
+    pdf.cell(task_w, g.baseline, labels[0])
+    pdf.set_xy(dx, g.row(row))
+    pdf.cell(dw, g.baseline, labels[1])
+    pdf.set_draw_color(*tokens.COLORS["line"])
+    pdf.set_line_width(tokens.STROKE_HAIRLINE)
+    for k in range(n):
+        top, y = g.row(row + 1 + k), g.row(row + 2 + k)
+        draw_checkbox(pdf, x, top + (g.baseline - box) / 2, box)
+        pdf.line(x + box + 2, y, x + task_w, y)
+        pdf.line(dx, y, dx + dw, y)
+
+
 @register
 class Goals(BasePage):
     """Yearly goals, 1 page: per goal a title rule, checkbox steps and a deadline rule.
@@ -169,20 +195,81 @@ class Todo(BasePage):
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("todo.title"))
 
-        x = g.safe.x
-        dx, dw = g.col(g.columns - self.DUE_COLS, self.DUE_COLS)
-        task_w = dx - g.gutter - x
-        box = min(self.BOX, g.baseline - 1.0)
+        _draw_task_list(
+            pdf, g, 0, self.layout(g.rows), (s("todo.task"), s("todo.due")), self.BOX, self.DUE_COLS
+        )
+
+
+@register
+class Projects(BasePage):
+    """Project planner, 1 page per instance (one project per page).
+
+    Top to bottom: project and objective rows, a start | deadline row, 1 gap row, the task list
+    (label row + task rows) , 1 gap row and a notes block (label row + plain rules).
+    Fit rule (``layout(rows)``): ``FIXED_ROWS`` are structure; of the rest, notes get a third
+    (at least ``MIN_NOTES``) and tasks the remainder, so small pages shrink both instead of
+    overflowing. ``Projects(count=N)`` gives N pages (default 1); no config field yet.
+    """
+
+    id = "projects"
+    name = "Project planner"
+    category = "optional"
+    section = "optional"
+
+    FIELD_ROWS = 3
+    FIXED_ROWS = FIELD_ROWS + 4  # fields, gap, task labels, gap, notes label
+    MIN_NOTES = 2
+    LABEL_W = 22.0
+    BOX = 3.0
+    DUE_COLS = 1
+
+    def __init__(self, count: int = 1) -> None:
+        if count < 0:
+            raise ValueError("count must be >= 0")
+        self.count = count
+
+    def instances(self, config: Config) -> list[Ctx]:
+        return [{} for _ in range(self.count)]
+
+    @classmethod
+    def layout(cls, rows: int) -> tuple[int, int]:
+        """(task rows, notes rows) for ``rows`` baseline rows of content."""
+        free = max(0, rows - cls.FIXED_ROWS)
+        notes = min(free, max(cls.MIN_NOTES, free // 3))
+        return free - notes, notes
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        h = g.header
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, s("projects.title"))
+
+        tasks, notes = self.layout(g.rows)
+        x, w = g.safe.x, g.safe.w
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        draw_label_rule(pdf, x, w, g.row(1), s("projects.name"), self.LABEL_W)
+        draw_label_rule(pdf, x, w, g.row(2), s("projects.objective"), self.LABEL_W)
+        span = g.columns // 2
+        lx, lw = g.col(0, span)
+        rx, rw = g.col(span, g.columns - span)
+        draw_label_rule(pdf, lx, lw, g.row(3), s("projects.start"), self.LABEL_W)
+        draw_label_rule(pdf, rx, rw, g.row(3), s("projects.deadline"), self.LABEL_W)
+
+        tr = self.FIELD_ROWS + 1
+        labels = (s("projects.task"), s("projects.due"))
+        _draw_task_list(pdf, g, tr, tasks, labels, self.BOX, self.DUE_COLS)
+
+        nr = tr + tasks + 2
         pdf.set_text_color(*tokens.COLORS["muted"])
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
-        pdf.set_xy(x, g.row(0))
-        pdf.cell(task_w, g.baseline, s("todo.task"))
-        pdf.set_xy(dx, g.row(0))
-        pdf.cell(dw, g.baseline, s("todo.due"))
+        pdf.set_xy(x, g.row(nr))
+        pdf.cell(w, g.baseline, s("projects.notes"))
         pdf.set_draw_color(*tokens.COLORS["line"])
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
-        for k in range(self.layout(g.rows)):
-            top, y = g.row(1 + k), g.row(2 + k)
-            draw_checkbox(pdf, x, top + (g.baseline - box) / 2, box)
-            pdf.line(x + box + 2, y, x + task_w, y)
-            pdf.line(dx, y, dx + dw, y)
+        for k in range(notes):
+            y = g.row(nr + 2 + k)
+            pdf.line(x, y, x + w, y)

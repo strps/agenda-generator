@@ -24,3 +24,9 @@ Short running notes between agents. Trim stale entries.
 ### Task 3: To-do list
 - `Todo(count=1)` (`todo`, optional/optional): `count` -> `instances()` N pages (negative raises), like Notes. No config field for count exists (Notes has none), so `config.pages` gives 1.
 - `Todo.layout(rows) -> rows - 1` task rows (row 1 = labels); 1 column on all sizes; due rule = last grid column. Keys `todo.title/task/due`.
+
+### Task 4: Projects
+- `Projects(count=1)` (`projects`): rows = 3 field rows (name, objective, start|deadline halves), gap, task labels, tasks, gap, notes label, notes rules.
+- `Projects.layout(rows) -> (tasks, notes)`: `FIXED_ROWS`=7; notes = max(2, free//3) (capped at free), tasks = rest.
+- Shared `_draw_task_list(pdf, g, row, n, labels, box, due_cols)` in optional.py (label row + n checkbox rows); Todo uses it too.
+- Keys `projects.title/name/objective/start/deadline/task/due/notes`.
