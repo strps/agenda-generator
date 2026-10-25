@@ -31,3 +31,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 6: separate_covers
 - True: Cover = page 1, blank inside-cover filler = page 2, ..., blank inside-back filler, BackCover last. All four stay in the plan (drawn/shown) with `booklet_index=None`; inner block (pages 3..N-2) starts on a right page, is padded and indexed alone (`booklet_index_for(page-2, per)`), so inner count is a multiple of per. Sides/page numbers stay global (Cover recto, back cover verso). Default False unchanged.
 - Tests at the end of tests/test_padding.py. Summary/validation should count covers separately.
+
+### Task 7: daily_months
+- Filter lives in `build_plan` (`d.month in config.daily_months`); `Daily.instances` unchanged. Weeks/months unaffected; later steps (fillers, padding, booklets) derive from the filtered list. Tests: tests/test_daily_months.py.
+- Gotcha: a year's first/last days in an ISO week owned by the neighbouring year have no Daily (2028 gives 364 dailies), independent of daily_months.

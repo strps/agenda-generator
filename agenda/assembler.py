@@ -182,7 +182,7 @@ def build_plan(config: Any) -> PagePlan:
     """Ordered ``PagePlan`` for ``config`` (page numbers 1..N, 1-based ``booklet_index``).
 
     Order: front matter (cover, personal info, yearly) -> per month: monthly, then per owned
-    week its weekly spread and that week's dailies (dates inside ``config.year``) -> optional ->
+    week its weekly spread and that week's dailies (dates inside ``config.year`` and in ``config.daily_months``) -> optional ->
     value-added -> back matter (notes, contacts, padding, back cover). With
     ``config.separate_covers`` the cover is page 1 followed by a blank inside-cover filler, and a
     blank inside-back filler precedes the back cover; those 4 pages have ``booklet_index`` None and
@@ -232,7 +232,7 @@ def build_plan(config: Any) -> PagePlan:
                 put(Weekly, weekly_ctx[(week.iso_year, week.number)])
             if "daily" in config.planners:
                 for d in week.days:
-                    if d in daily_ctx:
+                    if d in daily_ctx and d.month in config.daily_months:
                         put(Daily, daily_ctx[d])
     for category in ("optional", "value_added"):
         for cls in _extras(config, category):
