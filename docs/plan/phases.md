@@ -94,7 +94,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Important dates
 - [x] To-do list
 - [x] Projects
-- [ ] Budget (x12)
+- [x] Budget (x12)
 - [ ] Habit tracker (x12)
 - [ ] Monthly review (x12)
 - [ ] Schedule

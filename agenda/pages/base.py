@@ -68,3 +68,8 @@ def validate_page_class(cls: type[BasePage]) -> None:
         raise ValueError(f"{cls.__name__}.starts_on {cls.starts_on!r} not in {STARTS_ON}")
     if isinstance(cls.pages, bool) or not isinstance(cls.pages, int) or cls.pages < 1:
         raise ValueError(f"{cls.__name__}.pages must be an int >= 1, got {cls.pages!r}")
+
+
+def month_ctxs(config: Config) -> list[Ctx]:
+    """One context per month of ``config.year``: ``{"month": 1..12, "year": year}``."""
+    return [{"month": m, "year": config.year} for m in range(1, 13)]

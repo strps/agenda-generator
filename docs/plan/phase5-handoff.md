@@ -30,3 +30,8 @@ Short running notes between agents. Trim stale entries.
 - `Projects.layout(rows) -> (tasks, notes)`: `FIXED_ROWS`=7; notes = max(2, free//3) (capped at free), tasks = rest.
 - Shared `_draw_task_list(pdf, g, row, n, labels, box, due_cols)` in optional.py (label row + n checkbox rows); Todo uses it too.
 - Keys `projects.title/name/objective/start/deadline/task/due/notes`.
+
+### Task 5: Budget
+- `Budget` (`budget`, optional/optional, 1 page x12): `Budget.layout(rows) -> (income, fixed, variable, savings)` write-in rows; `FIXED_ROWS`=11, rest split by `WEIGHTS` (1,2,2,1). Amount = last 2 grid cols.
+- Shared `month_ctxs(config)` in `agenda/pages/base.py` -> `[{"month", "year"}]*12`; habits/review should use it (Monthly still builds its own).
+- Keys `budget.*` (title takes `{month} {year}`).
