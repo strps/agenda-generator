@@ -84,7 +84,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] `daily_months` filter
 - [x] Validation: imposition requires folded; folded page counts multiple of 4
 - [x] Summary: pages, sheets, booklets, padding, page-count warning
-- [ ] Unit tests for the plan (no rendering)
+- [x] Unit tests for the plan (no rendering)
 
 **Done when:** `build_plan(config)` returns a correct plan for the default config and edge cases (1 page, 1-sheet booklets, weekly-only, daily-only).
 

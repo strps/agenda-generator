@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         target = args.output or DEFAULT_OUTPUT
         if args.pages is None:
-            out = export_agenda(cfg, target)  # temporary until Phase 4 build_plan
+            out = export_agenda(cfg, target)
         else:
             out = export_blank(cfg, args.pages, target)
     except FontsMissingError as exc:

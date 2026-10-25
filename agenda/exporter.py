@@ -7,10 +7,9 @@ from pathlib import Path
 from fpdf import FPDF
 
 from agenda import __version__
-from agenda.calendar import weeks_by_month
 from agenda.config import Config
 from agenda.draw import draw_debug_grid
-from agenda.grid import Grid, side_for_page
+from agenda.grid import Grid
 
 DEFAULT_OUTPUT = Path("output") / "agenda.pdf"
 
@@ -92,49 +91,22 @@ def export_blank(cfg: Config, pages: int = 1, path: str | Path = DEFAULT_OUTPUT)
 
 
 def export_agenda(cfg: Config, path: str | Path = DEFAULT_OUTPUT) -> Path:
-    """TEMPORARY full-agenda render (Phase 3). Phase 4 (`build_plan`) replaces this.
+    """Render the full agenda by iterating ``build_plan(cfg)``.
 
-    Order (plan section 7): cover, personal_info, yearly, then per month: monthly, then per owned
-    week its weekly spread and that week's daily pages (dates inside ``cfg.year``); then notes,
-    contacts, back_cover. A blank filler page is inserted when a page class with
-    ``starts_on`` left/right would start on the other side. No booklet math, padding,
-    ``daily_months`` or separate covers.
+    One PDF page per plan entry (blank for ``page_class=None``); each page instance is drawn
+    once, at its first entry, with the grids of all its pages.
     """
-    from agenda.pages.core import (
-        BackCover,
-        Contacts,
-        Cover,
-        Daily,
-        Monthly,
-        Notes,
-        PersonalInfo,
-        Weekly,
-        Yearly,
-    )
+    from agenda.assembler import build_plan
 
+    plan = build_plan(cfg)
     pdf = new_document(cfg)
-
-    def put(page, ctx) -> None:
-        want = page.starts_on
-        if want != "any" and side_for_page(pdf.page + 1) != want:
-            add_page(pdf, cfg)  # blank filler
-        grids = [add_page(pdf, cfg) for _ in range(page.pages)]
-        page.draw(pdf, ctx, cfg, grids)
-
-    for cls in (Cover, PersonalInfo, Yearly):
-        put(cls(), {})
-    monthly, weekly, daily = Monthly(), Weekly(), Daily()
-    weekly_ctx = {(c["iso_year"], c["number"]): c for c in weekly.instances(cfg)}
-    daily_ctx = {c["date"]: c for c in daily.instances(cfg)}
-    for month, weeks in weeks_by_month(cfg.year, cfg.week_start).items():
-        put(monthly, {"month": month})
-        for week in weeks:
-            if "weekly" in cfg.planners:
-                put(weekly, weekly_ctx[(week.iso_year, week.number)])
-            if "daily" in cfg.planners:
-                for d in week.days:
-                    if d in daily_ctx:
-                        put(daily, daily_ctx[d])
-    for cls in (Notes, Contacts, BackCover):
-        put(cls(), {})
+    grids: list[Grid] = []
+    for entry in plan:
+        grid = add_page(pdf, cfg)
+        if entry.page_in_instance == 0:
+            grids = []
+        grids.append(grid)
+        last = entry.page_in_instance == (entry.page_class.pages - 1 if entry.page_class else 0)
+        if entry.page_class is not None and last:
+            entry.page_class().draw(pdf, entry.ctx, cfg, grids)
     return write_pdf(pdf, path)

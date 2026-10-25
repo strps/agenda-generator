@@ -225,15 +225,31 @@ def build_plan(config: Any) -> PagePlan:
             lead = len(entries)
     weekly_ctx = {(c["iso_year"], c["number"]): c for c in Weekly().instances(config)}
     daily_ctx = {c["date"]: c for c in Daily().instances(config)}
-    for month, weeks in weeks_by_month(config.year, config.week_start).items():
+    by_month = weeks_by_month(config.year, config.week_start)
+    covered = {d for ws in by_month.values() for w in ws for d in w.days}
+    first_day = min(covered)
+    # Days of config.year in an ISO week owned by a neighbouring year: no weekly spread, but
+    # still a Daily page. Early ones follow the January monthly, late ones the last December week.
+    orphans = sorted(d for d in daily_ctx if d not in covered)
+    if "daily" not in config.planners:
+        orphans = []
+
+    def put_dailies(days: Sequence[Any]) -> None:
+        for d in days:
+            if d in daily_ctx and d.month in config.daily_months:
+                put(Daily, daily_ctx[d])
+
+    for month, weeks in by_month.items():
         put(Monthly, {"month": month})
+        if month == 1:
+            put_dailies([d for d in orphans if d < first_day])
         for week in weeks:
             if "weekly" in config.planners:
                 put(Weekly, weekly_ctx[(week.iso_year, week.number)])
             if "daily" in config.planners:
-                for d in week.days:
-                    if d in daily_ctx and d.month in config.daily_months:
-                        put(Daily, daily_ctx[d])
+                put_dailies(week.days)
+        if month == 12:
+            put_dailies([d for d in orphans if d > first_day])
     for category in ("optional", "value_added"):
         for cls in _extras(config, category):
             for ctx in cls().instances(config):
