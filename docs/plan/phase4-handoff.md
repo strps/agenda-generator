@@ -22,8 +22,7 @@ Short running notes between agents. Trim stale entries.
 - Tests: tests/test_build_plan.py (fillers replayed independently).
 
 ### Task 4: booklet math
-- `pages_per_sheet`, `pages_per_booklet(size, unit, folded)`, `booklet_index_for(page, per)`, `plan_booklets(total, per, num_booklets="auto") -> BookletLayout(total_pages, pages_per_booklet, count, padding, overflow)`.
-- Fixed `num_booklets` too small: `overflow` > 0, padding 0 (no truncation; validation/summary decide). Folded counts not multiple of 4 are not checked here. Tests: tests/test_booklets.py.
+- `pages_per_sheet`, `pages_per_booklet`, `booklet_index_for`, `plan_booklets(total, per, num_booklets) -> BookletLayout(..., padding, overflow)`; too-small fixed count: `overflow` > 0, padding 0.
 
 ### Task 5: padding
 - `Config.pad_with` (default "notes", validated against catalog). Padding goes before BackCover: tries 0,1,2.. pad units until `plan_booklets` fits; `kind="padding"`. No whole-unit fit: blank padding (`page_class=None`, section `front_back`). Fixed `num_booklets` too small: no padding, plan overflows. Tests: tests/test_padding.py.
@@ -41,3 +40,7 @@ Short running notes between agents. Trim stale entries.
 - `build_plan` asserts the counted block is a multiple of 4 when folded and not overflowing.
 - Overflow (fixed `num_booklets` too small) is NOT an error: plan builds, `BookletLayout.overflow` > 0. Task 9 summary must warn.
 - Gotcha: pydantic `validate_assignment` raises but leaves the bad value set; don't rely on rollback.
+
+### Task 9: summary
+- `summarize(plan, config) -> PlanSummary` (frozen, pure, not stored on PagePlan; `.format()`/`str()` multi-line text). Fields: total/counted/cover pages, fillers, padding_pages, blank_padding, pages_per_booklet, booklets, sheets_per_booklet, total_sheets, overflow, warnings.
+- Counted pages = entries with `booklet_index` (separate_covers); covers not turned into sheets. Warnings: overflow, `LARGE_PAGE_COUNT`=600 (suggests daily_months), blank padding. Tests: tests/test_summary.py.

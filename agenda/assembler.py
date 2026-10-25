@@ -295,3 +295,82 @@ def build_plan(config: Any) -> PagePlan:
         return booklet_index_for(e.page_number - lead, per)
 
     return PagePlan(tuple(replace(e, booklet_index=index(e)) for e in entries))
+
+
+LARGE_PAGE_COUNT = 600
+"""Total pages above which ``summarize`` warns (spec: both planners is about 500 pages)."""
+
+
+@dataclass(frozen=True)
+class PlanSummary:
+    """Numbers shown by the GUI and ``--dry-run``; computed by ``summarize`` (not stored on the plan).
+
+    ``counted_pages`` = pages inside booklets (``total_pages`` minus ``cover_pages``, which is
+    non-zero only with ``separate_covers``; covers are not folded into sheets here).
+    ``fillers`` includes the blank cover fillers; ``padding_pages`` counts ``kind="padding"``
+    and ``blank_padding`` the subset left blank.
+    """
+
+    total_pages: int
+    counted_pages: int
+    cover_pages: int
+    fillers: int
+    padding_pages: int
+    blank_padding: int
+    pages_per_booklet: int
+    booklets: int
+    sheets_per_booklet: int
+    total_sheets: int
+    overflow: int
+    warnings: tuple[str, ...] = ()
+
+    def format(self) -> str:
+        lines = [
+            f"Pages: {self.total_pages} ({self.counted_pages} in booklets"
+            + (f", {self.cover_pages} cover pages" if self.cover_pages else "")
+            + ")",
+            f"Booklets: {self.booklets} x {self.sheets_per_booklet} sheets"
+            + f" ({self.pages_per_booklet} pages each)",
+            f"Sheets: {self.total_sheets}",
+            f"Fillers: {self.fillers}, padding: {self.padding_pages}",
+        ]
+        lines += [f"Warning: {w}" for w in self.warnings]
+        return "\n".join(lines)
+
+    __str__ = format
+
+
+def summarize(plan: PagePlan, config: Any) -> PlanSummary:
+    """Pure summary of ``plan`` under ``config`` (booklet layout re-derived from the plan)."""
+    per = pages_per_booklet(config.booklet_size, config.booklet_unit, config.booklet_folded)
+    pps = pages_per_sheet(config.booklet_folded)
+    total = len(plan)
+    counted = (
+        sum(1 for e in plan if e.booklet_index is not None) if config.separate_covers else total
+    )
+    lay = plan_booklets(counted, per, config.num_booklets)
+    padding = [e for e in plan if e.kind == "padding"]
+    blank_pad = sum(1 for e in padding if e.is_blank)
+    sheets_per = math.ceil(per / pps)
+    warnings: list[str] = []
+    if lay.overflow:
+        need = math.ceil(counted / per)
+        warnings.append(
+            f"num_booklets={lay.count} is too small: {lay.overflow} pages do not fit "
+            f"({need} booklets needed); raise num_booklets or use 'auto'."
+        )
+    if total > LARGE_PAGE_COUNT:
+        warnings.append(
+            f"The agenda has {total} pages (more than {LARGE_PAGE_COUNT}); "
+            "consider daily_months to keep daily pages for fewer months."
+        )
+    if blank_pad:
+        warnings.append(
+            f"{blank_pad} blank padding pages: pad_with={config.pad_with!r} "
+            "could not fill the last booklet exactly."
+        )
+    return PlanSummary(
+        total, counted, total - counted, sum(1 for e in plan if e.kind == "filler"),
+        len(padding), blank_pad, per, lay.count, sheets_per, lay.count * sheets_per,
+        lay.overflow, tuple(warnings),
+    )  # fmt: skip
