@@ -70,3 +70,40 @@ def test_widget_legend_summary_click_and_error():
     assert win.summary_label.text() == M.NO_PLAN_TEXT
     assert win.legend.entries == []
     win.preview.wait_idle()
+
+
+def _legend_with(entries):
+    pytest.importorskip("PySide6")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import QApplication
+
+    QApplication.instance() or QApplication([])
+    from agenda.gui.legend import Legend
+
+    lg = Legend()
+    lg.set_entries(entries)
+    return lg
+
+
+def test_legend_tooltips_explain_colors():
+    from PySide6.QtWidgets import QLabel
+
+    from agenda.gui.help_text import SECTION_DESCRIPTIONS
+
+    lg = _legend_with(M.legend_entries(build_plan(Config())))
+    assert lg.entries
+    for e in lg.entries:
+        for tip in (lg.buttons[e.key].toolTip(), lg.findChild(QLabel, f"swatch_{e.key}").toolTip()):
+            assert SECTION_DESCRIPTIONS[e.key] in tip
+            assert "first" in tip
+    title = lg.findChild(QLabel, "legend_title")
+    assert title is not None and title.toolTip()
+    lg.set_entries(lg.entries)
+    assert lg.findChild(QLabel, "legend_title") is not None
+
+
+def test_legend_padding_description():
+    from agenda.gui.help_text import SECTION_DESCRIPTIONS
+
+    lg = _legend_with([M.LegendEntry("padding", "Padding", 2)])
+    assert SECTION_DESCRIPTIONS["padding"] in lg.buttons["padding"].toolTip()

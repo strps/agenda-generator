@@ -4,6 +4,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
+from agenda.gui import help_text
 from agenda.gui import legend_model as M
 from agenda.gui import section_colors as C
 
@@ -19,6 +20,13 @@ class Legend(QWidget):
         self.buttons: dict[str, QPushButton] = {}
         self._row = QHBoxLayout(self)
         self._row.setContentsMargins(4, 2, 4, 2)
+        self.title = QLabel("Legend:")
+        self.title.setObjectName("legend_title")
+        self.title.setToolTip(
+            "The colors mark the agenda sections in the bar above. "
+            "Hatching marks padding (blank filler pages)."
+        )
+        self._row.addWidget(self.title)
 
     def dark(self) -> bool:
         return C.is_dark(self.palette().window().color().lightness())
@@ -27,17 +35,21 @@ class Legend(QWidget):
         self.entries = list(entries)
         while self._row.count():
             item = self._row.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            w = item.widget()
+            if w is not None and w is not self.title:
+                w.deleteLater()
         self.buttons = {}
+        self._row.addWidget(self.title)
         for e in self.entries:
             btn = QPushButton(f"{e.label} {e.count}")
             btn.setFlat(True)
-            btn.setToolTip(f"Go to the first {e.label} page")
+            tip = f"{help_text.section_tooltip(e.key)}\nClick to go to the first {e.label} page."
+            btn.setToolTip(tip)
             btn.clicked.connect(lambda _=False, k=e.key: self.section_clicked.emit(k))
             sw = QLabel()
             sw.setFixedSize(12, 12)
             sw.setObjectName(f"swatch_{e.key}")
+            sw.setToolTip(tip)
             self._row.addWidget(sw)
             self._row.addWidget(btn)
             self.buttons[e.key] = btn
