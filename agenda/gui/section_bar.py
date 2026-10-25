@@ -5,8 +5,8 @@ from PySide6.QtGui import QBrush, QColor, QPainter, QPen
 from PySide6.QtWidgets import QWidget
 
 from agenda.gui import bar_model as B
+from agenda.gui import section_colors as C
 
-PLACEHOLDER = QColor("#8a8984")  # neutral until task 7 adds the section palette
 TICK_H = 6
 MARKER_W = 2
 
@@ -30,13 +30,19 @@ class SectionBar(QWidget):
     def geometry_for(self, width: float | None = None) -> B.BarGeometry:
         return B.geometry(self.plan, float(self.width() if width is None else width))
 
+    def dark(self) -> bool:
+        return C.is_dark(self.palette().window().color().lightness())
+
+    def color_for(self, key: str) -> QColor:
+        return QColor(C.section_color(key, self.dark()))
+
     def paintEvent(self, _event) -> None:
         geo = self.geometry_for()
         p = QPainter(self)
         bar_h = self.height() - TICK_H - 2
         for s in geo.segments():
             rect = QRectF(s.x, 0, s.width, bar_h)
-            p.fillRect(rect, PLACEHOLDER)
+            p.fillRect(rect, self.color_for(s.section))
             if s.padding:
                 p.fillRect(
                     rect, QBrush(self.palette().window().color(), Qt.BrushStyle.BDiagPattern)

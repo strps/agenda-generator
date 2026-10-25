@@ -12,6 +12,7 @@ MODULES = [
     "gui.preview_model",
     "gui.render_cache",
     "gui.bar_model",
+    "gui.section_colors",
     "sizes",
     "catalog",
     "calendar",

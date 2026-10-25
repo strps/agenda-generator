@@ -1,6 +1,5 @@
 # Phase 7b handoff
 
-
 ## Conventions
 
 - Env: `.venv/bin/pytest`, `.venv/bin/ruff check .`, `.venv/bin/ruff format --check agenda tests`.
@@ -37,5 +36,9 @@
 - `MainWindow`: `settings.changed` -> 300 ms QTimer (`DEBOUNCE_S`) -> `update_preview()`; `flush_preview()` skips the wait. build_plan still runs in the GUI thread (fast); the bar (task 6) should update from `update_preview` immediately.
 ### Task 6: section bar
 - `gui.bar_model` (Qt-free, in smoke MODULES): `geometry(plan, width) -> BarGeometry` with `runs`, `segments()` (section/`padding`, first, count, x, width), `ticks()`, `marker_x(i)`, `page_width`; `GAP_PX`=2. Padding (`kind=="padding"`) is its own run keyed `PADDING`; blank fillers keep their section.
-- `gui.section_bar.SectionBar` (object name `section_bar`): `set_plan`, `set_position`, `geometry_for()`; paints from the model. One neutral `PLACEHOLDER` color: task 7 swaps in the palette; task 8 needs `page_at(x)` (not built). MainWindow feeds it in `update_preview` and from `preview.page_changed`.
+- `gui.section_bar.SectionBar` (object name `section_bar`): `set_plan`, `set_position`, `geometry_for()`; paints from the model. Task 8 needs `page_at(x)` (not built). MainWindow feeds it in `update_preview` and from `preview.page_changed`.
 - Tests: `tests/test_gui_bar.py`.
+### Task 7: section colors
+- `gui.section_colors` (Qt-free, in smoke MODULES): `PALETTE` (key -> light, dark hex per gui.md), `section_color(key, dark) -> "#rrggbb"` (unknown -> gray), `is_dark(lightness)`. Padding is gray; the bar adds the hatch.
+- `SectionBar.dark()` (window lightness < 128), `color_for(key) -> QColor`; the legend (task 9) should reuse `section_color`.
+- Tests: `tests/test_gui_colors.py`.
