@@ -233,3 +233,10 @@ def draw_label_rule(pdf: FPDF, x: float, w: float, y: float, label: str, label_w
     pdf.set_draw_color(*tokens.COLORS["line"])
     pdf.set_line_width(tokens.STROKE_HAIRLINE)
     pdf.line(x + label_w, y, x + w, y)
+
+
+def draw_circle(pdf: FPDF, cx: float, cy: float, d: float) -> None:
+    """Empty circle centred on ``(cx, cy)`` with diameter ``d`` mm (light stroke, muted)."""
+    pdf.set_draw_color(*tokens.COLORS["muted"])
+    pdf.set_line_width(tokens.STROKE_LIGHT)
+    pdf.ellipse(cx - d / 2, cy - d / 2, d, d, style="D")
