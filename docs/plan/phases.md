@@ -10,7 +10,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 |---|---|---|---|---|---|---|
 | 1. Foundation | Done | 1–2 days | 2026-10-25 | 2026-10-25 | — | |
 | 2. Calendar | Done | 1 day | 2026-10-25 | 2026-10-25 | 1 | |
-| 3. Core pages | Not started | 3–4 days | | | 1, 2, 4 | |
+| 3. Core pages | In progress | 3–4 days | 2026-10-25 | | 1, 2, 4 | |
 | 4. Booklets & page plan | Not started | 1–2 days | | | 1, 2 | |
 | 5. Optional pages | Not started | 3 days | | | 3 | |
 | 6. Value-added pages | Not started | 4 days | | | 3 | |
@@ -56,7 +56,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 
 **Goal:** a complete, usable agenda with the core pages.
 
-- [ ] `BasePage` with `id`, `name`, `category`, `section`, `pages`, `starts_on`, `instances()`, `draw()`
+- [x] `BasePage` with `id`, `name`, `category`, `section`, `pages`, `starts_on`, `instances()`, `draw()`
 - [ ] `@register` catalog
 - [ ] Cover
 - [ ] Personal information
