@@ -145,3 +145,31 @@ def test_example_list(captured):
 def test_list_ignores_other_args_and_does_not_render(captured, tmp_path):
     result = runner.invoke(app, ["--list", "--size", "bogus", "-o", str(tmp_path / "x.pdf")])
     assert result.exit_code == 0 and not (tmp_path / "x.pdf").exists()
+
+
+def test_dry_run_prints_summary_without_rendering(captured, tmp_path):
+    out = tmp_path / "x.pdf"
+    res = runner.invoke(app, ["--dry-run", "--preset", "essential", "-o", str(out)])
+    assert res.exit_code == 0, res.output
+    assert "Pages:" in res.output and "wrote" not in res.output
+    assert "cfg" not in captured and not out.exists()
+
+
+def test_dry_run_with_pages_matches_plan(captured):
+    res = runner.invoke(app, ["--dry-run", "--pages", EXAMPLE_PAGES, "--booklet", "5"])
+    assert res.exit_code == 0, res.output
+    assert "Pages:" in res.output
+
+
+def test_dry_run_with_config_and_override(captured, tmp_path):
+    y = tmp_path / "c.yaml"
+    y.write_text("preset: essential\nbooklet:\n  size: 4\n  unit: sheets\n")
+    base = runner.invoke(app, ["--dry-run", "--config", str(y)])
+    over = runner.invoke(app, ["--dry-run", "--config", str(y), "--pages", "cover,qr"])
+    assert base.exit_code == over.exit_code == 0
+    assert base.output != over.output and "cfg" not in captured
+
+
+def test_dry_run_needs_no_fonts_and_still_validates(monkeypatch):
+    monkeypatch.setattr(cli, "export_agenda", lambda *a: pytest.fail("rendered"))
+    assert runner.invoke(app, ["--dry-run", "--year", "1800"]).exit_code == 2

@@ -126,7 +126,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] `typer` CLI mirroring the config model
 - [x] YAML loading; CLI overrides YAML; single validation pass
 - [x] `--list` catalog with value scores
-- [ ] `--dry-run` prints the plan summary without rendering
+- [x] `--dry-run` prints the plan summary without rendering
 - [ ] Sample `config.yaml`
 
 **Done when:** every example in [plan §8.1](plan_script_agenda.md#81-command-line) runs.

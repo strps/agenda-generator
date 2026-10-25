@@ -145,6 +145,9 @@ def run(
     blank_pages: Annotated[
         int | None, typer.Option(help="Write N blank pages instead of the agenda (temporary).")
     ] = None,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Print the plan summary; render nothing.")
+    ] = False,
 ) -> None:
     """Build the config from the flags, validate it once and write the PDF."""
     try:
@@ -183,6 +186,11 @@ def run(
         cfg = Config(**merged)
     except ValueError as exc:
         raise _fail(str(exc), 2) from None
+    if dry_run:
+        from agenda.assembler import build_plan, summarize
+
+        typer.echo(summarize(build_plan(cfg), cfg).format())
+        raise typer.Exit()
     target = cfg.output if "output" in merged else DEFAULT_OUTPUT
     try:
         if blank_pages is None:

@@ -26,3 +26,6 @@ Short running notes between agents. Trim stale entries.
 ### Task 3: `--list`
 - `catalog.catalog_rows()` (dicts: id, name, category, value, presets; sorted category, value desc, id) and pure `format_catalog(rows) -> str` (aligned table, `-` = unscored/none). No new module.
 - `--list` is an eager flag on `run` (like `--version`): prints and exits 0 before any other arg is validated. Tests: `tests/test_catalog_list.py`, `test_cli.py` (`--list` example).
+
+### Task 4: `--dry-run`
+- `run --dry-run`: after the single Config validation, prints `summarize(build_plan(cfg), cfg).format()` and exits 0; no export call, no fonts, no file. Validation errors still exit 2. Works with `--config`/`--preset`/`--pages`. Tests in `test_cli.py`. Plan §8.1 has no dry-run example.
