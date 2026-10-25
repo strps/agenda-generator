@@ -1,6 +1,5 @@
 # Phase 6 handoff
 
-
 ## Conventions
 
 - Env: `.venv/bin/pytest`, `.venv/bin/ruff check .`, `.venv/bin/ruff format --check agenda tests`.
@@ -13,21 +12,16 @@
 ## Log
 ### Task 1: Monthly quotes
 - `MonthlyQuotes` (`quotes`, value_added/value_added, 1 page x12 via `month_ctxs`); `layout(rows) -> (quote rows, reflection rules)`: quote area = half the rows in whole 2-baseline lines, label row + rules below.
-- Quotes are i18n keys `quotes.1..12` (es, en) plus `quotes.title/reflection`. Rule: original sayings, no attribution; name an author only for a certain public-domain quote (none now).
-- Wrapping: `pdf.multi_cell(..., dry_run=True, output="LINES")`; tries `QUOTE_SIZES`, drops lines that don't fit.
 ### Task 2: Vision board
 - `VisionBoard` (`vision_board`, value_added/value_added, 1 page); `layout(rows, width_rows) -> VisionLayout(word_rows, cols, nrows, cell_rows)` in baseline units, derived from the safe area (see class docstring).
-- Strings `vision.title/subtitle/word` (es, en). Empty framed cells + caption rule; no emoji.
 ### Task 3: Health tracker
 - `HealthTracker` (`health`, value_added/value_added, 1 page x12 via `month_ctxs`; the catalog gives no repetition, chosen monthly like Habits). `layout(rows)` = tracker rows that fit (2 baselines each, never shrunk; trackers dropped from the end); all 5 fit on a5/b6/letter.
 - `draw_mood(pdf, cx, cy, d, level 1..5)` and `MOOD_LEVELS` in `agenda/draw.py`: circle, dot eyes, polyline mouth; no glyphs.
-- Strings `health.title/mood/water/sleep/exercise/other` (es, en). Each day cell is a hairline rect (test counts `re` ops).
 ### Task 4: Meals and groceries
 - `Meals` (`meals`, value_added/value_added, 1 page; the catalog gives no repetition). `layout(rows) -> MealsLayout(day_rows, grocery_rows, grocery_cols)`: planner takes 60% of rows (1 label row + 7 days of 1..4 baselines), groceries get the rest after gap + label rows; 2 columns when rows >= 30 (a5, letter), 1 on b6.
 - Strings `meals.title/breakfast/lunch/dinner/groceries` (es, en); weekday labels use short names.
 ### Task 5: Gratitude journal
 - `Gratitude(count=1)` (`gratitude`, value_added/value_added; catalog's 4 is the value score, no repetition, so `count=N` like Todo, negatives rejected). `layout(rows) -> GratitudeLayout(lines, last_lines)`: fixed rows = date + 5 labels + 4 gaps; rest split evenly per block (min 1), remainder to the final "intention" block.
-- 3 "grateful" blocks have the row number as muted text (no glyph art); best-moment and intention blocks plain rules. Strings `gratitude.title/date/grateful/best/intention` (es, en).
 ### Task 6: Books, movies, series
 - `Media(count=1)` (`media_log`, value_added/value_added; catalog gives value 3, no repetition, so `count=N`, negatives rejected). Type column = stacked Book/Movie/Series labels, title, date, 5 `draw_circle` rating.
 - `layout(rows, width, type_w, date_w, title_min, g) -> MediaLayout(rows, circle_d, show_date)`: rows = (rows-1)//3; shrinks circles (ratios of a baseline) before dropping the date column. Grid has 6 columns, so DATE_COLS=1, TITLE_COLS=2. Today all sizes keep the date.
@@ -48,3 +42,6 @@
 - `QRCodes` (`qr`, value_added/value_added); `qrcode` was already a dependency (no new one). New `Config.qr_urls: list[str]` (default empty; stripped, non-empty, <= `QR_MAX_CHARS`=200, <= `QR_MAX_COUNT`=24; any text allowed, not only http). Not added to the argparse CLI.
 - `layout(w, h, baseline, gutter) -> QRLayout(cols, rows, cell_w, cell_h, side)`: 2 cols, 3 rows if it keeps the QR square >= 0.8 cell width, else 2 (all sizes give 2x2). `instances` = ceil(urls/per_page) ctxs `{"urls": [...]}`; 0 URLs = 0 pages (build_plan fine).
 - Modules are filled `re` rects (ECC M, 4-module quiet zone); caption = shortened text + "Name" rule. Strings `qr.title/label` (es, en).
+### Task 11: Physical extras guide
+- `ExtrasGuide` (`physical_extras` from catalog §3.3, value 5; value_added/value_added, 1 page, no `count`). `layout(rows) -> ExtrasLayout(tips, supply_rows)`: each tip = `TIP_ROWS` (3) rows, `min(6, rows//3)` tips in order; leftover rows >= 2 give a "My supplies" checkbox list (<= 4). All sizes show 6 tips.
+- Icons drawn by `ExtrasGuide._icon(pdf, kind, x, y, d)` from rect/ellipse/line. Strings `extras.title/supplies/fold/stickers/tabs/ribbon/loop/pocket` (es, en); text clipped to 2 lines.
