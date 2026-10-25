@@ -12,7 +12,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 | 2. Calendar | Done | 1 day | 2026-10-25 | 2026-10-25 | 1 | |
 | 3. Core pages | Done | 3–4 days | 2026-10-25 | 2026-10-25 | 1, 2, 4 | |
 | 4. Booklets & page plan | Done | 1–2 days | 2026-10-25 | 2026-10-25 | 1, 2 | |
-| 5. Optional pages | In progress | 3 days | 2026-10-25 | | 3 | |
+| 5. Optional pages | Done | 3 days | 2026-10-25 | 2026-10-25 | 3 | |
 | 6. Value-added pages | Not started | 4 days | | | 3 | |
 | 7. CLI & YAML | Not started | 1 day | | | 1, 4 | |
 | 7b. GUI | Not started | 4–5 days | | | 3, 4, 7 | |
