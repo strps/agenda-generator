@@ -37,6 +37,7 @@ class MonthlyQuotes(BasePage):
     """
 
     id = "quotes"
+    added_value = 3
     name = "Monthly quotes"
     category = "value_added"
     section = "value_added"
@@ -120,6 +121,7 @@ class VisionBoard(BasePage):
     """
 
     id = "vision_board"
+    added_value = 4
     name = "Vision board"
     category = "value_added"
     section = "value_added"
@@ -212,6 +214,7 @@ class HealthTracker(BasePage):
     """
 
     id = "health"
+    added_value = 4
     name = "Health tracker"
     category = "value_added"
     section = "value_added"
@@ -320,6 +323,7 @@ class Meals(BasePage):
     """
 
     id = "meals"
+    added_value = 4
     name = "Meal and grocery planner"
     category = "value_added"
     section = "value_added"
@@ -408,6 +412,7 @@ class Gratitude(BasePage):
     """
 
     id = "gratitude"
+    added_value = 4
     name = "Gratitude journal"
     category = "value_added"
     section = "value_added"
@@ -499,6 +504,7 @@ class Media(BasePage):
     """
 
     id = "media_log"
+    added_value = 3
     name = "Books, movies and series"
     category = "value_added"
     section = "value_added"
@@ -624,6 +630,7 @@ class Travel(BasePage):
     """
 
     id = "travel"
+    added_value = 4
     name = "Travel planner"
     category = "value_added"
     section = "value_added"
@@ -733,6 +740,7 @@ class Challenge30(BasePage):
     """
 
     id = "challenges30"
+    added_value = 4
     name = "30-day challenges"
     category = "value_added"
     section = "value_added"
@@ -840,6 +848,7 @@ class IdeaMap(BasePage):
     """
 
     id = "ideas"
+    added_value = 3
     name = "Idea map"
     category = "value_added"
     section = "value_added"
@@ -945,6 +954,7 @@ class QRCodes(BasePage):
     """
 
     id = "qr"
+    added_value = 5
     name = "QR codes"
     category = "value_added"
     section = "value_added"
@@ -1047,6 +1057,7 @@ class ExtrasGuide(BasePage):
     """
 
     id = "physical_extras"
+    added_value = 5
     name = "Physical extras guide"
     category = "value_added"
     section = "value_added"
@@ -1218,6 +1229,7 @@ class PackEntrepreneur(_Counted):
     """
 
     id = "niche_entrepreneur"
+    added_value = 5
     name = "Entrepreneur pack"
     FIXED_ROWS = 9
     METRIC_DIV = 6
@@ -1285,6 +1297,7 @@ class PackStudent(_Counted):
     """
 
     id = "niche_student"
+    added_value = 5
     name = "Student pack"
     ROW_BASELINES = 2
     STUDY_BOX_ROWS = 2
@@ -1346,6 +1359,7 @@ class PackFitness(_Counted):
     """
 
     id = "niche_fitness"
+    added_value = 5
     name = "Fitness pack"
     FIXED_ROWS = 4
     ROW_BASELINES = 2

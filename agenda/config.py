@@ -62,6 +62,8 @@ class Config(BaseModel):
     planners: list[Literal["weekly", "daily"]] = Field(default_factory=lambda: ["weekly", "daily"])
     daily_months: list[int] = Field(default_factory=lambda: list(range(1, 13)))
     pages: list[str] | None = None  # catalog IDs; None = all core pages (resolved by catalog)
+    # Selects ``pages`` by value score (agenda.catalog.preset_pages). Only used when ``pages`` is
+    # empty: explicit ``pages`` always win over the preset.
     preset: Literal["essential", "complete", "premium"] | None = None
     notes_pattern: Literal["lined", "dotted", "grid", "blank"] = "dotted"
     page_numbers: bool = False
@@ -142,6 +144,15 @@ class Config(BaseModel):
     @classmethod
     def _upper_country(cls, v: str) -> str:
         return v.strip().upper()
+
+    @model_validator(mode="after")
+    def _resolve_preset(self) -> Config:
+        """Single resolution point: an unset/empty ``pages`` is filled from ``preset``."""
+        if self.preset and not self.pages:
+            from agenda.catalog import preset_pages  # lazy: the catalog imports this module
+
+            self.__dict__["pages"] = preset_pages(self.preset)  # no re-validation (no recursion)
+        return self
 
     @model_validator(mode="after")
     def _check_booklet_rules(self) -> Config:

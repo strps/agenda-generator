@@ -37,6 +37,8 @@ class BasePage(ABC):
     section: ClassVar[str]
     pages: ClassVar[int] = 1
     starts_on: ClassVar[str] = "any"
+    # Value score 1-5 (plan section 3.3); 0 = unscored (core and optional pages). Drives presets.
+    added_value: ClassVar[int] = 0
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)

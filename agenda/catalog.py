@@ -16,6 +16,16 @@ T = TypeVar("T", bound=type[BasePage])
 
 CATALOG: dict[str, type[BasePage]] = {}  # insertion order = registration order
 
+# Presets select non-core pages by their ``added_value`` score (plan section 3.3, 1-5). Pages
+# without a score (0: core and optional pages) are only in "premium".
+ESSENTIAL_MIN_VALUE = 5
+COMPLETE_MIN_VALUE = 4
+PRESET_MIN_VALUE: dict[str, int] = {
+    "essential": ESSENTIAL_MIN_VALUE,
+    "complete": COMPLETE_MIN_VALUE,
+    "premium": 0,
+}
+
 PAGE_MODULES = ("agenda.pages.core", "agenda.pages.optional", "agenda.pages.value_added")
 
 
@@ -64,3 +74,20 @@ def resolve_pages(config: Config) -> list[type[BasePage]]:
     if config.pages is None:
         return pages_by_category("core")
     return [get_page(i) for i in config.pages]
+
+
+def preset_pages(name: str) -> list[str]:
+    """Ids of the non-core pages a preset selects, by ``added_value`` score.
+
+    ``essential`` = score >= ``ESSENTIAL_MIN_VALUE``, ``complete`` = score >= ``COMPLETE_MIN_VALUE``,
+    ``premium`` = every registered non-core page (including unscored ones, score 0). Core pages
+    are always in the plan and never listed. Order = registration order (optional pages, then
+    value-added), so the lists are nested: essential <= complete <= premium.
+    """
+    try:
+        minimum = PRESET_MIN_VALUE[name]
+    except KeyError:
+        raise ValueError(
+            f"unknown preset {name!r}; valid presets: {', '.join(PRESET_MIN_VALUE)}"
+        ) from None
+    return [p.id for p in all_pages() if p.category != "core" and p.added_value >= minimum]

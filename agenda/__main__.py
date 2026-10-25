@@ -28,6 +28,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="write N blank pages instead of the agenda (temporary)",
     )
     parser.add_argument("--page-size", default=None, help="named size or WxH in mm")
+    parser.add_argument(
+        "--preset",
+        choices=["essential", "complete", "premium"],
+        default=None,
+        help="select optional/value-added pages by value score",
+    )
     parser.add_argument("--orientation", choices=["portrait", "landscape"], default=None)
     parser.add_argument(
         "--debug-grid", action="store_true", help="overlay margins, columns, baseline and rulers"
@@ -38,7 +44,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     overrides = {
-        k: v for k, v in (("page_size", args.page_size), ("orientation", args.orientation)) if v
+        k: v
+        for k, v in (
+            ("page_size", args.page_size),
+            ("orientation", args.orientation),
+            ("preset", args.preset),
+        )
+        if v
     }
     if args.debug_grid:
         overrides["debug_grid"] = True
