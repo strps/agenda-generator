@@ -177,3 +177,94 @@ def test_export_with_crop_marks(tmp_path):
 def test_crop_marks_require_imposition():
     with pytest.raises(ValueError, match="crop_marks requires imposition"):
         Config(crop_marks=True)
+
+
+# ---------------------------------------------------------------- properties and the Done-when
+
+from helpers import PT, drawn_points
+
+from agenda.grid import side_for_page
+
+_SIZES = list(range(4, 201, 4))
+
+
+@pytest.mark.parametrize("n", _SIZES)
+def test_order_every_page_once_and_pairs_sum_to_n_plus_1(n):
+    sides = imposition_order(n)
+    assert len(sides) == n // 2
+    assert sorted(p for side in sides for p in side) == list(range(1, n + 1))
+    assert all(a + b == n + 1 for a, b in sides)
+
+
+@pytest.mark.parametrize("n", _SIZES)
+def test_order_front_back_alternation(n):
+    # In a folded booklet every side has an even page on the left (verso) and an odd page on the
+    # right (recto), the same rule the grid uses for the binding margin.
+    for left, right in imposition_order(n):
+        assert left % 2 == 0 and right % 2 == 1
+        assert side_for_page(left) == "left" and side_for_page(right) == "right"
+    # sheet s: front is (n-2s+2, 2s-1), back (2s, n-2s+1)
+    for s in range(1, n // 4 + 1):
+        assert imposition_order(n)[2 * s - 2] == (n - 2 * s + 2, 2 * s - 1)
+        assert imposition_order(n)[2 * s - 1] == (2 * s, n - 2 * s + 1)
+
+
+def _text_xs(page):
+    """Map text token -> x of its origin in points."""
+    xs = {}
+
+    def visit(t, cm, tm, fd, fs):
+        if t.strip():
+            xs[t.strip()] = cm[4] + tm[4] * cm[0]
+
+    page.extract_text(visitor_text=visit)
+    return xs
+
+
+@pytest.mark.parametrize("n", [4, 8, 12, 20, 40])
+@pytest.mark.parametrize("bleed", [None, 3])
+def test_pdf_sides_hold_expected_pages_in_their_half(n, bleed):
+    out = impose_booklets(_pdf(n), [1] * n, bleed_mm=bleed)
+    reader = PdfReader(io.BytesIO(out))
+    sides = imposition_order(n)
+    assert len(reader.pages) == len(sides)
+    for page, (left, right) in zip(reader.pages, sides):
+        half = float(page.mediabox.width) / 2
+        xs = _text_xs(page)
+        assert set(xs) == {f"P{left}", f"P{right}"}
+        assert xs[f"P{left}"] < half < xs[f"P{right}"]
+        # content of each page stays inside its own half (fold at the sheet centre)
+        assert 0 < xs[f"P{left}"] < half < xs[f"P{right}"] < 2 * half
+
+
+@pytest.mark.parametrize("booklet_size", [1, 2, 3])
+def test_binding_margin_lands_on_the_fold_side(tmp_path, booklet_size):
+    # inner (binding) margin 15 > outer 10: after imposition every placed page's content keeps
+    # >= inner from the fold and >= outer from the sheet edge, left and right pages alike.
+    # (Per-page margins are Grid.for_page / side_for_page; this checks they survive imposition.)
+    cfg = Config(
+        year=2025,
+        planners=[],
+        booklet_size=booklet_size,
+        num_booklets=1,
+        imposition=True,
+        inner_margin=15,
+        outer_margin=10,
+    )
+    out = export_agenda(cfg, tmp_path / "b.pdf").read_bytes()
+    reader = PdfReader(io.BytesIO(out))
+    inner, outer, eps = cfg.inner_margin, cfg.outer_margin, 0.1
+    seen = {"left": 0, "right": 0}
+    for page, pts in zip(reader.pages, drawn_points(out)):
+        sheet_w = float(page.mediabox.width) * PT
+        fold = sheet_w / 2
+        for x, _ in pts:
+            if min(abs(x), abs(x - fold), abs(x - sheet_w)) < 1e-3:
+                continue  # page-boundary clip rectangles added by the merge, not content
+            if x < fold:
+                seen["left"] += 1
+                assert outer - eps <= x <= fold - inner + eps, x
+            else:
+                seen["right"] += 1
+                assert fold + inner - eps <= x <= sheet_w - outer + eps, x
+    assert seen["left"] and seen["right"]

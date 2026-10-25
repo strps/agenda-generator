@@ -16,7 +16,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 | 6. Value-added pages | Done | 4 days | 2026-10-25 | 2026-10-25 | 3 | |
 | 7. CLI & YAML | Done | 1 day | 2026-10-25 | 2026-10-25 | 1, 4 | |
 | 7b. GUI | Done | 4–5 days | 2026-10-25 | 2026-10-25 | 3, 4, 7 | |
-| 8. Imposition | In progress | 2 days | 2026-10-25 | | 4 | |
+| 8. Imposition | Done | 2 days | 2026-10-25 | 2026-10-25 | 4 | |
 | 9. Testing & polish | Not started | 2–3 days | | | all | |
 
 **Recommended execution order:** 1 → 2 → 4 → 3 → 7 → 8 → 7b → 5 → 6 → 9. The booklet logic and page plan come before the core pages because page placement (left/right, spreads) affects page design. See [improvements.md §6](improvements.md#6-phase-order).
@@ -153,9 +153,11 @@ Spec: [gui.md](../architecture/gui.md).
 - [x] `imposition_order(n)` for folded booklets
 - [x] 2-up placement on landscape letter/A4 with pypdf; scaling/centering for other sizes
 - [x] Bleed and crop marks
-- [ ] Property tests: every page once; each sheet side's pair sums to N+1
+- [x] Property tests: every page once; each sheet side's pair sums to N+1
 
 **Done when:** a printed, folded test booklet reads in order with the binding margin on the fold side.
+
+Verified by tests (order, halves, margins at PDF level); the physical print of a folded booklet remains a manual check (Phase 9 print test).
 
 ## Phase 9 — Testing & polish
 
@@ -177,3 +179,4 @@ Spec: [gui.md](../architecture/gui.md).
 | 2026-10-25 | Tracker created. Decisions so far: folded booklets by default (selectable), weekly + daily planners, `CR` holidays, fpdf2 rendering, PySide6 GUI with section bar. |
 | 2026-10-25 | Phase 1 done: package, config, sizes, fonts, grid, alternating margins, `--debug-grid`, i18n table (`es`, `en`). |
 | 2026-10-25 | Phase 2 done: `agenda/calendar.py` (months, month grids, ISO weeks, weeks by month, localized holidays) with tests for 2026 (53 weeks), 2027, 2028 (leap), Monday/Sunday start. |
+| 2026-10-25 | Phase 8 done: imposition (order, 2-up placement, crop marks) with property and PDF-level tests; physical print check stays manual. |
