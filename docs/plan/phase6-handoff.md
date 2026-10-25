@@ -27,3 +27,6 @@ Short running notes between agents. Trim stale entries.
 ### Task 4: Meals and groceries
 - `Meals` (`meals`, value_added/value_added, 1 page; the catalog gives no repetition). `layout(rows) -> MealsLayout(day_rows, grocery_rows, grocery_cols)`: planner takes 60% of rows (1 label row + 7 days of 1..4 baselines), groceries get the rest after gap + label rows; 2 columns when rows >= 30 (a5, letter), 1 on b6.
 - Strings `meals.title/breakfast/lunch/dinner/groceries` (es, en); weekday labels use short names.
+### Task 5: Gratitude journal
+- `Gratitude(count=1)` (`gratitude`, value_added/value_added; catalog's 4 is the value score, no repetition, so `count=N` like Todo, negatives rejected). `layout(rows) -> GratitudeLayout(lines, last_lines)`: fixed rows = date + 5 labels + 4 gaps; rest split evenly per block (min 1), remainder to the final "intention" block.
+- 3 "grateful" blocks have the row number as muted text (no glyph art); best-moment and intention blocks plain rules. Strings `gratitude.title/date/grateful/best/intention` (es, en).
