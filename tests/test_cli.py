@@ -133,3 +133,15 @@ def test_end_to_end_subprocess(tmp_path):
     proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
     assert proc.returncode == 0, proc.stderr
     assert len(PdfReader(out).pages) > 2
+
+
+def test_example_list(captured):
+    result = runner.invoke(app, ["--list"])
+    assert result.exit_code == 0
+    assert "cover" in result.output and "VALUE" in result.output
+    assert "cfg" not in captured
+
+
+def test_list_ignores_other_args_and_does_not_render(captured, tmp_path):
+    result = runner.invoke(app, ["--list", "--size", "bogus", "-o", str(tmp_path / "x.pdf")])
+    assert result.exit_code == 0 and not (tmp_path / "x.pdf").exists()

@@ -91,3 +91,46 @@ def preset_pages(name: str) -> list[str]:
             f"unknown preset {name!r}; valid presets: {', '.join(PRESET_MIN_VALUE)}"
         ) from None
     return [p.id for p in all_pages() if p.category != "core" and p.added_value >= minimum]
+
+
+def catalog_rows() -> list[dict[str, object]]:
+    """One row per registered page: id, name, category, value score and the presets containing it.
+
+    Sorted by category (``CATEGORIES`` order), then value score (high first), then id. Core pages
+    are in every plan, so their ``presets`` is empty.
+    """
+    rows = []
+    for p in all_pages():
+        presets = [n for n in PRESET_MIN_VALUE if p.id in preset_pages(n)]
+        rows.append(
+            {
+                "id": p.id,
+                "name": p.name,
+                "category": p.category,
+                "value": p.added_value,
+                "presets": presets,
+            }
+        )
+    rows.sort(key=lambda r: (CATEGORIES.index(str(r["category"])), -int(r["value"]), r["id"]))  # type: ignore[call-overload]
+    return rows
+
+
+def format_catalog(rows: list[dict[str, object]]) -> str:
+    """Render ``catalog_rows`` as an aligned text table (value ``-`` = unscored)."""
+    head = ("ID", "CATEGORY", "VALUE", "PRESETS", "NAME")
+    body = [
+        (
+            str(r["id"]),
+            str(r["category"]),
+            str(r["value"]) if r["value"] else "-",
+            ",".join(r["presets"]) if r["presets"] else "-",  # type: ignore[call-overload]
+            str(r["name"]),
+        )
+        for r in rows
+    ]
+    widths = [max(len(line[i]) for line in [head, *body]) for i in range(4)]
+    lines = [head, *body]
+    return "\n".join(
+        "  ".join(cell.ljust(w) for cell, w in zip(line[:4], widths)) + "  " + line[4]
+        for line in lines
+    )

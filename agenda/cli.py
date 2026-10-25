@@ -63,6 +63,14 @@ def _version(value: bool) -> None:
         raise typer.Exit()
 
 
+def _list(value: bool) -> None:
+    if value:
+        from agenda.catalog import catalog_rows, format_catalog
+
+        typer.echo(format_catalog(catalog_rows()))
+        raise typer.Exit()
+
+
 def _fail(message: str, code: int) -> "typer.Exit":
     typer.echo(f"agenda-gen: {message}", err=True)
     return typer.Exit(code)
@@ -72,6 +80,10 @@ def _fail(message: str, code: int) -> "typer.Exit":
 def run(
     version: Annotated[
         bool, typer.Option("--version", callback=_version, is_eager=True, help="Show version.")
+    ] = False,
+    list_pages: Annotated[
+        bool,
+        typer.Option("--list", callback=_list, is_eager=True, help="List the page catalog."),
     ] = False,
     config: Annotated[
         Path | None, typer.Option("--config", help="YAML settings file; flags override it.")

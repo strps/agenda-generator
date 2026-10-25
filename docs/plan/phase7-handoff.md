@@ -22,3 +22,7 @@ Short running notes between agents. Trim stale entries.
 - `run --config PATH`: `Config(**merge(load_yaml, build_overrides))` is the single validation; unknown keys fail in Config (`extra=forbid`). All errors exit 2 with `agenda-gen: ...`.
 - Overrides replace whole values: `--pages`/`--category` replace the YAML `pages`; `--preset` is ignored if YAML sets `pages` (explicit pages win). Output path: flag, else YAML `output`, else `DEFAULT_OUTPUT`.
 - `Config.pages` still accepts unknown ids (left open; not Config-trivial because catalog imports config).
+
+### Task 3: `--list`
+- `catalog.catalog_rows()` (dicts: id, name, category, value, presets; sorted category, value desc, id) and pure `format_catalog(rows) -> str` (aligned table, `-` = unscored/none). No new module.
+- `--list` is an eager flag on `run` (like `--version`): prints and exits 0 before any other arg is validated. Tests: `tests/test_catalog_list.py`, `test_cli.py` (`--list` example).
