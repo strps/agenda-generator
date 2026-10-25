@@ -108,7 +108,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Monthly quotes
 - [x] Vision board
 - [x] Health tracker (drawn mood shapes, no emoji)
-- [ ] Meals and groceries
+- [x] Meals and groceries
 - [ ] Gratitude journal
 - [ ] Books, movies and series
 - [ ] Travel planner

@@ -24,3 +24,6 @@ Short running notes between agents. Trim stale entries.
 - `HealthTracker` (`health`, value_added/value_added, 1 page x12 via `month_ctxs`; the catalog gives no repetition, chosen monthly like Habits). `layout(rows)` = tracker rows that fit (2 baselines each, never shrunk; trackers dropped from the end); all 5 fit on a5/b6/letter.
 - `draw_mood(pdf, cx, cy, d, level 1..5)` and `MOOD_LEVELS` in `agenda/draw.py`: circle, dot eyes, polyline mouth; no glyphs.
 - Strings `health.title/mood/water/sleep/exercise/other` (es, en). Each day cell is a hairline rect (test counts `re` ops).
+### Task 4: Meals and groceries
+- `Meals` (`meals`, value_added/value_added, 1 page; the catalog gives no repetition). `layout(rows) -> MealsLayout(day_rows, grocery_rows, grocery_cols)`: planner takes 60% of rows (1 label row + 7 days of 1..4 baselines), groceries get the rest after gap + label rows; 2 columns when rows >= 30 (a5, letter), 1 on b6.
+- Strings `meals.title/breakfast/lunch/dinner/groceries` (es, en); weekday labels use short names.
