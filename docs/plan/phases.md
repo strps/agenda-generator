@@ -33,7 +33,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] `sizes.py`: named sizes + custom `WxH` in mm, orientation
 - [x] fpdf2 document in mm (`FPDF(unit="mm", format=...)`)
 - [x] Bundle and register TTF fonts in `assets/fonts/`; fail if missing
-- [ ] `tokens.py` and `grid.py`: margins, 6 columns, 5 mm baseline ([layout-grid.md](../architecture/layout-grid.md))
+- [x] `tokens.py` and `grid.py`: margins, 6 columns, 5 mm baseline ([layout-grid.md](../architecture/layout-grid.md))
 - [ ] Alternating inner/outer margins by page side
 - [ ] `--debug-grid` overlay (margins, columns, baseline, mm rulers)
 - [ ] i18n string table (`es`, `en`)

@@ -46,3 +46,11 @@ Short running notes between agents. Trim stale entries.
 - CLI prints the error to stderr and returns exit code 1 (2 stays for invalid config).
 - Tests in `tests/test_exporter.py` (accent text extracted from PDF, missing-dir error, CLI exit code).
 - Gotcha: fpdf2 `cell()` defaults to staying on the line; pass `new_x="LMARGIN", new_y="NEXT"` for line breaks (margins are 0).
+
+### Task 7: tokens + grid
+- `agenda/tokens.py`: constants `COLUMNS=6`, `GUTTER=3`, `BASELINE=5`, `MARGIN_TOP/BOTTOM=10`, `HEADER_HEIGHT=12`, `FOOTER_HEIGHT=6`, `SPACING`, `TYPE_SIZES_PT`, `STROKE_*`, `RADII`, `DOT_SIZE`, `COLORS` (RGB dict), `pt_to_mm()`.
+- `agenda/grid.py`: frozen dataclass `Grid` + `Rect(x, y, w, h)` NamedTuple (`.x2/.y2`); origin top-left. `Grid.from_config(cfg, side="right")`, `grid.for_side(side)` (copy for other side).
+- `side` = physical page side: "right" (recto) => left margin = inner; "left" (verso) => right margin = inner. Left/right margins already swap via `side`; task 8 only needs to pick the side per page number (odd = right) and call `for_side`/`from_config`. Nothing else to implement in grid for it.
+- API: `safe`, `header`, `footer`, `content` (height is floored to whole baseline rows), `col_width`, `col_x(i)`, `col(i, span) -> (x, w)`, `span_width`, `rows`, `row(n)` (y of baseline line n from content top), `snap(y)`, `rows_in(h)`, `span(col, cols, row, rows) -> Rect`. Columns 0-based.
+- Top/bottom margins, header/footer heights are tokens, not Config fields (Config only has inner/outer). Overlay (task 9) can draw from these properties.
+- Tests: `tests/test_grid.py` (half_letter, a5, both sides).
