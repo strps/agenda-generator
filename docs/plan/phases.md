@@ -151,7 +151,7 @@ Spec: [gui.md](../architecture/gui.md).
 ## Phase 8 — Imposition
 
 - [x] `imposition_order(n)` for folded booklets
-- [ ] 2-up placement on landscape letter/A4 with pypdf; scaling/centering for other sizes
+- [x] 2-up placement on landscape letter/A4 with pypdf; scaling/centering for other sizes
 - [ ] Bleed and crop marks
 - [ ] Property tests: every page once; each sheet side's pair sums to N+1
 
