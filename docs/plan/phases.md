@@ -13,7 +13,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 | 3. Core pages | Done | 3–4 days | 2026-10-25 | 2026-10-25 | 1, 2, 4 | |
 | 4. Booklets & page plan | Done | 1–2 days | 2026-10-25 | 2026-10-25 | 1, 2 | |
 | 5. Optional pages | Done | 3 days | 2026-10-25 | 2026-10-25 | 3 | |
-| 6. Value-added pages | In progress | 4 days | 2026-10-25 | | 3 | |
+| 6. Value-added pages | Done | 4 days | 2026-10-25 | 2026-10-25 | 3 | |
 | 7. CLI & YAML | Not started | 1 day | | | 1, 4 | |
 | 7b. GUI | Not started | 4–5 days | | | 3, 4, 7 | |
 | 8. Imposition | Not started | 2 days | | | 4 | |
@@ -117,7 +117,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] QR codes from user URLs
 - [x] Physical extras guide
 - [x] Niche packs (entrepreneur, student, fitness)
-- [ ] Presets by value score (`--preset essential|complete|premium`)
+- [x] Presets by value score (`--preset essential|complete|premium`)
 
 **Done when:** each page renders at every supported size, and presets select the expected pages.
 
