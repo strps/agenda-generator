@@ -89,3 +89,40 @@ def test_add_page_sets_per_page_grid_and_margins():
         assert pdf.l_margin == grid.left
         assert pdf.r_margin == grid.right
         assert pdf.get_x() == grid.safe.x
+
+
+def test_export_agenda_full_default(tmp_path, monkeypatch, capsys):
+    import time
+
+    from helpers import assert_in_safe_area
+
+    from agenda.exporter import export_agenda
+    from agenda.grid import side_for_page
+    from agenda.pages.core import Weekly
+
+    starts = []
+    orig = Weekly.draw
+
+    def spy(self, pdf, ctx, config, grids):
+        starts.append(pdf.page - 1)  # 1-based number of the spread's left page
+        orig(self, pdf, ctx, config, grids)
+
+    monkeypatch.setattr(Weekly, "draw", spy)
+    cfg = Config(year=2026)
+    t0 = time.perf_counter()
+    out = export_agenda(cfg, tmp_path / "full.pdf")
+    elapsed = time.perf_counter() - t0
+    data = out.read_bytes()
+    n = len(PdfReader(out).pages)
+    print(f"agenda pages={n} render={elapsed:.1f}s")
+    assert 480 < n < 600  # 3+12 front/monthly, ~53 spreads, 365 dailies, 3 back, ~53 fillers
+    assert len(starts) >= 52
+    for p in starts:
+        assert side_for_page(p) == "left" and side_for_page(p + 1) == "right"
+    assert_in_safe_area(data, cfg, allow_blank=True)
+
+
+def test_cli_default_writes_full_agenda(tmp_path):
+    out = tmp_path / "a.pdf"
+    assert main(["-o", str(out), "--page-size", "a5"]) == 0
+    assert len(PdfReader(out).pages) > 100

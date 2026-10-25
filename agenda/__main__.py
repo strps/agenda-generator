@@ -10,7 +10,7 @@ import sys
 
 from agenda import __version__
 from agenda.config import Config
-from agenda.exporter import DEFAULT_OUTPUT, FontsMissingError, export_blank
+from agenda.exporter import DEFAULT_OUTPUT, FontsMissingError, export_agenda, export_blank
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -21,7 +21,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-o", "--output", default=None, help="output PDF path (default output/agenda.pdf)"
     )
-    parser.add_argument("--pages", type=int, default=4, help="number of blank pages (temporary)")
+    parser.add_argument(
+        "--pages",
+        type=int,
+        default=None,
+        help="write N blank pages instead of the agenda (temporary)",
+    )
     parser.add_argument("--page-size", default=None, help="named size or WxH in mm")
     parser.add_argument("--orientation", choices=["portrait", "landscape"], default=None)
     parser.add_argument(
@@ -43,7 +48,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"agenda-gen: {exc}", file=sys.stderr)
         return 2
     try:
-        out = export_blank(cfg, args.pages, args.output or DEFAULT_OUTPUT)
+        target = args.output or DEFAULT_OUTPUT
+        if args.pages is None:
+            out = export_agenda(cfg, target)  # temporary until Phase 4 build_plan
+        else:
+            out = export_blank(cfg, args.pages, target)
     except FontsMissingError as exc:
         print(f"agenda-gen: {exc}", file=sys.stderr)
         return 1

@@ -19,12 +19,12 @@ Short running notes between agents. Trim stale entries.
 - Inter via `pdf.set_font("Inter", style, pt)`; set `pdf.c_margin = 0`. Safe-area check sees text origins only; keep cells in `safe`.
 ### Tasks 5-6: Yearly, Monthly
 - `agenda.draw.draw_mini_month(pdf, rect, year, month, lang, week_start, day_style, title_pt, body_pt)`, `DayStyle(color, fill)`.
-- Task 12 hook on each page: staticmethod `day_style(date) -> DayStyle | None` (None); Monthly ctx `{"month": m}`.
+- Monthly ctx `{"month": m}`. Day marking: see task 12.
 ### Task 7: Weekly
 - `Weekly` (2 pages, starts_on left). ctx: `number`, `iso_year`, `days` (7 dates), `month` (owner, `weeks_by_month` order). Tests use `render_spreads` in tests/test_weekly.py; `assert_in_safe_area(..., allow_blank=True)`.
 ### Task 8: Daily
 - `Daily` (`daily`, section daily, 1 page). ctx `date`, `week`, `iso_year` (ISO; sort/place after its week's spread in Phase 4). `daily_months` NOT applied (Phase 4).
-- Header: `day.title` + `week.number` right; schedule 06:00-21:00 left half (fewer hours if rows short), priorities/notes right. `Daily.day_style` fills header.
+- Header: `day.title` + `week.number` right; schedule 06:00-21:00 left half (fewer hours if rows short), priorities/notes right.
 - Tests render a subset (`render_subset` in tests/test_daily.py), not all 366.
 ### Task 9: Notes
 - `Notes` (`notes`, section front_back, 1 page): header `notes.title` + `draw_pattern(pdf, g.content, config.notes_pattern, g.baseline)` (agenda/draw.py; lined/dotted/grid/blank, anchored top-left of rect, clipped to it).
@@ -36,3 +36,14 @@ Short running notes between agents. Trim stale entries.
 ### Task 11: Back cover
 - `BackCover` (`back_cover`, section front_back, 1 page) in core.py; shares `_cover_panel(pdf, g, title, year)` with `Cover` (Cover refactored, output unchanged).
 - New i18n key `back_cover.line` (es "Que cada día cuente", en "Make every day count"); placement last is Phase 4.
+### Task 12: Holidays/weekends + temporary full render
+- `draw.day_style_for(cfg) -> f(date)`: `HOLIDAY_STYLE` (accent text, `holiday_fill`) > `WEEKEND_STYLE` (Sat/Sun only, any `week_start`) > None. `holiday_name_for(cfg)`; holidays cached per (year, country, language); bad country -> ValueError at call. Per-page `day_style` hooks removed; pages call `day_style_for(config)`.
+- Weekly prints the holiday name right-aligned in the day label row if it fits. Daily only colors the header.
+- TEMPORARY `exporter.export_agenda(cfg, path)`: section 7 order, blank filler for `starts_on`, honors `planners`; CLI without `--pages` uses it. 2026 default: 530 pages in ~0.6 s (~53 fillers, as 7 dailies per week are odd).
+
+## Phase 3 wrap-up / open items for Phase 4+
+
+- Replace `export_agenda` with `build_plan` + drawing from the plan; keep the page order and filler logic.
+- Placement of padding, `daily_months`, `separate_covers`, summary, booklets are still open.
+- Fillers are blank pages (no notes pattern); consider Notes fillers via `Notes(count=N)`.
+- Daily pages for dates of a week outside `config.year` are skipped; weekly spreads of boundary weeks still show those days.

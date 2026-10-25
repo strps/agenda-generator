@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import date
+from functools import lru_cache
 from typing import NamedTuple
 
 from fpdf import FPDF
 
 from agenda import tokens
-from agenda.calendar import month_grid
+from agenda.calendar import holidays_for, month_grid
+from agenda.config import Config
 from agenda.grid import Grid, Rect
 from agenda.i18n import Strings
 
@@ -143,6 +145,46 @@ def draw_mini_month(
 class DayStyle(NamedTuple):
     color: tuple[int, int, int] | None = None
     fill: tuple[int, int, int] | None = None
+
+
+WEEKEND_STYLE = DayStyle(color=tokens.COLORS["muted"], fill=tokens.COLORS["weekend_fill"])
+HOLIDAY_STYLE = DayStyle(color=tokens.COLORS["accent"], fill=tokens.COLORS["holiday_fill"])
+
+
+@lru_cache(maxsize=32)
+def _holidays(year: int, country: str, language: str) -> dict[date, str]:
+    return holidays_for(year, country, language)
+
+
+def holiday_name_for(config: Config) -> Callable[[date], str | None]:
+    """Return ``f(date) -> holiday name or None`` for ``config.holiday_country``/``language``.
+
+    Holidays are cached per (year, country, language); unknown country raises ValueError.
+    """
+
+    def name(d: date) -> str | None:
+        return _holidays(d.year, config.holiday_country, config.language).get(d)
+
+    name(date(config.year, 1, 1))  # fail early on a bad country
+    return name
+
+
+def day_style_for(config: Config) -> Callable[[date], DayStyle | None]:
+    """Return ``f(date) -> DayStyle | None`` marking holidays (strong) and Sat/Sun (light).
+
+    Weekends are Saturday and Sunday regardless of ``config.week_start``; a holiday on a
+    weekend gets the holiday style.
+    """
+    holiday = holiday_name_for(config)
+
+    def style(d: date) -> DayStyle | None:
+        if holiday(d):
+            return HOLIDAY_STYLE
+        if d.weekday() >= 5:
+            return WEEKEND_STYLE
+        return None
+
+    return style
 
 
 def draw_pattern(pdf: FPDF, rect: Rect, pattern: str, pitch: float) -> None:

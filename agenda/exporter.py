@@ -7,9 +7,10 @@ from pathlib import Path
 from fpdf import FPDF
 
 from agenda import __version__
+from agenda.calendar import weeks_by_month
 from agenda.config import Config
 from agenda.draw import draw_debug_grid
-from agenda.grid import Grid
+from agenda.grid import Grid, side_for_page
 
 DEFAULT_OUTPUT = Path("output") / "agenda.pdf"
 
@@ -88,3 +89,52 @@ def write_pdf(pdf: FPDF, path: str | Path = DEFAULT_OUTPUT) -> Path:
 
 def export_blank(cfg: Config, pages: int = 1, path: str | Path = DEFAULT_OUTPUT) -> Path:
     return write_pdf(add_blank_pages(new_document(cfg), pages, cfg), path)
+
+
+def export_agenda(cfg: Config, path: str | Path = DEFAULT_OUTPUT) -> Path:
+    """TEMPORARY full-agenda render (Phase 3). Phase 4 (`build_plan`) replaces this.
+
+    Order (plan section 7): cover, personal_info, yearly, then per month: monthly, then per owned
+    week its weekly spread and that week's daily pages (dates inside ``cfg.year``); then notes,
+    contacts, back_cover. A blank filler page is inserted when a page class with
+    ``starts_on`` left/right would start on the other side. No booklet math, padding,
+    ``daily_months`` or separate covers.
+    """
+    from agenda.pages.core import (
+        BackCover,
+        Contacts,
+        Cover,
+        Daily,
+        Monthly,
+        Notes,
+        PersonalInfo,
+        Weekly,
+        Yearly,
+    )
+
+    pdf = new_document(cfg)
+
+    def put(page, ctx) -> None:
+        want = page.starts_on
+        if want != "any" and side_for_page(pdf.page + 1) != want:
+            add_page(pdf, cfg)  # blank filler
+        grids = [add_page(pdf, cfg) for _ in range(page.pages)]
+        page.draw(pdf, ctx, cfg, grids)
+
+    for cls in (Cover, PersonalInfo, Yearly):
+        put(cls(), {})
+    monthly, weekly, daily = Monthly(), Weekly(), Daily()
+    weekly_ctx = {(c["iso_year"], c["number"]): c for c in weekly.instances(cfg)}
+    daily_ctx = {c["date"]: c for c in daily.instances(cfg)}
+    for month, weeks in weeks_by_month(cfg.year, cfg.week_start).items():
+        put(monthly, {"month": month})
+        for week in weeks:
+            if "weekly" in cfg.planners:
+                put(weekly, weekly_ctx[(week.iso_year, week.number)])
+            if "daily" in cfg.planners:
+                for d in week.days:
+                    if d in daily_ctx:
+                        put(daily, daily_ctx[d])
+    for cls in (Notes, Contacts, BackCover):
+        put(cls(), {})
+    return write_pdf(pdf, path)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
 
 from fpdf import FPDF
@@ -10,7 +11,7 @@ from agenda import tokens
 from agenda.calendar import days_of_year, month_grid, weeks_by_month
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import DayStyle, draw_mini_month, draw_pattern
+from agenda.draw import DayStyle, day_style_for, draw_mini_month, draw_pattern, holiday_name_for
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -127,11 +128,6 @@ class Yearly(BasePage):
     MONTH_COLS = 3
     MONTH_ROWS = 4
 
-    @staticmethod
-    def day_style(d: date) -> DayStyle | None:
-        """Hook for task 12 (weekend/holiday marking): return a ``DayStyle`` or None."""
-        return
-
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         g = grids[0]
         pdf.c_margin = 0
@@ -141,13 +137,14 @@ class Yearly(BasePage):
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, str(config.year))
 
+        day_style = day_style_for(config)
         span = g.columns // self.MONTH_COLS
         per = g.rows // self.MONTH_ROWS  # baseline rows per block, one of them is the gap
         for m in range(1, 13):
             r, c = divmod(m - 1, self.MONTH_COLS)
             cell = g.span(c * span, span, r * per, per - 1)
             draw_mini_month(
-                pdf, cell, config.year, m, config.language, config.week_start, self.day_style
+                pdf, cell, config.year, m, config.language, config.week_start, day_style
             )
 
 
@@ -159,11 +156,6 @@ class Monthly(BasePage):
     name = "Monthly planner"
     category = "core"
     section = "monthly"
-
-    @staticmethod
-    def day_style(d: date) -> DayStyle | None:
-        """Hook for task 12 (weekend/holiday marking): return a ``DayStyle`` or None."""
-        return
 
     def instances(self, config: Config) -> list[Ctx]:
         return [{"month": m} for m in range(1, 13)]
@@ -180,6 +172,7 @@ class Monthly(BasePage):
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("month.title", month=s.month_name(month), year=config.year))
 
+        day_style = day_style_for(config)
         weeks = month_grid(config.year, month, config.week_start)
         notes_rows = max(4, g.rows // 5)  # priorities block: label + write-in lines
         grid_rows = g.rows - 1 - notes_rows - 1  # weekday row and a gap row excluded
@@ -199,7 +192,7 @@ class Monthly(BasePage):
         for r, week in enumerate(weeks):
             for i, d in enumerate(week):
                 bx, by = x + i * box_w, top + r * box_h
-                style = self.day_style(d) if d else None
+                style = day_style(d) if d else None
                 if style and style.fill:
                     pdf.set_fill_color(*style.fill)
                     pdf.rect(bx, by, box_w, box_h, style="DF")
@@ -241,11 +234,6 @@ class Weekly(BasePage):
     LEFT_DAYS = 4  # blocks per page; right page shows the remaining days plus a notes block
     BLOCKS = 4
 
-    @staticmethod
-    def day_style(d: date) -> DayStyle | None:
-        """Hook for task 12 (weekend/holiday marking): return a ``DayStyle`` or None."""
-        return
-
     def instances(self, config: Config) -> list[Ctx]:
         by_month = weeks_by_month(config.year, config.week_start)
         return [
@@ -257,9 +245,18 @@ class Weekly(BasePage):
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         s = Strings(config.language)
         days: list[date] = ctx["days"]
+        style_of, name_of = day_style_for(config), holiday_name_for(config)
         last = pdf.page
         pdf.page = last - 1  # left page
-        self._page(pdf, grids[0], s, days[: self.LEFT_DAYS], s("week.number", n=ctx["number"]))
+        self._page(
+            pdf,
+            grids[0],
+            s,
+            days[: self.LEFT_DAYS],
+            s("week.number", n=ctx["number"]),
+            style_of,
+            name_of,
+        )
         pdf.page = last
         months = []
         for d in days:
@@ -270,7 +267,7 @@ class Weekly(BasePage):
         title = " – ".join(months)
         if days[0].year == days[-1].year:
             title += f" {days[0].year}"
-        self._page(pdf, grids[1], s, days[self.LEFT_DAYS :], title, notes=True)
+        self._page(pdf, grids[1], s, days[self.LEFT_DAYS :], title, style_of, name_of, notes=True)
 
     def _page(
         self,
@@ -279,6 +276,8 @@ class Weekly(BasePage):
         s: Strings,
         days: list[date],
         title: str,
+        style_of: Callable[[date], DayStyle | None],
+        name_of: Callable[[date], str | None],
         notes: bool = False,
     ) -> None:
         x, w = g.col(0, g.columns)
@@ -299,14 +298,24 @@ class Weekly(BasePage):
             y0 = g.row(r0)
             if i < len(days):
                 d = days[i]
-                style = self.day_style(d)
+                style = style_of(d)
                 if style and style.fill:
                     pdf.set_fill_color(*style.fill)
                     pdf.rect(x, y0, w, g.baseline, style="F")
                 pdf.set_text_color(*((style and style.color) or _INK))
                 pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
                 pdf.set_xy(x + pad, y0)
-                pdf.cell(w - 2 * pad, g.baseline, f"{names[d.weekday()]} {d.day}")
+                label = f"{names[d.weekday()]} {d.day}"
+                pdf.cell(w - 2 * pad, g.baseline, label)
+                holiday = name_of(d)
+                if holiday:  # right-aligned, only if it fits next to the day label
+                    pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+                    hw = pdf.get_string_width(holiday)
+                    pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+                    if hw + pdf.get_string_width(label) + 2 * pad < w - 2 * pad:
+                        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+                        pdf.set_xy(x + pad, y0)
+                        pdf.cell(w - 2 * pad, g.baseline, holiday, align="R")
             elif notes:
                 pdf.set_text_color(*_ACCENT)
                 pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
@@ -337,11 +346,6 @@ class Daily(BasePage):
     HOUR_START = 6
     HOUR_END = 21
 
-    @staticmethod
-    def day_style(d: date) -> DayStyle | None:
-        """Hook for task 12 (weekend/holiday marking): return a ``DayStyle`` or None."""
-        return
-
     def instances(self, config: Config) -> list[Ctx]:
         out = []
         for d in days_of_year(config.year):
@@ -355,7 +359,7 @@ class Daily(BasePage):
         d: date = ctx["date"]
         pdf.c_margin = 0
         h = g.header
-        style = self.day_style(d)
+        style = day_style_for(config)(d)
         if style and style.fill:
             pdf.set_fill_color(*style.fill)
             pdf.rect(h.x, h.y, h.w, h.h, style="F")

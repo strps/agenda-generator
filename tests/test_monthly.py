@@ -21,12 +21,6 @@ def test_twelve_instances():
     assert [c["month"] for c in Monthly().instances(Config())] == list(range(1, 13))
 
 
-def test_day_style_hook_default_is_none():
-    from datetime import date
-
-    assert Monthly.day_style(date(2026, 1, 1)) is None
-
-
 @pytest.mark.parametrize("week_start", ["monday", "sunday"])
 @pytest.mark.parametrize("lang", ["es", "en"])
 @pytest.mark.parametrize("size", ["half_letter", "a5", "b6", "a4", "letter"])

@@ -67,7 +67,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Notes (lined, dotted, grid, blank)
 - [x] Contacts
 - [x] Back cover
-- [ ] Holidays and weekends marked on calendar pages
+- [x] Holidays and weekends marked on calendar pages
 
 **Done when:** the default config produces a full agenda where every page stays inside the safe area and weekly spreads face each other.
 

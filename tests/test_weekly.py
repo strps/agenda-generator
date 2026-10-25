@@ -49,10 +49,6 @@ def test_ctx_days_and_month(week_start):
     assert ctxs[0]["month"] == 1
 
 
-def test_day_style_hook_default_is_none():
-    assert Weekly.day_style(date(2026, 1, 1)) is None
-
-
 @pytest.mark.parametrize("week_start", ["monday", "sunday"])
 @pytest.mark.parametrize("lang", ["es", "en"])
 @pytest.mark.parametrize("size", ["half_letter", "a5", "b6", "a4", "letter"])
