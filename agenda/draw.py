@@ -143,3 +143,31 @@ def draw_mini_month(
 class DayStyle(NamedTuple):
     color: tuple[int, int, int] | None = None
     fill: tuple[int, int, int] | None = None
+
+
+def draw_pattern(pdf: FPDF, rect: Rect, pattern: str, pitch: float) -> None:
+    """Fill ``rect`` with a notes pattern anchored at its top-left on a ``pitch`` mm lattice.
+
+    ``lined``: horizontal rules; ``dotted``: dots at lattice points; ``grid``: squares
+    (rules both ways); ``blank`` (or anything else): nothing. Everything stays inside ``rect``.
+    """
+    if pattern not in ("lined", "dotted", "grid") or pitch <= 0:
+        return
+    cols = int(rect.w / pitch + 1e-6)
+    rows = int(rect.h / pitch + 1e-6)
+    pdf.set_draw_color(*tokens.COLORS["line"])
+    pdf.set_line_width(tokens.STROKE_HAIRLINE)
+    if pattern in ("lined", "grid"):
+        for r in range(1 if pattern == "lined" else 0, rows + 1):
+            y = rect.y + r * pitch
+            pdf.line(rect.x, y, rect.x + (cols * pitch if pattern == "grid" else rect.w), y)
+    if pattern == "grid":
+        for c in range(cols + 1):
+            x = rect.x + c * pitch
+            pdf.line(x, rect.y, x, rect.y + rows * pitch)
+    if pattern == "dotted":
+        with pdf.local_context(stroke_cap_style="round", line_width=0.4):
+            for r in range(rows + 1):
+                for c in range(cols + 1):
+                    x, y = rect.x + c * pitch, rect.y + r * pitch
+                    pdf.line(x, y, x + 0.01, y)

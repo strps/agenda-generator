@@ -26,3 +26,7 @@ Short running notes between agents. Trim stale entries.
 - `Daily` (`daily`, section daily, 1 page). ctx `date`, `week`, `iso_year` (ISO; sort/place after its week's spread in Phase 4). `daily_months` NOT applied (Phase 4).
 - Header: `day.title` + `week.number` right; schedule 06:00-21:00 left half (fewer hours if rows short), priorities/notes right. `Daily.day_style` fills header.
 - Tests render a subset (`render_subset` in tests/test_daily.py), not all 366.
+### Task 9: Notes
+- `Notes` (`notes`, section front_back, 1 page): header `notes.title` + `draw_pattern(pdf, g.content, config.notes_pattern, g.baseline)` (agenda/draw.py; lined/dotted/grid/blank, anchored top-left of rect, clipped to it).
+- Count: `Notes(count=N).instances(cfg)` -> N empty ctxs (default 1; spec says "variable"). Phase 4 padding: instantiate `Notes(count=missing)`; catalog default instance gives 1.
+- Dots are zero-length round-cap lines (0.4 mm); blank draws only the header.

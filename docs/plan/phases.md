@@ -64,7 +64,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Monthly planner
 - [x] Weekly planner (WO2P spread, always starting on a left page)
 - [x] Daily planner
-- [ ] Notes (lined, dotted, grid, blank)
+- [x] Notes (lined, dotted, grid, blank)
 - [ ] Contacts
 - [ ] Back cover
 - [ ] Holidays and weekends marked on calendar pages

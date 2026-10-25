@@ -10,7 +10,7 @@ from agenda import tokens
 from agenda.calendar import days_of_year, month_grid, weeks_by_month
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import DayStyle, draw_mini_month
+from agenda.draw import DayStyle, draw_mini_month, draw_pattern
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -392,3 +392,37 @@ class Daily(BasePage):
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(x, g.row(row))
         pdf.cell(w, g.baseline, text)
+
+
+@register
+class Notes(BasePage):
+    """Notes, 1 page: localized header and a pattern (``config.notes_pattern``) over the content.
+
+    The pattern is anchored to the content box on the baseline pitch, so it lines up with the
+    baseline grid. ``Notes(count=N)`` makes ``instances()`` return N pages (default 1); Phase 4
+    padding uses this. ``blank`` draws only the header.
+    """
+
+    id = "notes"
+    name = "Notes"
+    category = "core"
+    section = "front_back"
+
+    def __init__(self, count: int = 1) -> None:
+        if count < 0:
+            raise ValueError("count must be >= 0")
+        self.count = count
+
+    def instances(self, config: Config) -> list[Ctx]:
+        return [{} for _ in range(self.count)]
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        h = g.header
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, s("notes.title"))
+        draw_pattern(pdf, g.content, config.notes_pattern, g.baseline)
