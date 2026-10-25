@@ -57,7 +57,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 **Goal:** a complete, usable agenda with the core pages.
 
 - [x] `BasePage` with `id`, `name`, `category`, `section`, `pages`, `starts_on`, `instances()`, `draw()`
-- [ ] `@register` catalog
+- [x] `@register` catalog
 - [ ] Cover
 - [ ] Personal information
 - [ ] Yearly calendar

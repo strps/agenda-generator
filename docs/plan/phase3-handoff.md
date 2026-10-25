@@ -16,3 +16,9 @@ Short running notes between agents. Trim stale entries.
 - ctx = plain `dict` (e.g. `{"month": 3}`); `instances(config) -> list[ctx]` defaults to `[{}]`.
 - `draw(pdf, ctx, config, grids)`: caller adds `pages` pages with `exporter.add_page` and passes their grids in order; `pdf.page` is the last one, so a spread sets `pdf.page = pdf.page - 1` to draw the left page. Pages never add pages or fillers.
 - Instances are created without args: `Page().instances(cfg)`. `@register` (task 2) should validate nothing extra beyond unique `id`.
+
+### Task 2: catalog
+- `agenda/catalog.py`: `register` (dup id -> ValueError, non-BasePage -> TypeError), `get_page` (unknown -> KeyError listing ids), `all_pages`, `pages_by_category`, `resolve_pages(config)` (None = core pages in registration order; presets not handled).
+- Page modules import `register` from `agenda.catalog`; the catalog imports them lazily in `load_pages()` (called by every lookup), so no cycle. `CATALOG` dict is the raw registry.
+- Core registration order = display order for `pages=None`; a later task (Phase 4 plan) does section ordering. Tests snapshot/restore `catalog.CATALOG`.
+
