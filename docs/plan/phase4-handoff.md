@@ -28,3 +28,11 @@ Short running notes between agents. Trim stale entries.
 - Fixed: days of `config.year` in a neighbour year's ISO week now get a Daily (early ones after the January monthly, late ones after the last December week); 365/366 dailies every year, both week starts.
 - `export_agenda(cfg, path)` now iterates `build_plan`; draws each instance once after adding all its pages (base.py contract: `pdf.page` is the last page of the instance).
 - tests/test_plan_cases.py: `check_plan(cfg)` invariants over CASES; "1 page" = smallest plan (no planners, `pages=[]`, about 18-20 pages), since cover/monthlies/back matter are fixed.
+
+## Phase 4 wrap-up / open items for Phase 5+
+
+- Done when verified: default 2026 = 540 pages, 27 booklets x 5 sheets, 135 sheets; build_plan ~4 ms.
+- 41 blank `starts_on` fillers in the default plan (~8%); consider Notes fillers instead.
+- `validate_assignment` does not roll back a failed assignment: GUI must rebuild Config, not mutate it.
+- `summarize` is not wired to the CLI yet (Phase 7 `--dry-run`). `LARGE_PAGE_COUNT = 600` is a guess.
+- Optional/value-added pages appear only when listed in `config.pages` (default: none).
