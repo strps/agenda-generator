@@ -11,7 +11,7 @@ Short running notes between agents. Trim stale entries.
 - Layout: package `agenda/` at repo root (not `agenda_gen/`); setuptools discovers `agenda*`.
 - CLI uses stdlib `argparse` (not typer); entry is `agenda.__main__:main(argv=None) -> int`.
 - Deps (core): fpdf2, pydantic, PyYAML, holidays, pypdf, qrcode, Pillow. Extras: `gui` (PySide6, pypdfium2), `dev` (pytest, ruff).
-- Bundled fonts/assets will live in `agenda/assets/fonts/` is NOT yet decided: plan says top-level `assets/`; if inside the package, add `package-data` to pyproject.
+- Fonts: plan puts them in top-level `assets/fonts/`. Undecided whether to move them into the package; if so, add `[tool.setuptools.package-data]` to pyproject.
 
 ## Log
 
