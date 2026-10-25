@@ -16,7 +16,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 | 6. Value-added pages | Done | 4 days | 2026-10-25 | 2026-10-25 | 3 | |
 | 7. CLI & YAML | Done | 1 day | 2026-10-25 | 2026-10-25 | 1, 4 | |
 | 7b. GUI | Done | 4–5 days | 2026-10-25 | 2026-10-25 | 3, 4, 7 | |
-| 8. Imposition | Not started | 2 days | | | 4 | |
+| 8. Imposition | In progress | 2 days | 2026-10-25 | | 4 | |
 | 9. Testing & polish | Not started | 2–3 days | | | all | |
 
 **Recommended execution order:** 1 → 2 → 4 → 3 → 7 → 8 → 7b → 5 → 6 → 9. The booklet logic and page plan come before the core pages because page placement (left/right, spreads) affects page design. See [improvements.md §6](improvements.md#6-phase-order).
@@ -150,7 +150,7 @@ Spec: [gui.md](../architecture/gui.md).
 
 ## Phase 8 — Imposition
 
-- [ ] `imposition_order(n)` for folded booklets
+- [x] `imposition_order(n)` for folded booklets
 - [ ] 2-up placement on landscape letter/A4 with pypdf; scaling/centering for other sizes
 - [ ] Bleed and crop marks
 - [ ] Property tests: every page once; each sheet side's pair sums to N+1
