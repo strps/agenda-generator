@@ -20,3 +20,8 @@ Short running notes between agents. Trim stale entries.
 - `gui.settings_panel.SettingsPanel` (`QFrame`, object name `settings`): `editors[name]`, `values()`, `set_values()`, `config()`, `load_file`/`save_file`, signal `changed` (fires per edit and after set_values; task 5 debounces it). Pages = checklist by category; none checked = `pages: None`.
 - `MainWindow.settings`, `load_config(path)`/`save_config(path)` return "" or an error; buttons open QFileDialog.
 - Tests: `tests/test_gui_settings.py`.
+### Task 3: render_pages
+- `agenda.exporter.render_pages(cfg, plan, indices) -> bytes`: 0-based plan indices, plan order, dupes ignored; empty -> ValueError, out of range -> IndexError.
+- Shares `_render_plan` with `export_agenda` (all pages = same output). `add_page(pdf, cfg, page_number=None)` takes the real page number.
+- A spread (2-page instance) is drawn whole and the unrequested page dropped with pypdf, so one index = one PDF page.
+- Tests: `tests/test_render_pages.py` (compares text + `drawn_points`; raw streams differ by font subset).
