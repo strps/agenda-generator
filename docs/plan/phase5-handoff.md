@@ -15,7 +15,6 @@ Short running notes between agents. Trim stale entries.
 
 ### Task 1: Goals
 - `Goals` (`goals`, optional/optional, 1 page): `Goals.layout(rows) -> (goals, steps)`: 6 goals, else 5, with up to 4 steps, min 2; block = title + steps + deadline + 1 gap row.
-- Keys `goals.title/goal/step/deadline` (`goals.step` unused so far). Plan test: after dailies, before Notes.
 
 ### Task 2: Important dates
 - `ImportantDates` (`important_dates`, optional/optional, 1 page): `layout(rows) -> entries` = `max(1, rows // 6 - 2)`; 12 month blocks (2 cols x 6 rows: title row, entries, gap row), each entry a short day rule + name rule.
@@ -44,3 +43,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 7: Monthly review
 - `MonthlyReview` (`monthly_review`, optional/optional, 1 page x12 via `month_ctxs`): `layout(rows) -> (wins, challenges, lessons, goals)` write-in rows; `FIXED_ROWS`=9, rest split equally, leftovers to first sections. Goals rows have checkboxes (side = 0.6 baseline).
 - Last row: label + 5 `draw_circle`s right-aligned (pitch 2 baselines). Keys `review.*`.
+
+### Task 8: Schedule
+- `Schedule` (`schedule`, optional/optional, 1 page): 7 weekday columns (short names, `config.week_start` order, weekend tint) all sizes; hour label column = half a grid column. Key `schedule.title`.
+- `Schedule.layout(rows) -> (hours, baselines per hour)`: tallest band of 3/2/1 rows keeping >= 10 hours, max 15 (7:00-21:00); b6 gives 13 hours x 2 rows.

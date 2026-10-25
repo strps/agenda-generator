@@ -7,7 +7,7 @@ from datetime import date
 from fpdf import FPDF
 
 from agenda import tokens
-from agenda.calendar import days_in_month
+from agenda.calendar import days_in_month, weekday_order
 from agenda.catalog import register
 from agenda.config import Config
 from agenda.draw import draw_checkbox, draw_circle, draw_label_rule
@@ -506,3 +506,79 @@ class MonthlyReview(BasePage):
         x0 = g.safe.x2 - self.RATING * pitch
         for i in range(self.RATING):
             draw_circle(pdf, x0 + (i + 0.5) * pitch, g.row(r) + g.baseline / 2, diam)
+
+
+@register
+class Schedule(BasePage):
+    """Weekly timetable, 1 page (classes / shifts): hour rows down the left, weekday columns.
+
+    All 7 weekdays, ordered by ``config.week_start`` (short localized names): on b6 the day
+    columns are still ~11 mm wide, enough for a 3-letter name and a short note, so no combined
+    weekend column is needed. The hour label column is half a grid column; Saturday and Sunday
+    get the ``weekend_fill`` tint. Row 0 holds the weekday names, then one band per hour from
+    ``FIRST_HOUR``, each ``row_h`` baselines tall.
+    Fit rule (``layout(rows)``): take the tallest hour band (``BAND_ROWS``, 3 > 2 > 1 baselines)
+    that still shows at least ``MIN_HOURS`` hours; hours = ``(rows - 1) // row_h`` capped at
+    ``MAX_HOURS`` (7:00-21:00). Small pages therefore get thinner bands, then fewer hours.
+    """
+
+    id = "schedule"
+    name = "Weekly schedule"
+    category = "optional"
+    section = "optional"
+
+    FIRST_HOUR = 7
+    MAX_HOURS = 15
+    MIN_HOURS = 10
+    BAND_ROWS = (3, 2, 1)
+    DAYS = 7
+
+    @classmethod
+    def layout(cls, rows: int) -> tuple[int, int]:
+        """(hours, baselines per hour) for ``rows`` content rows (one is the weekday row)."""
+        free = max(0, rows - 1)
+        for rh in cls.BAND_ROWS:
+            if free // rh >= cls.MIN_HOURS:
+                return min(cls.MAX_HOURS, free // rh), rh
+        return min(cls.MAX_HOURS, free), 1
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        h = g.header
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, s("schedule.title"))
+
+        hours, rh = self.layout(g.rows)
+        x = g.safe.x
+        gx = x + g.col_width / 2
+        day_w = (g.safe.x2 - gx) / self.DAYS
+        bottom = g.row(1 + hours * rh)
+        names = s.weekday_names(config.week_start, "short")
+        order = weekday_order(config.week_start)
+
+        pdf.set_fill_color(*tokens.COLORS["weekend_fill"])
+        for i, wd in enumerate(order):
+            if wd >= 5:
+                pdf.rect(gx + i * day_w, g.row(1), day_w, bottom - g.row(1), style="F")
+
+        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+        for i, name in enumerate(names):
+            pdf.set_xy(gx + i * day_w, g.row(0))
+            pdf.cell(day_w, g.baseline, name, align="C")
+        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        for k in range(hours):
+            pdf.set_xy(x, g.row(1 + k * rh))
+            pdf.cell(gx - x - g.gutter / 2, g.baseline, f"{self.FIRST_HOUR + k}:00", align="R")
+
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_HAIRLINE)
+        for k in range(hours + 1):
+            y = g.row(1 + k * rh)
+            pdf.line(gx, y, g.safe.x2, y)
+        for i in range(self.DAYS + 1):
+            pdf.line(gx + i * day_w, g.row(1), gx + i * day_w, bottom)
