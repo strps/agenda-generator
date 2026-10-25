@@ -17,3 +17,6 @@ Short running notes between agents. Trim stale entries.
 - `MonthlyQuotes` (`quotes`, value_added/value_added, 1 page x12 via `month_ctxs`); `layout(rows) -> (quote rows, reflection rules)`: quote area = half the rows in whole 2-baseline lines, label row + rules below.
 - Quotes are i18n keys `quotes.1..12` (es, en) plus `quotes.title/reflection`. Rule: original sayings, no attribution; name an author only for a certain public-domain quote (none now).
 - Wrapping: `pdf.multi_cell(..., dry_run=True, output="LINES")`; tries `QUOTE_SIZES`, drops lines that don't fit.
+### Task 2: Vision board
+- `VisionBoard` (`vision_board`, value_added/value_added, 1 page); `layout(rows, width_rows) -> VisionLayout(word_rows, cols, nrows, cell_rows)` in baseline units, derived from the safe area (see class docstring).
+- Strings `vision.title/subtitle/word` (es, en). Empty framed cells + caption rule; no emoji.

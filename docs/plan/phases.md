@@ -106,7 +106,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 ## Phase 6 — Value-added pages
 
 - [x] Monthly quotes
-- [ ] Vision board
+- [x] Vision board
 - [ ] Health tracker (drawn mood shapes, no emoji)
 - [ ] Meals and groceries
 - [ ] Gratitude journal
