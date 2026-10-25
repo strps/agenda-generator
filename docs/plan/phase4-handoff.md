@@ -15,3 +15,9 @@ Short running notes between agents. Trim stale entries.
 - Blank filler: `page_class=None`, `kind="filler"`, section of the page it precedes. Padding: `kind="padding"`, real class (e.g. `Notes`) or None.
 - `booklet_index` is None until the booklet task (then 1-based).
 - `PagePlan(entries)` frozen tuple; validates `page_number == i+1` and side. Helpers: `len`, iter, `[i]`, `page_count`, `by_section`, `by_booklet`, `drawn()`, `sections()` (runs `(section, first, last)`).
+
+### Task 2: build_plan ordering
+- `build_plan(config) -> PagePlan` in assembler.py; inner `put(cls, ctx)` appends `cls.pages` entries (hook comment for starts_on fillers, task 3); another hook before back matter for padding (task 5).
+- Mirrors `export_agenda` (still the renderer). Front: Cover, PersonalInfo, Yearly; back: Notes, Contacts, BackCover.
+- Optional/value-added: classes from catalog (by category order) whose id is in `config.pages`; `pages=None` means none (core only). Each class's `instances(config)` in order.
+- Tests: tests/test_build_plan.py (default, weekly-only, daily-only, year edges).

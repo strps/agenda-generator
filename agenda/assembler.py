@@ -109,3 +109,63 @@ class PagePlan:
             else:
                 runs.append((e.section, e.page_number, e.page_number))
         return runs
+
+
+def _extras(config: Any, category: str) -> list[type[BasePage]]:
+    """Optional/value-added classes enabled by ``config.pages`` (ids), in catalog order."""
+    from agenda.catalog import pages_by_category
+
+    if config.pages is None:
+        return []
+    return [c for c in pages_by_category(category) if c.id in config.pages]
+
+
+def build_plan(config: Any) -> PagePlan:
+    """Ordered ``PagePlan`` for ``config`` (page numbers 1..N, ``booklet_index`` None).
+
+    Order: front matter (cover, personal info, yearly) -> per month: monthly, then per owned
+    week its weekly spread and that week's dailies (dates inside ``config.year``) -> optional ->
+    value-added -> back matter (notes, contacts, back cover). A multi-page instance is
+    ``cls.pages`` entries sharing one ctx.
+    """
+    from agenda.calendar import weeks_by_month
+    from agenda.pages.core import (
+        BackCover,
+        Contacts,
+        Cover,
+        Daily,
+        Monthly,
+        Notes,
+        PersonalInfo,
+        Weekly,
+        Yearly,
+    )
+
+    entries: list[PlanEntry] = []
+
+    def put(cls: type[BasePage], ctx: dict[str, Any]) -> None:
+        # Hook: task 3 (starts_on fillers) goes here, before the instance's entries.
+        for k in range(cls.pages):
+            entries.append(make_entry(cls, ctx, len(entries) + 1, cls.section, page_in_instance=k))
+
+    for cls in (Cover, PersonalInfo, Yearly):
+        put(cls, {})
+    weekly_ctx = {(c["iso_year"], c["number"]): c for c in Weekly().instances(config)}
+    daily_ctx = {c["date"]: c for c in Daily().instances(config)}
+    for month, weeks in weeks_by_month(config.year, config.week_start).items():
+        put(Monthly, {"month": month})
+        for week in weeks:
+            if "weekly" in config.planners:
+                put(Weekly, weekly_ctx[(week.iso_year, week.number)])
+            if "daily" in config.planners:
+                for d in week.days:
+                    if d in daily_ctx:
+                        put(Daily, daily_ctx[d])
+    for category in ("optional", "value_added"):
+        for cls in _extras(config, category):
+            for ctx in cls().instances(config):
+                put(cls, ctx)
+    # Hook: task 5 (padding before the back cover) goes here.
+    for cls in (Notes, Contacts, BackCover):
+        put(cls, {})
+    return PagePlan(tuple(entries))
