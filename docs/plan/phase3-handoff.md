@@ -6,6 +6,7 @@ Short running notes between agents. Trim stale entries.
 
 - Same env/commands as before (`.venv/bin/pytest`, `.venv/bin/ruff check .`, `.venv/bin/ruff format --check agenda tests`).
 - Pages live in `agenda/pages/{core,optional,value_added}.py` and subclass `agenda.pages.base.BasePage`.
+- Test helpers in `tests/helpers.py` (`from helpers import ...`): `render_page(page_cls, cfg) -> bytes` (all instances), `assert_in_safe_area(pdf_bytes, cfg)` (text origins + rect/line vertices per page; needs debug_grid False). Use both in every page test.
 - Calendar logic comes from `agenda/calendar.py`; geometry from `Grid` (never hardcode mm).
 
 ## Log
@@ -22,3 +23,7 @@ Short running notes between agents. Trim stale entries.
 - Page modules import `register` from `agenda.catalog`; the catalog imports them lazily in `load_pages()` (called by every lookup), so no cycle. `CATALOG` dict is the raw registry.
 - Core registration order = display order for `pages=None`; a later task (Phase 4 plan) does section ordering. Tests snapshot/restore `catalog.CATALOG`.
 
+
+### Task 3: Cover
+- `agenda/pages/core.py`: `Cover` (`cover`, core, front_back, 1 page): tint panel (top 2/3 of content rows) with accent bar, title (18pt, `cover.title`) and year (28pt bold). Existing i18n keys reused, none added.
+- Safe-area check sees text origins only (not right edge); keep text cells within `safe`. Inter via `pdf.set_font("Inter", style, pt)`; set `pdf.c_margin = 0` for cells on the grid.
