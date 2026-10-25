@@ -17,7 +17,12 @@ Short running notes between agents. Trim stale entries.
 - `PagePlan(entries)` frozen tuple; validates `page_number == i+1` and side. Helpers: `len`, iter, `[i]`, `page_count`, `by_section`, `by_booklet`, `drawn()`, `sections()` (runs `(section, first, last)`).
 
 ### Task 2: build_plan ordering
-- `build_plan(config) -> PagePlan` in assembler.py; inner `put(cls, ctx)` appends `cls.pages` entries (hook comment for starts_on fillers, task 3); another hook before back matter for padding (task 5).
+- `build_plan(config) -> PagePlan` in assembler.py; inner `put(cls, ctx)` appends `cls.pages` entries ; another hook before back matter for padding (task 5).
 - Mirrors `export_agenda` (still the renderer). Front: Cover, PersonalInfo, Yearly; back: Notes, Contacts, BackCover.
 - Optional/value-added: classes from catalog (by category order) whose id is in `config.pages`; `pages=None` means none (core only). Each class's `instances(config)` in order.
 - Tests: tests/test_build_plan.py (default, weekly-only, daily-only, year edges).
+
+### Task 3: starts_on fillers
+- `put` inserts one filler (`page_class=None`, `kind="filler"`, ctx `{}`, section of the class it precedes) when `side_for_page(next) != cls.starts_on`; same rule as `export_agenda`. Only Weekly (`left`) uses it today.
+- Fillers sit before the instance's first entry, so padding (task 5) and booklet math must count them as ordinary pages.
+- Tests replay the rule independently (`_reference_fillers`), no rendering.

@@ -77,7 +77,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 
 - [x] `PagePlan` entries: `(page_class, ctx, page_number, side, booklet_index, section)`
 - [x] Ordering: front matter → per month: monthly, then per week: weekly spread → that week's dailies → optional → value-added → back matter
-- [ ] `starts_on` handling: insert filler when a spread would start on the wrong side
+- [x] `starts_on` handling: insert filler when a spread would start on the wrong side
 - [ ] Booklet math, folded (default, 4 pages/sheet) and flat (2 pages/sheet); `sheets`/`pages` units
 - [ ] Padding with `pad_with` pages, placed before the back cover
 - [ ] `separate_covers` option

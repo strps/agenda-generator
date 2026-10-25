@@ -126,7 +126,8 @@ def build_plan(config: Any) -> PagePlan:
     Order: front matter (cover, personal info, yearly) -> per month: monthly, then per owned
     week its weekly spread and that week's dailies (dates inside ``config.year``) -> optional ->
     value-added -> back matter (notes, contacts, back cover). A multi-page instance is
-    ``cls.pages`` entries sharing one ctx.
+    ``cls.pages`` entries sharing one ctx. One blank filler (``kind="filler"``, section of the
+    page it precedes) is inserted before an instance whose ``starts_on`` side doesn't match.
     """
     from agenda.calendar import weeks_by_month
     from agenda.pages.core import (
@@ -144,7 +145,9 @@ def build_plan(config: Any) -> PagePlan:
     entries: list[PlanEntry] = []
 
     def put(cls: type[BasePage], ctx: dict[str, Any]) -> None:
-        # Hook: task 3 (starts_on fillers) goes here, before the instance's entries.
+        want = cls.starts_on
+        if want != "any" and side_for_page(len(entries) + 1) != want:
+            entries.append(make_entry(None, {}, len(entries) + 1, cls.section, kind="filler"))
         for k in range(cls.pages):
             entries.append(make_entry(cls, ctx, len(entries) + 1, cls.section, page_in_instance=k))
 
