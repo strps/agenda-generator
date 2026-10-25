@@ -91,7 +91,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 ## Phase 5 — Optional pages
 
 - [x] Yearly goals
-- [ ] Important dates
+- [x] Important dates
 - [ ] To-do list
 - [ ] Projects
 - [ ] Budget (x12)

@@ -16,3 +16,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 1: Goals
 - `Goals` (`goals`, optional/optional, 1 page): `Goals.layout(rows) -> (goals, steps)`: 6 goals, else 5, with up to 4 steps, min 2; block = title + steps + deadline + 1 gap row.
 - Keys `goals.title/goal/step/deadline` (`goals.step` unused so far). Plan test: after dailies, before Notes.
+
+### Task 2: Important dates
+- `ImportantDates` (`important_dates`, optional/optional, 1 page): `layout(rows) -> entries` = `max(1, rows // 6 - 2)`; 12 month blocks (2 cols x 6 rows: title row, entries, gap row), each entry a short day rule + name rule.
+- Month names via `Strings.month_name(m)`; key `dates.title` only.
