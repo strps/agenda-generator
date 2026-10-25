@@ -33,10 +33,14 @@ Short running notes between agents. Trim stale entries.
 
 ### Task 5: Budget
 - `Budget` (`budget`, optional/optional, 1 page x12): `Budget.layout(rows) -> (income, fixed, variable, savings)` write-in rows; `FIXED_ROWS`=11, rest split by `WEIGHTS` (1,2,2,1). Amount = last 2 grid cols.
-- Shared `month_ctxs(config)` in `agenda/pages/base.py` -> `[{"month", "year"}]*12`; habits/review should use it (Monthly still builds its own).
+- Shared `month_ctxs(config)` in `agenda/pages/base.py` -> `[{"month", "year"}]*12`.
 - Keys `budget.*` (title takes `{month} {year}`).
 
 ### Task 6: Habits
 - `Habits` (`habits`, optional/optional, 1 page x12 via `month_ctxs`): `layout(rows) -> habits` = `rows - 2` (title row 0, day numbers row 1), cap `MAX_HABITS`=20. Name column = first `NAME_COLS`=2 grid columns; days share the rest (cell ~2.1 mm on b6, 31 days).
 - New shared `draw_circle(pdf, cx, cy, d)` in draw.py (monthly review rating can reuse). Weekend columns use `weekend_fill`.
 - Day numbers use Inter regular 6pt (bold overlaps on b6). Keys `habits.title/habit`. Circle test counts bezier `c` ops / 4.
+
+### Task 7: Monthly review
+- `MonthlyReview` (`monthly_review`, optional/optional, 1 page x12 via `month_ctxs`): `layout(rows) -> (wins, challenges, lessons, goals)` write-in rows; `FIXED_ROWS`=9, rest split equally, leftovers to first sections. Goals rows have checkboxes (side = 0.6 baseline).
+- Last row: label + 5 `draw_circle`s right-aligned (pitch 2 baselines). Keys `review.*`.
