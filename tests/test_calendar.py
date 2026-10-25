@@ -5,6 +5,7 @@ import pytest
 from agenda.calendar import (
     days_in_month,
     days_of_year,
+    holidays_for,
     is_leap,
     iso_weeks_in_year,
     month_grid,
@@ -182,3 +183,29 @@ def test_holidays_other_country_and_invalid():
     assert us[date(2026, 7, 4)] == "Independence Day"
     with pytest.raises(ValueError, match="XX"):
         holidays_for(2026, "XX")
+
+
+@pytest.mark.parametrize("ws", ["monday", "sunday"])
+@pytest.mark.parametrize("year,ndays,nweeks", [(2026, 365, 53), (2027, 365, 52), (2028, 366, 52)])
+def test_phase2_done_when(year, ndays, nweeks, ws):
+    days = days_of_year(year)
+    assert len(days) == ndays
+    assert any(d.month == 2 and d.day == 29 for d in days) == (year == 2028)
+    assert iso_weeks_in_year(year) == nweeks
+    weeks = weeks_of_year(year, ws)
+    assert len(weeks) == nweeks
+    by_month = weeks_by_month(year, ws)
+    assert [w for m in range(1, 13) for w in by_month[m]] == weeks
+    cells = [d for m in range(1, 13) for r in month_grid(year, m, ws) for d in r if d]
+    assert sorted(cells) == days  # each day exactly once
+    assert holidays_for(year)
+
+
+def test_53_week_year_starting_thursday_vs_leap_starting_wednesday():
+    assert date(2026, 1, 1).weekday() == 3 and not is_leap(2026)
+    assert date(2020, 1, 1).weekday() == 2 and is_leap(2020)
+    for y in (2020, 2026):
+        assert iso_weeks_in_year(y) == 53
+        assert weeks_of_year(y)[-1].number == 53
+    assert date(2020, 12, 31).isocalendar()[:2] == (2020, 53)
+    assert iso_weeks_in_year(2019) == 52 and iso_weeks_in_year(2021) == 52

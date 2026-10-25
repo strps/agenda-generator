@@ -31,3 +31,14 @@ Short running notes between agents. Trim stale entries.
 - `calendar.py`: `holidays_for(year, country="CR", language="es") -> dict[date, str]`, sorted; same-day names joined "; ". Imports `holidays` lazily.
 - Language: `en`->`en_US` via prefix match; unsupported -> country default (no crash). Unknown country -> ValueError. Subdivisions not supported.
 - `Config.holiday_country` only uppercases; it does not validate the code (error surfaces at `holidays_for`).
+
+### Task 5: tests
+- Added `test_phase2_done_when` (2026/27/28 x Monday/Sunday) plus the 2020-vs-2026 53-week test; the rest of the coverage already existed from tasks 1-4.
+
+## Phase 2 wrap-up / open items for Phase 3+
+
+- `Config.holiday_country` is not validated at config time; bad codes fail only in `holidays_for` (ValueError).
+- Holiday subdivisions (regions/states) are unsupported.
+- `holidays` names for a language without translations fall back to the country default silently.
+- Weeks spanning years are not days of one year: use `weeks_by_month` for page order, `month_grid` for calendars.
+- `month_grid` pads with `None`; Phase 3 decides whether to show adjacent-month days.

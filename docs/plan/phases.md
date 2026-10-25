@@ -9,7 +9,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 | Phase | Status | Estimate | Started | Finished | Depends on | Notes |
 |---|---|---|---|---|---|---|
 | 1. Foundation | Done | 1–2 days | 2026-10-25 | 2026-10-25 | — | |
-| 2. Calendar | Not started | 1 day | | | 1 | |
+| 2. Calendar | Done | 1 day | 2026-10-25 | 2026-10-25 | 1 | |
 | 3. Core pages | Not started | 3–4 days | | | 1, 2, 4 | |
 | 4. Booklets & page plan | Not started | 1–2 days | | | 1, 2 | |
 | 5. Optional pages | Not started | 3 days | | | 3 | |
@@ -48,7 +48,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] ISO weeks, including 52/53-week years; first week overlapping the previous year
 - [x] Rule for weeks spanning two months (week belongs to the month of its first day)
 - [x] Holidays via `holidays` (default `CR`), names localized by `language`
-- [ ] Unit tests: leap years, 53-week years, Sunday start
+- [x] Unit tests: leap years, 53-week years, Sunday start
 
 **Done when:** tests pass for 2026 (53 weeks), 2027 and 2028 (leap year).
 
@@ -176,3 +176,4 @@ Spec: [gui.md](../architecture/gui.md).
 |---|---|
 | 2026-10-25 | Tracker created. Decisions so far: folded booklets by default (selectable), weekly + daily planners, `CR` holidays, fpdf2 rendering, PySide6 GUI with section bar. |
 | 2026-10-25 | Phase 1 done: package, config, sizes, fonts, grid, alternating margins, `--debug-grid`, i18n table (`es`, `en`). |
+| 2026-10-25 | Phase 2 done: `agenda/calendar.py` (months, month grids, ISO weeks, weeks by month, localized holidays) with tests for 2026 (53 weeks), 2027, 2028 (leap), Monday/Sunday start. |
