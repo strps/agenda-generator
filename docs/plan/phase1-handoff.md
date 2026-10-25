@@ -25,3 +25,10 @@ Short running notes between agents. Trim stale entries.
 - Decision: fonts stay in top-level `assets/fonts/` (plus `assets/icons/`), with `.gitkeep` placeholders; no package-data. Resolve with `Path(__file__).resolve().parents[1] / "assets" / "fonts"`. Works for the editable install; a built wheel would not ship them (revisit before packaging; then move into `agenda/assets` and add `[tool.setuptools.package-data]`).
 - Gotcha: `agenda/calendar.py` shadows stdlib only for relative imports inside the package; always use `from agenda import calendar` / absolute imports, never run scripts from inside `agenda/`.
 - No `main.py`/`config.yaml`/`output/` from plan §4 yet: entry is `agenda.__main__`.
+
+### Task 3: config model
+- `agenda/config.py`: `Config(BaseModel)` (extra="forbid", validate_assignment). All plan §2 params plus amendments: `bleed` (3 mm), `separate_covers`, `creep_mm`, `preset`, `page_numbers`, `debug_grid`. Property `pages_per_booklet`. Tests in `tests/test_config.py`.
+- Hook for task 4: `page_size` is a raw `str` (name lowercased, or custom "WxH"); the validator only checks the shape (name in the five known, or regex `WxH`). `sizes.py` must do the real parse and may tighten validation. `orientation` is separate.
+- `daily_months` accepts `"1-3,6"` or a list; stored as sorted unique ints. `year` defaults to the current year. `pages=None` means "all core pages" (catalog resolves it). `num_booklets: int | "auto"`.
+- Model validators: `imposition` needs `booklet_folded`; folded + unit=pages needs size % 4 == 0.
+- Not done (later phases): YAML loading, CLI overlay, presets expansion, margin-vs-page-size checks.
