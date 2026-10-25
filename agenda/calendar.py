@@ -93,3 +93,26 @@ def weeks_of_year(year: int, week_start: str = "monday") -> list[Week]:
         start = first + timedelta(weeks=n - 1, days=shift)
         weeks.append(Week(n, year, [start + timedelta(days=i) for i in range(7)]))
     return weeks
+
+
+def week_month(week: Week) -> tuple[int, int]:
+    """(year, month) that owns `week`: the month of its first day (`week.start`).
+
+    The result may be (iso_year - 1, 12) for a week 1 that starts in the
+    previous December; `weeks_by_month` places those under January.
+    """
+    return (week.start.year, week.start.month)
+
+
+def weeks_by_month(year: int, week_start: str = "monday") -> dict[int, list[Week]]:
+    """Group `weeks_of_year(year)` by owning month, keys 1..12 (all present).
+
+    A week belongs to the month of its first day. Edge: a week 1 starting in
+    the previous December goes under January of `year`. Every week appears
+    exactly once; a month has 3-5 weeks.
+    """
+    result: dict[int, list[Week]] = {m: [] for m in range(1, 13)}
+    for week in weeks_of_year(year, week_start):
+        y, m = week_month(week)
+        result[m if y == year else 1].append(week)
+    return result

@@ -8,7 +8,9 @@ from agenda.calendar import (
     is_leap,
     iso_weeks_in_year,
     month_grid,
+    week_month,
     weekday_order,
+    weeks_by_month,
     weeks_of_year,
 )
 
@@ -112,3 +114,39 @@ def test_weeks_sunday_start():
     assert weeks_of_year(2022, "sunday")[-1].end == date(2022, 12, 31)
     with pytest.raises(ValueError):
         weeks_of_year(2026, "friday")
+
+
+def test_week_month_is_month_of_first_day():
+    w = next(w for w in weeks_of_year(2026) if w.start == date(2026, 3, 30))
+    assert w.end == date(2026, 4, 5)
+    assert week_month(w) == (2026, 3)
+    # Sunday start: Sun Mar 29 - Sat Apr 4 is March's
+    ws = next(w for w in weeks_of_year(2026, "sunday") if w.start == date(2026, 3, 29))
+    assert week_month(ws) == (2026, 3)
+
+
+def test_weeks_by_month_mid_week_first_not_owned():
+    by = weeks_by_month(2026)
+    assert set(by) == set(range(1, 13))
+    # Apr 1 2026 is a Wednesday: the week Mar 30 - Apr 5 is March's, April starts Apr 6
+    assert by[4][0].start == date(2026, 4, 6)
+    assert by[3][-1].start == date(2026, 3, 30)
+
+
+@pytest.mark.parametrize("year", [2020, 2024, 2025, 2026, 2027, 2028])
+@pytest.mark.parametrize("ws", ["monday", "sunday"])
+def test_weeks_by_month_partition(year, ws):
+    by = weeks_by_month(year, ws)
+    flat = [w for m in range(1, 13) for w in by[m]]
+    assert flat == weeks_of_year(year, ws)  # each once, in order
+    for m, weeks in by.items():
+        assert 3 <= len(weeks) <= 5  # Sunday-start Dec can lose its last week
+        for w in weeks:
+            y, mm = week_month(w)
+            assert (y, mm) == (year, m) or (m == 1 and (y, mm) == (year - 1, 12))
+
+
+def test_week_one_from_previous_december_goes_to_january():
+    for ws, start in (("monday", date(2025, 12, 29)), ("sunday", date(2025, 12, 28))):
+        first = weeks_by_month(2026, ws)[1][0]
+        assert first.number == 1 and first.start == start

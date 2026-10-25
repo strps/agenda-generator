@@ -46,7 +46,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 
 - [x] Months, days and month grids for any year; `week_start` monday/sunday
 - [x] ISO weeks, including 52/53-week years; first week overlapping the previous year
-- [ ] Rule for weeks spanning two months (week belongs to the month of its first day)
+- [x] Rule for weeks spanning two months (week belongs to the month of its first day)
 - [ ] Holidays via `holidays` (default `CR`), names localized by `language`
 - [ ] Unit tests: leap years, 53-week years, Sunday start
 

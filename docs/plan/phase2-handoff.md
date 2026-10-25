@@ -21,3 +21,8 @@ Short running notes between agents. Trim stale entries.
 - Not every day of `y` is in `weeks_of_year(y)`: Jan 1-3 2027 are in 2026 wk 53. Whole-year coverage = union of consecutive years, each day exactly once.
 - Sunday start: ISO number kept, days = Sun..Sat with Sunday = ISO Monday - 1 (2026 wk1 = Sun 2025-12-28). Edge: a Sun Dec 31 opens next year's wk 1, so it is absent from that year's weeks.
 - Weeks are not yet assigned to months (task 3).
+
+### Task 3: weeks -> months
+- `calendar.py`: `week_month(week) -> (year, month)` of `week.start`; `weeks_by_month(y, ws) -> {1..12: [Week]}` (all keys present, partition of `weeks_of_year`, in order).
+- Week 1 starting in previous Dec (2026: Mon 12-29 / Sun 12-28) is filed under January of `y`, though `week_month` returns (y-1, 12). Last week starting in Dec stays in Dec.
+- Mar 30 - Apr 5 2026 is March's; April's first week starts Apr 6. Page order: month -> its weeks (spread + dailies).
