@@ -102,6 +102,7 @@ STRINGS: Final[dict[str, dict[str, str]]] = {
         "tasks": "Tareas",
         "schedule": "Horario",
         "back_cover.title": "Contraportada",
+        "back_cover.line": "Que cada día cuente",
         "page.number": "Página {n}",
     },
     "en": {
@@ -134,6 +135,7 @@ STRINGS: Final[dict[str, dict[str, str]]] = {
         "tasks": "Tasks",
         "schedule": "Schedule",
         "back_cover.title": "Back cover",
+        "back_cover.line": "Make every day count",
         "page.number": "Page {n}",
     },
 }

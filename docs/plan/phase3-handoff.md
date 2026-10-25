@@ -33,3 +33,6 @@ Short running notes between agents. Trim stale entries.
 ### Task 10: Contacts
 - `Contacts` (`contacts`, section front_back, 1 page): header `contacts.title`; entries of name/phone/email label+rule rows (3 rows + 1 gap), 2 columns if safe width >= 100 mm.
 - Count: `Contacts(count=N)` like `Notes` (default 1, N empty ctxs, ValueError if negative). Strings already existed. `notes` section was already front_back.
+### Task 11: Back cover
+- `BackCover` (`back_cover`, section front_back, 1 page) in core.py; shares `_cover_panel(pdf, g, title, year)` with `Cover` (Cover refactored, output unchanged).
+- New i18n key `back_cover.line` (es "Que cada día cuente", en "Make every day count"); placement last is Phase 4.
