@@ -24,6 +24,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--pages", type=int, default=4, help="number of blank pages (temporary)")
     parser.add_argument("--page-size", default=None, help="named size or WxH in mm")
     parser.add_argument("--orientation", choices=["portrait", "landscape"], default=None)
+    parser.add_argument(
+        "--debug-grid", action="store_true", help="overlay margins, columns, baseline and rulers"
+    )
     return parser
 
 
@@ -32,6 +35,8 @@ def main(argv: list[str] | None = None) -> int:
     overrides = {
         k: v for k, v in (("page_size", args.page_size), ("orientation", args.orientation)) if v
     }
+    if args.debug_grid:
+        overrides["debug_grid"] = True
     try:
         cfg = Config(**overrides)
     except ValueError as exc:

@@ -8,6 +8,7 @@ from fpdf import FPDF
 
 from agenda import __version__
 from agenda.config import Config
+from agenda.draw import draw_debug_grid
 from agenda.grid import Grid
 
 DEFAULT_OUTPUT = Path("output") / "agenda.pdf"
@@ -65,6 +66,8 @@ def add_page(pdf: FPDF, cfg: Config) -> Grid:
     pdf.add_page()
     pdf.set_left_margin(grid.left)
     pdf.set_right_margin(grid.right)
+    if cfg.debug_grid:
+        draw_debug_grid(pdf, grid, pdf.page)
     pdf.set_xy(grid.safe.x, grid.safe.y)
     return grid
 

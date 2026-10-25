@@ -39,3 +39,8 @@ Short running notes between agents. Trim stale entries.
 - Task 9 overlay: call `grid = add_page(pdf, cfg)` per page and draw from `grid.safe/header/footer/content/col_x/row`.
 - Gotcha: if a filler/blank page is inserted, page number = physical position, so side follows automatically.
 - `ruff format` applied to all Python files (use `ruff format --check agenda tests`).
+
+### Task 9: --debug-grid
+- `agenda/draw.py::draw_debug_grid(pdf, grid, page_no=None)`: inner margin blue, outer orange, header/content/footer boxes, 6 columns (pink), 5 mm baselines, mm rulers on top/left edges (Inter 4 pt), label "p.N side". Restores colors/line width.
+- `add_page` calls it when `cfg.debug_grid` (drawn at page creation, so page content added later paints over it; if that matters, move the call to a finalize step). CLI `--debug-grid` sets `Config.debug_grid`.
+- Default size is half_letter, so `agenda-gen --debug-grid` yields 4 pages; visually verified pages 1-2 (margins swap, 15 mm inner / 10 mm outer). Render with `pdftoppm -r 110 -png`.

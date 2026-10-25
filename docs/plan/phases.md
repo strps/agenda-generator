@@ -35,7 +35,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Bundle and register TTF fonts in `assets/fonts/`; fail if missing
 - [x] `tokens.py` and `grid.py`: margins, 6 columns, 5 mm baseline ([layout-grid.md](../architecture/layout-grid.md))
 - [x] Alternating inner/outer margins by page side
-- [ ] `--debug-grid` overlay (margins, columns, baseline, mm rulers)
+- [x] `--debug-grid` overlay (margins, columns, baseline, mm rulers)
 - [ ] i18n string table (`es`, `en`)
 
 **Done when:** `agenda-gen --debug-grid` outputs a few half-letter pages whose grid overlay shows margins swapping between left and right pages.
