@@ -152,7 +152,7 @@ Spec: [gui.md](../architecture/gui.md).
 
 - [x] `imposition_order(n)` for folded booklets
 - [x] 2-up placement on landscape letter/A4 with pypdf; scaling/centering for other sizes
-- [ ] Bleed and crop marks
+- [x] Bleed and crop marks
 - [ ] Property tests: every page once; each sheet side's pair sums to N+1
 
 **Done when:** a printed, folded test booklet reads in order with the binding margin on the fold side.

@@ -126,3 +126,54 @@ def test_normal_export_unchanged_by_imposition_support(tmp_path):
     out = export_agenda(cfg, tmp_path / "a.pdf")
     plan = build_plan(cfg)
     assert _texts(out.read_bytes()) == _texts(render_pages(cfg, plan, range(len(plan))))
+
+
+# ---------------------------------------------------------------- bleed and crop marks
+
+
+def _strokes(page) -> int:
+    return page.get_contents().get_data().replace(b"\n", b" ").count(b"l S")
+
+
+def test_crop_mark_segments_geometry():
+    from agenda.imposition import crop_mark_segments
+
+    segs = crop_mark_segments(10, 20, 100, 50, bleed=3, length=4)
+    assert len(segs) == 8 and len(set(segs)) == 8
+    assert (7, 20, 3, 20) in segs  # bottom-left, horizontal, pointing left
+    assert (10, 17, 10, 13) in segs  # bottom-left, vertical, pointing down
+    assert (113, 70, 117, 70) in segs and (110, 73, 110, 77) in segs  # top-right
+    # no mark touches the trim box or the bleed zone
+    for x1, y1, x2, y2 in segs:
+        for x, y in ((x1, y1), (x2, y2)):
+            assert not (7 < x < 113 and 17 < y < 73) or x in (10, 110) or y in (20, 70)
+
+
+def test_inset_shrinks_pages_and_keeps_them_clear_of_the_edge():
+    from agenda.imposition import marks_inset, place_two_up
+
+    s0, *_ = place_two_up(139.7, 215.9, 279.4, 215.9)
+    inset = marks_inset(3)
+    s, (lx, ly), (rx, _) = place_two_up(139.7, 215.9, 279.4, 215.9, inset)
+    assert s < s0 and ly >= inset - 1e-9 and lx >= inset - 1e-9
+    assert rx + 139.7 * s + inset <= 279.4 + 1e-9
+
+
+def test_impose_with_marks_draws_lines_and_keeps_order():
+    plain = impose_booklets(_pdf(4), [1] * 4)
+    marked = impose_booklets(_pdf(4), [1] * 4, bleed_mm=3)
+    r = PdfReader(io.BytesIO(marked))
+    assert _texts(marked) == _texts(plain)
+    assert _strokes(r.pages[0]) == 16  # 8 marks x 2 pages on a full side
+    assert _strokes(PdfReader(io.BytesIO(plain)).pages[0]) == 0
+
+
+def test_export_with_crop_marks(tmp_path):
+    base = Config(year=2025, booklet_size=2, num_booklets=1, imposition=True)
+    out = export_agenda(base.model_copy(update={"crop_marks": True}), tmp_path / "m.pdf")
+    assert _strokes(PdfReader(out).pages[0]) > 0
+
+
+def test_crop_marks_require_imposition():
+    with pytest.raises(ValueError, match="crop_marks requires imposition"):
+        Config(crop_marks=True)

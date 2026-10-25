@@ -47,7 +47,7 @@ class Config(BaseModel):
     orientation: Literal["portrait", "landscape"] = "portrait"
     inner_margin: float = Field(15.0, ge=0)  # mm, binding side
     outer_margin: float = Field(10.0, ge=0)  # mm
-    bleed: float = Field(3.0, ge=0)  # mm, only applied with crop_marks
+    bleed: float = Field(3.0, ge=0)  # mm, gap before each crop mark (needs crop_marks)
 
     # Booklets
     booklet_size: int = Field(5, ge=1)
@@ -158,6 +158,8 @@ class Config(BaseModel):
     def _check_booklet_rules(self) -> Config:
         if self.imposition and not self.booklet_folded:
             raise ValueError("imposition requires booklet_folded=true")
+        if self.crop_marks and not self.imposition:
+            raise ValueError("crop_marks requires imposition=true")
         if self.booklet_unit == "pages":
             # folded: 4 pages per sheet; flat: 2 pages per sheet (double-sided)
             step = 4 if self.booklet_folded else 2

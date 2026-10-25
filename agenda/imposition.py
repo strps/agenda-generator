@@ -33,25 +33,57 @@ MM_PT = 72 / 25.4
 SHEETS: dict[str, tuple[float, float]] = {"letter": (279.4, 215.9), "a4": (297.0, 210.0)}
 
 
-def choose_sheet(page_w: float, page_h: float) -> tuple[float, float]:
+def choose_sheet(page_w: float, page_h: float, inset: float = 0.0) -> tuple[float, float]:
     """Landscape letter or A4 (mm) giving the larger scale for two ``page_w x page_h`` pages."""
-    return max(SHEETS.values(), key=lambda s: placement_scale(page_w, page_h, *s))
+    return max(SHEETS.values(), key=lambda s: placement_scale(page_w, page_h, *s, inset))
 
 
-def placement_scale(page_w: float, page_h: float, sheet_w: float, sheet_h: float) -> float:
-    """Scale (<= 1, never enlarges) so two pages fit side by side on the sheet."""
-    return min(1.0, sheet_w / 2 / page_w, sheet_h / page_h)
+def placement_scale(
+    page_w: float, page_h: float, sheet_w: float, sheet_h: float, inset: float = 0.0
+) -> float:
+    """Scale (<= 1, never enlarges) so two pages fit side by side on the sheet.
+
+    ``inset`` reserves that much (same unit) around each scaled page for bleed and crop marks.
+    """
+    return min(1.0, (sheet_w / 2 - 2 * inset) / page_w, (sheet_h - 2 * inset) / page_h)
+
+
+MARK_LEN_MM = 3.0  # length of each crop mark
+MARK_WIDTH_PT = 0.25
+
+
+def marks_inset(bleed: float, mark_len: float = MARK_LEN_MM) -> float:
+    """Space (bleed + mark length) a page needs on each side so its marks fit."""
+    return bleed + mark_len
+
+
+def crop_mark_segments(
+    x: float, y: float, w: float, h: float, bleed: float, length: float = MARK_LEN_MM
+) -> list[tuple[float, float, float, float]]:
+    """The 8 crop-mark lines ``(x1, y1, x2, y2)`` of the trim box at ``(x, y)`` sized ``w x h``.
+
+    Two per corner, along the trim edges' extensions, starting ``bleed`` outside the trim and
+    running ``length`` further out. Any one unit, y up.
+    """
+    a, b = bleed, bleed + length
+    segs = []
+    for cx, dx in ((x, -1), (x + w, 1)):
+        for cy, dy in ((y, -1), (y + h, 1)):
+            segs.append((cx + dx * a, cy, cx + dx * b, cy))  # horizontal
+            segs.append((cx, cy + dy * a, cx, cy + dy * b))  # vertical
+    return segs
 
 
 def place_two_up(
-    page_w: float, page_h: float, sheet_w: float, sheet_h: float
+    page_w: float, page_h: float, sheet_w: float, sheet_h: float, inset: float = 0.0
 ) -> tuple[float, tuple[float, float], tuple[float, float]]:
     """Where two pages go on a sheet (any one unit, y up, origin bottom-left of the sheet).
 
     Returns ``(scale, left_origin, right_origin)``: the lower-left corner of each scaled page.
     Each page is centred in its half of the sheet, so the fold stays at the sheet's middle.
+    ``inset`` reserves room around each page for crop marks (see ``placement_scale``).
     """
-    s = placement_scale(page_w, page_h, sheet_w, sheet_h)
+    s = placement_scale(page_w, page_h, sheet_w, sheet_h, inset)
     w, h = page_w * s, page_h * s
     y = (sheet_h - h) / 2
     half = sheet_w / 2
@@ -63,19 +95,27 @@ def impose_pages(
     sides: Sequence[tuple[int | None, int | None]],
     sheet_mm: tuple[float, float] | None = None,
     writer: PdfWriter | None = None,
+    bleed_mm: float | None = None,
 ) -> PdfWriter:
     """Add (to ``writer`` or a new one) one landscape sheet side per ``(left, right)`` pair of 1-based ``reader`` pages.
 
     ``None`` leaves that half blank. The sheet is ``sheet_mm`` or ``choose_sheet`` of the first
     source page; pages are scaled/centred by ``place_two_up`` (sizes taken per page in points).
+    ``bleed_mm`` not None draws crop marks around every placed page (``bleed_mm`` outside the
+    trim, ``MARK_LEN_MM`` long) and shrinks the pages to leave room for them. The source pages
+    carry no art beyond the trim, so the bleed is only the gap before each mark.
     """
     from pypdf import PdfWriter, Transformation
 
     writer = writer or PdfWriter()
     first = reader.pages[0]
     pw, ph = float(first.mediabox.width), float(first.mediabox.height)
-    sw, sh = sheet_mm or choose_sheet(pw / MM_PT, ph / MM_PT)
+    marks = bleed_mm is not None
+    inset_mm = marks_inset(bleed_mm) if bleed_mm is not None else 0.0
+    sw, sh = sheet_mm or choose_sheet(pw / MM_PT, ph / MM_PT, inset_mm)
     sw, sh = sw * MM_PT, sh * MM_PT
+    inset = inset_mm * MM_PT
+    ops: list[str] = []
     for pair in sides:
         sheet = writer.add_blank_page(sw, sh)
         for num, origin_idx in zip(pair, (1, 2)):
@@ -83,19 +123,44 @@ def impose_pages(
                 continue
             src = reader.pages[num - 1]
             w, h = float(src.mediabox.width), float(src.mediabox.height)
-            s, *origins = place_two_up(w, h, sw, sh)
+            s, *origins = place_two_up(w, h, sw, sh, inset)
             x, y = origins[origin_idx - 1]
+            if marks and bleed_mm is not None:
+                ops += [
+                    f"{a:.3f} {b:.3f} m {c:.3f} {d:.3f} l S"
+                    for a, b, c, d in crop_mark_segments(
+                        x, y, w * s, h * s, bleed_mm * MM_PT, MARK_LEN_MM * MM_PT
+                    )
+                ]
             ctm = Transformation().translate(-float(src.mediabox.left), -float(src.mediabox.bottom))
             sheet.merge_transformed_page(src, ctm.scale(s).translate(x, y))
+        if ops:
+            _draw(writer, sheet, f"q {MARK_WIDTH_PT} w 0 G {' '.join(ops)} Q")
+            ops = []
     return writer
 
 
-def impose_booklets(pdf: bytes, booklet_of: Sequence[int | None]) -> bytes:
+def _draw(writer: PdfWriter, sheet, content: str) -> None:
+    """Append a content stream (PDF operators) on top of ``sheet``."""
+    from pypdf import PageObject
+    from pypdf.generic import DecodedStreamObject, NameObject
+
+    stream = DecodedStreamObject()
+    stream.set_data(content.encode("ascii"))
+    top = PageObject.create_blank_page(width=sheet.mediabox.width, height=sheet.mediabox.height)
+    top[NameObject("/Contents")] = writer._add_object(stream)
+    sheet.merge_page(top)
+
+
+def impose_booklets(
+    pdf: bytes, booklet_of: Sequence[int | None], bleed_mm: float | None = None
+) -> bytes:
     """Impose a finished PDF; ``booklet_of[i]`` is the booklet index of page ``i`` (None = not in one).
 
     Each booklet (pages contiguous, padded with blanks to a multiple of 4) becomes its sheet sides
     in ``imposition_order``. Pages outside any booklet (separate covers) are kept as they are,
     at their place relative to the booklets (before the first / after the last).
+    ``bleed_mm`` not None adds crop marks to the imposed sheets (see ``impose_pages``).
     """
     from pypdf import PdfReader, PdfWriter
 
@@ -114,7 +179,7 @@ def impose_booklets(pdf: bytes, booklet_of: Sequence[int | None]) -> bytes:
     for _, pages in sorted(groups.items()):
         padded: list[int | None] = [*pages, *[None] * (-len(pages) % 4)]
         sides = [(padded[a - 1], padded[b - 1]) for a, b in imposition_order(len(padded))]
-        impose_pages(reader, sides, writer=out)
+        impose_pages(reader, sides, writer=out, bleed_mm=bleed_mm)
     for n in (n for n in plain if n > first):
         out.add_page(reader.pages[n - 1])
     buf = io.BytesIO()
