@@ -30,3 +30,6 @@ Short running notes between agents. Trim stale entries.
 - `Notes` (`notes`, section front_back, 1 page): header `notes.title` + `draw_pattern(pdf, g.content, config.notes_pattern, g.baseline)` (agenda/draw.py; lined/dotted/grid/blank, anchored top-left of rect, clipped to it).
 - Count: `Notes(count=N).instances(cfg)` -> N empty ctxs (default 1; spec says "variable"). Phase 4 padding: instantiate `Notes(count=missing)`; catalog default instance gives 1.
 - Dots are zero-length round-cap lines (0.4 mm); blank draws only the header.
+### Task 10: Contacts
+- `Contacts` (`contacts`, section front_back, 1 page): header `contacts.title`; entries of name/phone/email label+rule rows (3 rows + 1 gap), 2 columns if safe width >= 100 mm.
+- Count: `Contacts(count=N)` like `Notes` (default 1, N empty ctxs, ValueError if negative). Strings already existed. `notes` section was already front_back.

@@ -426,3 +426,59 @@ class Notes(BasePage):
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("notes.title"))
         draw_pattern(pdf, g.content, config.notes_pattern, g.baseline)
+
+
+@register
+class Contacts(BasePage):
+    """Contact directory, 1 page: header and entries (name, phone, email write-in rows).
+
+    Entries fill the content box top to bottom, in 2 columns when the page is wide enough.
+    ``Contacts(count=N)`` makes ``instances()`` return N pages (default 1), like ``Notes``.
+    """
+
+    id = "contacts"
+    name = "Contacts"
+    category = "core"
+    section = "front_back"
+
+    FIELDS = ("contacts.name", "contacts.phone", "contacts.email")
+    ENTRY_ROWS = len(FIELDS) + 1  # one spacing row after each entry
+    WIDE_MM = 100.0  # safe width from which entries go in 2 columns
+    LABEL_W = 14.0
+
+    def __init__(self, count: int = 1) -> None:
+        if count < 0:
+            raise ValueError("count must be >= 0")
+        self.count = count
+
+    def instances(self, config: Config) -> list[Ctx]:
+        return [{} for _ in range(self.count)]
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        h = g.header
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, s("contacts.title"))
+
+        ncols = 2 if g.safe.w >= self.WIDE_MM and g.columns >= 2 else 1
+        span = g.columns // ncols
+        per_col = g.rows // self.ENTRY_ROWS
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_HAIRLINE)
+        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        for c in range(ncols):
+            x, w = g.col(c * span, span if c < ncols - 1 else g.columns - c * span)
+            if c < ncols - 1:  # keep a column gap
+                w = g.col(c * span, span - 1)[1] if span > 1 else w
+            for e in range(per_col):
+                for i, key in enumerate(self.FIELDS):
+                    r = e * self.ENTRY_ROWS + i
+                    pdf.set_text_color(*tokens.COLORS["muted"])
+                    pdf.set_xy(x, g.row(r))
+                    pdf.cell(self.LABEL_W, g.baseline, s(key))
+                    y = g.row(r + 1)
+                    pdf.line(x + self.LABEL_W, y, x + w, y)
