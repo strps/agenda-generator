@@ -11,7 +11,7 @@ Short running notes between agents. Trim stale entries.
 - Layout: package `agenda/` at repo root (not `agenda_gen/`); setuptools discovers `agenda*`.
 - CLI uses stdlib `argparse` (not typer); entry is `agenda.__main__:main(argv=None) -> int`.
 - Deps (core): fpdf2, pydantic, PyYAML, holidays, pypdf, qrcode, Pillow. Extras: `gui` (PySide6, pypdfium2), `dev` (pytest, ruff).
-- Fonts: top-level `assets/fonts/` (decided, task 2); see Task 2 log.
+- Fonts: top-level `assets/fonts/`; Inter registered by `new_document` (see Task 6).
 
 ## Log
 
@@ -38,3 +38,11 @@ Short running notes between agents. Trim stale entries.
 - CLI temporary flags: `-o/--output`, `--pages` (default 4), `--page-size`, `--orientation`; builds `Config(**overrides)`, exit 2 on invalid config. Replace with the real CLI/config overlay later.
 - Page size verified via pypdf mediabox (pt / (72/25.4)) in `tests/test_exporter.py`.
 - Note: fpdf2 margins set to 0 on purpose; the margins/grid tasks own real margins (alternating inner/outer by page side).
+
+### Task 6: fonts
+- Bundled Inter 4.0 static TTFs (OFL, `assets/fonts/Inter-LICENSE.txt`): Regular, Bold, Italic, BoldItalic (~1.6 MB). Docs (improvements.md) suggested Inter.
+- `agenda/exporter.py`: `FONT_DIR`, `FONT_FAMILY = "Inter"`, `FONT_FILES` (style -> file), `register_fonts(pdf, font_dir)`, `FontsMissingError` (lists missing files + dir). `new_document(cfg, font_dir=FONT_DIR)` calls it.
+- Use `pdf.set_font("Inter", "", 10)`; styles `""`, `"B"`, `"I"`, `"BI"`. Any other weight needs a new file added to `FONT_FILES`.
+- CLI prints the error to stderr and returns exit code 1 (2 stays for invalid config).
+- Tests in `tests/test_exporter.py` (accent text extracted from PDF, missing-dir error, CLI exit code).
+- Gotcha: fpdf2 `cell()` defaults to staying on the line; pass `new_x="LMARGIN", new_y="NEXT"` for line breaks (margins are 0).

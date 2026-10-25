@@ -11,8 +11,39 @@ from agenda.config import Config
 
 DEFAULT_OUTPUT = Path("output") / "agenda.pdf"
 
+FONT_DIR = Path(__file__).resolve().parents[1] / "assets" / "fonts"
+FONT_FAMILY = "Inter"
+# fpdf2 style code -> file name. Use `pdf.set_font("Inter", style, size)` with "", "B", "I", "BI".
+FONT_FILES = {
+    "": "Inter-Regular.ttf",
+    "B": "Inter-Bold.ttf",
+    "I": "Inter-Italic.ttf",
+    "BI": "Inter-BoldItalic.ttf",
+}
 
-def new_document(cfg: Config) -> FPDF:
+
+class FontsMissingError(FileNotFoundError):
+    """Required bundled font files are not present."""
+
+    def __init__(self, missing: list[Path], font_dir: Path):
+        self.missing = missing
+        self.font_dir = font_dir
+        names = ", ".join(p.name for p in missing)
+        super().__init__(f"Missing font files in {font_dir}: {names}")
+
+
+def register_fonts(pdf: FPDF, font_dir: str | Path = FONT_DIR) -> FPDF:
+    """add_font every required Inter style; raise FontsMissingError listing absent files."""
+    font_dir = Path(font_dir)
+    missing = [font_dir / f for f in FONT_FILES.values() if not (font_dir / f).is_file()]
+    if missing:
+        raise FontsMissingError(missing, font_dir)
+    for style, fname in FONT_FILES.items():
+        pdf.add_font(FONT_FAMILY, style, str(font_dir / fname))
+    return pdf
+
+
+def new_document(cfg: Config, font_dir: str | Path = FONT_DIR) -> FPDF:
     """Create an empty FPDF in mm sized from `cfg.page_dimensions`, no auto page breaks."""
     pdf = FPDF(unit="mm", format=tuple(cfg.page_dimensions))
     pdf.set_auto_page_break(False)
@@ -20,6 +51,7 @@ def new_document(cfg: Config) -> FPDF:
     pdf.set_title(f"Agenda {cfg.year}")
     pdf.set_creator(f"agenda-gen {__version__}")
     pdf.set_author("agenda-gen")
+    register_fonts(pdf, font_dir)
     return pdf
 
 

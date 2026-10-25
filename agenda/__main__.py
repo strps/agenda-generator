@@ -10,7 +10,7 @@ import sys
 
 from agenda import __version__
 from agenda.config import Config
-from agenda.exporter import DEFAULT_OUTPUT, export_blank
+from agenda.exporter import DEFAULT_OUTPUT, FontsMissingError, export_blank
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,7 +31,11 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         print(f"agenda-gen: {exc}", file=sys.stderr)
         return 2
-    out = export_blank(cfg, args.pages, args.output or DEFAULT_OUTPUT)
+    try:
+        out = export_blank(cfg, args.pages, args.output or DEFAULT_OUTPUT)
+    except FontsMissingError as exc:
+        print(f"agenda-gen: {exc}", file=sys.stderr)
+        return 1
     print(f"wrote {out}")
     return 0
 

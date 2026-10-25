@@ -42,3 +42,36 @@ def test_cli_writes_pdf(tmp_path):
     sizes = _sizes(out)
     assert len(sizes) == 2
     assert round(sizes[0][0]) == 148 and round(sizes[0][1]) == 210
+
+
+def test_fonts_registered_and_accents_render(tmp_path):
+    from agenda.exporter import FONT_FAMILY, FONT_FILES, write_pdf
+
+    pdf = new_document(Config())
+    pdf.add_page()
+    for style in FONT_FILES:
+        pdf.set_font(FONT_FAMILY, style, 12)
+        pdf.cell(0, 6, "Miércoles, año — ¿Qué tal? ñ Á É Í Ó Ú ü", new_x="LMARGIN", new_y="NEXT")
+    out = write_pdf(pdf, tmp_path / "f.pdf")
+    reader = PdfReader(out)
+    assert "Miércoles, año" in reader.pages[0].extract_text()
+    assert any("Inter" in str(f) for f in reader.pages[0]["/Resources"]["/Font"].values())
+
+
+def test_missing_fonts_raise(tmp_path):
+    from agenda.exporter import FONT_FILES, FontsMissingError
+
+    with pytest.raises(FontsMissingError) as ei:
+        new_document(Config(), font_dir=tmp_path)
+    assert str(tmp_path) in str(ei.value)
+    assert len(ei.value.missing) == len(FONT_FILES)
+    assert "Inter-Regular.ttf" in str(ei.value)
+
+
+def test_cli_exits_nonzero_when_fonts_missing(tmp_path, monkeypatch, capsys):
+    import agenda.exporter as ex
+
+    monkeypatch.setattr(ex, "FONT_DIR", tmp_path)
+    monkeypatch.setattr(ex.new_document, "__defaults__", (tmp_path,))
+    assert main(["-o", str(tmp_path / "x.pdf")]) == 1
+    assert "Missing font files" in capsys.readouterr().err
