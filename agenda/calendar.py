@@ -1,10 +1,11 @@
-"""Date calculations: months, days and month grids (pure, no drawing).
+"""Date calculations: months, days, month grids and ISO weeks (pure, no drawing).
 
 Weekday indices follow `datetime`: 0 = Monday ... 6 = Sunday.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, timedelta
 
 WEEK_STARTS = ("monday", "sunday")
@@ -49,3 +50,46 @@ def month_grid(year: int, month: int, week_start: str = "monday") -> list[list[d
     cells += [date(year, month, d) for d in range(1, n + 1)]
     cells += [None] * (-len(cells) % 7)
     return [cells[i : i + 7] for i in range(0, len(cells), 7)]
+
+
+@dataclass(frozen=True)
+class Week:
+    """One ISO week laid out for a given week start.
+
+    `number`/`iso_year` are always the ISO ones (of the week's Monday).
+    `days` has 7 dates in `weekday_order`; `start`/`end` are days[0]/days[-1].
+    """
+
+    number: int
+    iso_year: int
+    days: list[date]
+
+    @property
+    def start(self) -> date:
+        return self.days[0]
+
+    @property
+    def end(self) -> date:
+        return self.days[-1]
+
+
+def iso_weeks_in_year(year: int) -> int:
+    """52 or 53. Dec 28 always lies in the last ISO week of its year."""
+    return date(year, 12, 28).isocalendar()[1]
+
+
+def weeks_of_year(year: int, week_start: str = "monday") -> list[Week]:
+    """Every ISO week whose ISO year is `year`, in order.
+
+    Week 1 may start in the previous year (and the last week may end in the next).
+    Sunday start: the week keeps its ISO number but runs Sun..Sat, the Sunday
+    being the day before the ISO Monday.
+    """
+    order = weekday_order(week_start)  # validates week_start
+    first = date.fromisocalendar(year, 1, 1)
+    shift = -1 if order[0] == 6 else 0
+    weeks = []
+    for n in range(1, iso_weeks_in_year(year) + 1):
+        start = first + timedelta(weeks=n - 1, days=shift)
+        weeks.append(Week(n, year, [start + timedelta(days=i) for i in range(7)]))
+    return weeks

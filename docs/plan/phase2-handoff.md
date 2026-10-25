@@ -14,4 +14,10 @@ Short running notes between agents. Trim stale entries.
 ### Task 1: months, days, month grids
 - `calendar.py`: `weekday_order(ws)` (Sun start -> `[6,0,..5]`, ValueError otherwise), `is_leap`, `days_in_month(y, m)`, `days_of_year(y) -> list[date]`, `month_grid(y, m, ws) -> list[list[date | None]]`.
 - `month_grid`: rows of 7 in `weekday_order`; padding is `None` (not adjacent-month dates); 4-6 rows, no leading padding if the 1st is the week start.
-- Next tasks can reuse `weekday_order` and `WEEK_STARTS`; ISO weeks not started.
+- Next tasks can reuse `weekday_order` and `WEEK_STARTS`.
+
+### Task 2: ISO weeks
+- `calendar.py`: `Week(number, iso_year, days, start, end)` frozen; `iso_weeks_in_year(y)` (52/53); `weeks_of_year(y, ws)` = every ISO week with iso_year == y (week 1 may start in Dec of y-1, last may end in Jan of y+1, e.g. 2026 wk1 = Mon 2025-12-29).
+- Not every day of `y` is in `weeks_of_year(y)`: Jan 1-3 2027 are in 2026 wk 53. Whole-year coverage = union of consecutive years, each day exactly once.
+- Sunday start: ISO number kept, days = Sun..Sat with Sunday = ISO Monday - 1 (2026 wk1 = Sun 2025-12-28). Edge: a Sun Dec 31 opens next year's wk 1, so it is absent from that year's weeks.
+- Weeks are not yet assigned to months (task 3).
