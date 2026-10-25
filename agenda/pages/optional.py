@@ -125,3 +125,64 @@ class ImportantDates(BasePage):
                 y = g.row(top + 2 + k)
                 pdf.line(x, y, x + self.DAY_W, y)
                 pdf.line(x + self.DAY_W + self.DAY_GAP, y, x + w, y)
+
+
+@register
+class Todo(BasePage):
+    """To-do list, 1 page per instance: checkbox + task rule + due-date rule on every row.
+
+    Single column on every size (two columns would make rules too short on b6/a5). Row 1 holds
+    the column labels; every following baseline row (``layout(rows)``) is a task row, so the
+    page is filled from b6 to letter. The due column is the last grid column, the task rule
+    runs from the checkbox to the gutter before it. ``Todo(count=N)`` gives N pages (default 1);
+    there is no config field for the count yet, like Notes/Contacts.
+    """
+
+    id = "todo"
+    name = "To-do list"
+    category = "optional"
+    section = "optional"
+
+    BOX = 3.0
+    DUE_COLS = 1
+
+    def __init__(self, count: int = 1) -> None:
+        if count < 0:
+            raise ValueError("count must be >= 0")
+        self.count = count
+
+    def instances(self, config: Config) -> list[Ctx]:
+        return [{} for _ in range(self.count)]
+
+    @staticmethod
+    def layout(rows: int) -> int:
+        """Task rows for ``rows`` baseline rows of content (one row is the label row)."""
+        return max(0, rows - 1)
+
+    def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
+        g = grids[0]
+        s = Strings(config.language)
+        pdf.c_margin = 0
+        pdf.set_text_color(*_ACCENT)
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        h = g.header
+        pdf.set_xy(h.x, h.y)
+        pdf.cell(h.w, h.h, s("todo.title"))
+
+        x = g.safe.x
+        dx, dw = g.col(g.columns - self.DUE_COLS, self.DUE_COLS)
+        task_w = dx - g.gutter - x
+        box = min(self.BOX, g.baseline - 1.0)
+        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+        pdf.set_xy(x, g.row(0))
+        pdf.cell(task_w, g.baseline, s("todo.task"))
+        pdf.set_xy(dx, g.row(0))
+        pdf.cell(dw, g.baseline, s("todo.due"))
+        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_line_width(tokens.STROKE_HAIRLINE)
+        for k in range(self.layout(g.rows)):
+            top, y = g.row(1 + k), g.row(2 + k)
+            draw_checkbox(pdf, x, top + (g.baseline - box) / 2, box)
+            pdf.line(x + box + 2, y, x + task_w, y)
+            pdf.line(dx, y, dx + dw, y)

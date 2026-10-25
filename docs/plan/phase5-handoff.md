@@ -20,3 +20,7 @@ Short running notes between agents. Trim stale entries.
 ### Task 2: Important dates
 - `ImportantDates` (`important_dates`, optional/optional, 1 page): `layout(rows) -> entries` = `max(1, rows // 6 - 2)`; 12 month blocks (2 cols x 6 rows: title row, entries, gap row), each entry a short day rule + name rule.
 - Month names via `Strings.month_name(m)`; key `dates.title` only.
+
+### Task 3: To-do list
+- `Todo(count=1)` (`todo`, optional/optional): `count` -> `instances()` N pages (negative raises), like Notes. No config field for count exists (Notes has none), so `config.pages` gives 1.
+- `Todo.layout(rows) -> rows - 1` task rows (row 1 = labels); 1 column on all sizes; due rule = last grid column. Keys `todo.title/task/due`.
