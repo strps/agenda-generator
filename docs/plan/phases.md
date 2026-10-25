@@ -99,7 +99,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Monthly review (x12)
 - [x] Schedule
 - [x] Holidays list
-- [ ] Passwords (with warning)
+- [x] Passwords (with warning)
 
 **Done when:** each page renders at every supported size within the safe area.
 

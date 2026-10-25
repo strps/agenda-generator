@@ -47,3 +47,15 @@ Short running notes between agents. Trim stale entries.
 ### Task 9: Holidays
 - `Holidays` (`holidays`, optional/optional, 1 page): `layout(rows, n) -> (cols, shown, per_col)`; cap = `rows // ROW_BASELINES`(2); n <= cap one column, else two columns showing first `min(n, 2*cap)` (truncated); n=0 or unsupported country (`ValueError` caught) => cap empty rows.
 - Es dates "1 ene", en "Jan 1"; names ellipsized via `_ellipsize(pdf, text, w)`. Reuses keys `holidays.title`.
+
+### Task 10: Passwords
+- `Passwords(count=1)` (`passwords`, optional/optional): `layout(rows) -> entries` = `max(0, (rows - 6) // 2)`; `WARN_ROWS`=4 (bordered box, drawn triangle icon, wrapped text, max 3 lines, tested), 1 gap row, label row, entries of 2 rows in 3 columns. Keys `passwords.*`.
+
+## Phase 5 wrap-up (open items for later phases)
+- Done-when verified in `tests/test_optional_pages.py`: all 10 ids x es/en x all 5 registry sizes in safe area; `export_agenda` with all ids at every size matches plan page count.
+- x12 pages (budget, habits, monthly review) sit after the dailies, not next to their months.
+- `Todo/Projects/Passwords count` has no config field (always 1 via `config.pages`).
+- `Goals.BOX` and `ImportantDates.DAY_W/DAY_GAP` are hardcoded mm; Projects.LABEL_W and Todo.BOX likewise.
+- i18n keys `goals.step` and `holidays.label` are unused.
+- Habits cells are ~2 mm wide on b6.
+- Contacts' inline label+rule is not refactored onto `draw_label_rule`.
