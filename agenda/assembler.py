@@ -283,6 +283,11 @@ def build_plan(config: Any) -> PagePlan:
     if not done:
         try_padding(0, False)
     inner_end = len(entries) - 2 if sep else len(entries)  # last inner page number
+    if config.booklet_folded and plan_booklets(inner_end - lead, per, nb).overflow == 0:
+        # Invariant (not user-facing): a folded booklet block is whole sheets of 4 pages.
+        assert (inner_end - lead) % 4 == 0, (
+            f"folded page count {inner_end - lead} not a multiple of 4"
+        )
 
     def index(e: PlanEntry) -> int | None:
         if sep and not lead < e.page_number <= inner_end:

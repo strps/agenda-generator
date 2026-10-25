@@ -82,7 +82,7 @@ Progress tracker for the [development plan](plan_script_agenda.md). Update the s
 - [x] Padding with `pad_with` pages, placed before the back cover
 - [x] `separate_covers` option
 - [x] `daily_months` filter
-- [ ] Validation: imposition requires folded; folded page counts multiple of 4
+- [x] Validation: imposition requires folded; folded page counts multiple of 4
 - [ ] Summary: pages, sheets, booklets, padding, page-count warning
 - [ ] Unit tests for the plan (no rendering)
 

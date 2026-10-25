@@ -67,11 +67,11 @@ def test_pad_with_other_id_and_spread():
 
 
 def test_spread_that_cannot_fill_falls_back_to_blank():
-    # 2-page spread starting left, odd booklet size: cannot always fill exactly
-    cfg = _cfg(planners=["weekly"], pad_with="weekly", booklet_unit="pages", booklet_size=7,
+    # 2-page spread starting left, small booklet size: cannot always fill exactly
+    cfg = _cfg(planners=["weekly"], pad_with="weekly", booklet_unit="pages", booklet_size=6,
                booklet_folded=False)  # fmt: skip
     plan = build_plan(cfg)
-    assert len(plan) % 7 == 0
+    assert len(plan) % 6 == 0
     assert plan[-1].page_class is BackCover
     assert all(e.page_class in (Weekly, None) for e in _padding(plan))
 
@@ -133,3 +133,13 @@ def test_separate_covers_fixed_num_booklets():
     cfg = _cfg(planners=["weekly"], separate_covers=True, num_booklets=8)
     plan = _check_sep(cfg)
     assert _inner(plan)[-1].booklet_index == 8
+
+
+def test_folded_total_multiple_of_four_and_overflow_not_error():
+    for kw in ({}, {"separate_covers": True}, {"booklet_unit": "pages", "booklet_size": 8}):
+        plan = build_plan(_cfg(planners=["weekly"], **kw))
+        counted = [e for e in plan if e.booklet_index is not None]
+        assert len(counted) % 4 == 0
+    # fixed num_booklets too small: plan overflows (a summary warning, not an error)
+    plan = build_plan(_cfg(planners=["weekly"], num_booklets=1))
+    assert plan.page_count > 20

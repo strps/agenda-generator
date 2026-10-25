@@ -35,3 +35,9 @@ Short running notes between agents. Trim stale entries.
 ### Task 7: daily_months
 - Filter lives in `build_plan` (`d.month in config.daily_months`); `Daily.instances` unchanged. Weeks/months unaffected; later steps (fillers, padding, booklets) derive from the filtered list. Tests: tests/test_daily_months.py.
 - Gotcha: a year's first/last days in an ISO week owned by the neighbouring year have no Daily (2028 gives 364 dailies), independent of daily_months.
+
+### Task 8: validation
+- `Config._check_booklet_rules` (model_validator): imposition needs folded; `unit="pages"` size must be a multiple of 4 (folded) or 2 (flat; decision). Sheets always valid. Tests in tests/test_config.py.
+- `build_plan` asserts the counted block is a multiple of 4 when folded and not overflowing.
+- Overflow (fixed `num_booklets` too small) is NOT an error: plan builds, `BookletLayout.overflow` > 0. Task 9 summary must warn.
+- Gotcha: pydantic `validate_assignment` raises but leaves the bad value set; don't rely on rollback.

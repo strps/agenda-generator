@@ -129,8 +129,15 @@ class Config(BaseModel):
     def _check_booklet_rules(self) -> Config:
         if self.imposition and not self.booklet_folded:
             raise ValueError("imposition requires booklet_folded=true")
-        if self.booklet_unit == "pages" and self.booklet_folded and self.booklet_size % 4:
-            raise ValueError("folded booklets need a page count that is a multiple of 4")
+        if self.booklet_unit == "pages":
+            # folded: 4 pages per sheet; flat: 2 pages per sheet (double-sided)
+            step = 4 if self.booklet_folded else 2
+            if self.booklet_size % step:
+                kind = "folded" if self.booklet_folded else "flat"
+                raise ValueError(
+                    f"{kind} booklets need a page count that is a multiple of {step} "
+                    f"(got booklet_size={self.booklet_size} pages)"
+                )
         return self
 
     @property

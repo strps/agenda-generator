@@ -93,3 +93,37 @@ def test_pad_with_validated_against_catalog():
     assert Config(pad_with=" weekly ").pad_with == "weekly"
     with pytest.raises(ValidationError, match="unknown page id"):
         Config(pad_with="nope")
+
+
+def test_imposition_error_message():
+    with pytest.raises(ValidationError, match="imposition requires booklet_folded"):
+        Config(imposition=True, booklet_folded=False)
+    assert Config(imposition=False, booklet_folded=False)
+
+
+def test_folded_pages_message_and_valid_sizes():
+    with pytest.raises(ValidationError, match="multiple of 4"):
+        Config(booklet_unit="pages", booklet_size=6)
+    for n in (4, 8, 40):
+        assert Config(booklet_unit="pages", booklet_size=n).pages_per_booklet == n
+    for n in (1, 3, 5):  # sheets: always fine
+        assert Config(booklet_size=n).pages_per_booklet % 4 == 0
+
+
+def test_flat_pages_multiple_of_two():
+    with pytest.raises(ValidationError, match="multiple of 2"):
+        Config(booklet_unit="pages", booklet_size=7, booklet_folded=False)
+    assert Config(booklet_unit="pages", booklet_size=6, booklet_folded=False)
+
+
+def test_validate_assignment_rules():
+    c = Config(imposition=True)
+    with pytest.raises(ValidationError):
+        c.booklet_folded = False
+    # NB: pydantic does not roll back a failed assignment; the object is left invalid
+    c2 = Config(booklet_unit="pages", booklet_size=8)
+    with pytest.raises(ValidationError):
+        c2.booklet_size = 6
+    c3 = Config(booklet_unit="pages", booklet_size=8)
+    c3.booklet_size = 12
+    assert c3.pages_per_booklet == 12
