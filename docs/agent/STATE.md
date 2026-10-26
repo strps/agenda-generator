@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 19
+Last phase: 01   (plan: export dialog; earlier decisions below still hold)
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -23,8 +23,10 @@ Last phase: 19
 - Docs: README "Configuration" (Sections/Padding/Day extras) and "GUI", docs/architecture/gui.md, examples/{daily_quotes,daily_extra,holidays}.txt, commented `daily:` block in config.yaml; tests/test_sample_files.py pins config.yaml to the flat sample (booklet_folded field name) (phase 19)
 - Cross-field hour rules (start < end) live in Config._check_booklet_rules; each new field needs a CLI option + PARAM_SHORT/DETAILS (phase 11)
 - with_enabled on a "page" section with empty pages copies preset_pages(preset) first (phase 10)
+- Page numbers: Config page_number_start/first/position/placement/format (flat YAML, validated by numbering.validate_format); label drawn in exporter._draw_number right after add_page (before page content), muted 7pt Inter; margin = centered in bottom margin band, footer = bottom of safe area; total = len(plan); n = page - first + start (phase 01)
 
 ## Interfaces
+- agenda/numbering.py (Qt-free): `label_for(cfg,page,total)->str|None`, `align_for(side,position)->L|C|R`, `x_for(side,position,safe_x,safe_w,text_w)`, `validate_format(fmt)`; CLI `--page-number-start/-first/-position/-placement/-format`; tests/test_page_numbers.py
 - agenda/gui/help_text.py: `TOOLTIPS` (ids open_config, save_config, export_pdf, prev, next, mode_single, mode_spread, mode_sheet, zoom), `EXPORT_DISABLED_REASON`, `SECTION_DESCRIPTIONS`, `section_tooltip(key)`, `PARAM_SHORT`, `PARAM_DETAILS`, `param_tooltip(name, expanded=False)` (short, or short+"\n"+detail; unknown name returns name)
 - agenda/gui/hover_tooltip.py: `HOVER_EXPAND_MS=1500` (only definition; re-exported by section_bar), `make_expand_timer(parent, slot)`, `ExpandingToolTip(widget, short, detail)` (event filter on widget + scroll-area viewport; members expand_timer, expanded, hover(global_pos=None), current_text(), reset(), set_texts(short, detail)); Enter starts timer, ToolTip shows current text (consumed; fallback starts timer), Leave/Hide reset; tests/test_gui_hover_tooltip.py
 - section_bar.py: `HOVER_EXPAND_MS` (imported), `SectionBar.expand_timer`, `hover_at`, `current_tooltip`, `reset_hover`; tests in tests/test_gui_bar_hover.py
@@ -42,7 +44,7 @@ Last phase: 19
 - settings_model.config_to_yaml_data(cfg) grouped dict; config_to_data stays flat; tests/test_templates.py
 
 ## Open issues
-- none
+- footer placement can overlap the day-page quote/extra text in the footer band (not avoided)
 
 ## Blocked
 - none

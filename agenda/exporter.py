@@ -100,6 +100,28 @@ def export_blank(cfg: Config, pages: int = 1, path: str | Path = DEFAULT_OUTPUT)
     return write_pdf(add_blank_pages(new_document(cfg), pages, cfg), path)
 
 
+def _draw_number(pdf: FPDF, cfg: Config, grid: Grid, entry_number: int, total: int) -> None:
+    """Print the page-number label on the current page (no-op when numbering is off)."""
+    from agenda import tokens
+    from agenda.numbering import align_for, label_for
+
+    text = label_for(cfg, entry_number, total)
+    if text is None:
+        return
+    safe = grid.safe
+    h = 4.0
+    if cfg.page_number_placement == "footer":
+        y = safe.y2 - h
+    else:
+        y = safe.y2 + (grid.page_h - safe.y2 - h) / 2
+    pdf.set_font(FONT_FAMILY, "", 7)
+    pdf.set_text_color(*tokens.COLORS["muted"])
+    pdf.set_xy(safe.x, y)
+    pdf.cell(safe.w, h, text, align=align_for(grid.side, cfg.page_number_position))
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_xy(safe.x, safe.y)
+
+
 def _render_plan(
     cfg: Config,
     plan: PagePlan,
@@ -121,6 +143,8 @@ def _render_plan(
     for i in todo:
         entry = plan[i]
         grid = add_page(pdf, cfg, entry.page_number)
+        if cfg.page_numbers:
+            _draw_number(pdf, cfg, grid, entry.page_number, len(plan))
         if entry.page_in_instance == 0:
             grids = []
         grids.append(grid)

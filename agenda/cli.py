@@ -171,6 +171,21 @@ def run(
     preset: Annotated[str | None, typer.Option(help="essential, complete or premium.")] = None,
     notes_pattern: Annotated[str | None, typer.Option(help="lined, dotted, grid or blank.")] = None,
     page_numbers: Annotated[bool | None, typer.Option("--page-numbers/--no-page-numbers")] = None,
+    page_number_start: Annotated[
+        int | None, typer.Option(help="Number printed on the first numbered page (0-9999).")
+    ] = None,
+    page_number_first: Annotated[
+        int | None, typer.Option(help="Plan page (1-based) that gets the first number.")
+    ] = None,
+    page_number_position: Annotated[
+        str | None, typer.Option(help="outer, center or inner.")
+    ] = None,
+    page_number_placement: Annotated[
+        str | None, typer.Option(help="margin (below the page content) or footer.")
+    ] = None,
+    page_number_format: Annotated[
+        str | None, typer.Option(help="Label format with {n} and optionally {total}.")
+    ] = None,
     qr_url: Annotated[
         list[str] | None, typer.Option("--qr-url", help="Text or URL for the qr page (repeat).")
     ] = None,
@@ -237,6 +252,11 @@ def run(
             preset=preset,
             notes_pattern=notes_pattern,
             page_numbers=page_numbers,
+            page_number_start=page_number_start,
+            page_number_first=page_number_first,
+            page_number_position=page_number_position,
+            page_number_placement=page_number_placement,
+            page_number_format=page_number_format,
             year=year,
             week_start=week_start,
             language=language,

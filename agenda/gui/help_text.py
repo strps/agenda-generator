@@ -95,6 +95,11 @@ PARAM_SHORT: dict[str, str] = {
     "preset": "Page selection by value score.",
     "notes_pattern": "Pattern of the notes pages.",
     "page_numbers": "Print page numbers on the pages.",
+    "page_number_start": "Number printed on the first numbered page.",
+    "page_number_first": "Plan page that gets the first number.",
+    "page_number_position": "Where the number sits: outer, center or inner.",
+    "page_number_placement": "Number in the bottom margin or in the page footer.",
+    "page_number_format": "Label text; {n} is the number, {total} the last one.",
     "qr_urls": "Texts or URLs for the QR page, one per line.",
     "daily_hour_start": "First hour printed on day pages (0-23).",
     "daily_hour_end": "Last hour printed on day pages (0-23).",
@@ -195,7 +200,29 @@ PARAM_DETAILS: dict[str, str] = {
     ),
     "page_numbers": (
         "When on, a page number is printed on each page. When off, the pages carry "
-        "no numbers."
+        "no numbers. Start, first page, position, placement and format refine it "
+        "(page_number_start, page_number_first, page_number_position, "
+        "page_number_placement, page_number_format)."
+    ),
+    "page_number_start": (
+        "Number printed on the first numbered page (0-9999, default 1). "
+        "Only used when page_numbers is on."
+    ),
+    "page_number_first": (
+        "1-based plan page that gets the first number (default 1). Earlier pages are "
+        "unnumbered, e.g. 3 skips the cover and inside cover. Only used when page_numbers is on."
+    ),
+    "page_number_position": (
+        "Horizontal position: outer (away from the binding, default), center or inner "
+        "(next to the binding). Only used when page_numbers is on."
+    ),
+    "page_number_placement": (
+        "margin (default) prints the number in the bottom margin below the page content; "
+        "footer prints it inside the page footer band. Only used when page_numbers is on."
+    ),
+    "page_number_format": (
+        "Label text, 1-24 characters. {n} is the page number (required) and {total} the "
+        "last number, e.g. '{n} / {total}'. Only used when page_numbers is on."
     ),
     "qr_urls": (
         "Texts or URLs for the qr page, one QR code each, entered one per line. At most 24 "

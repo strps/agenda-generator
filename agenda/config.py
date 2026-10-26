@@ -74,6 +74,11 @@ class Config(BaseModel):
     preset: Literal["essential", "complete", "premium"] | None = None
     notes_pattern: Literal["lined", "dotted", "grid", "blank"] = "dotted"
     page_numbers: bool = False
+    page_number_start: int = Field(1, ge=0, le=9999)  # number printed on the first numbered page
+    page_number_first: int = Field(1, ge=1)  # 1-based plan page that gets the first number
+    page_number_position: Literal["outer", "center", "inner"] = "outer"
+    page_number_placement: Literal["margin", "footer"] = "margin"
+    page_number_format: str = "{n}"  # placeholders {n} and {total}
     # Texts or URLs for the `qr` page: one QR code each (<= QR_MAX_COUNT entries of
     # <= QR_MAX_CHARS characters, the byte-mode capacity of a QR code with ~15% error correction).
     qr_urls: list[str] = Field(default_factory=list)
@@ -116,6 +121,13 @@ class Config(BaseModel):
         v = v.strip()
         parse_size(v)  # raises ValueError on bad names / out-of-range custom sizes
         return v.lower() if v.lower() in SIZES else v
+
+    @field_validator("page_number_format")
+    @classmethod
+    def _check_number_format(cls, v: str) -> str:
+        from agenda.numbering import validate_format
+
+        return validate_format(v)
 
     @field_validator("daily_months", mode="before")
     @classmethod
