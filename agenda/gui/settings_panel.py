@@ -27,7 +27,9 @@ from PySide6.QtWidgets import (
 
 from agenda.catalog import catalog_rows
 from agenda.config import Config
+from agenda.gui import help_text
 from agenda.gui import settings_model as M
+from agenda.gui.hover_tooltip import ExpandingToolTip
 
 _BIG = 10**9
 
@@ -48,6 +50,8 @@ class SettingsPanel(QFrame):
         self.specs = M.field_specs()
         self.editors: dict[str, QWidget] = {}
         self.page_boxes: dict[str, QCheckBox] = {}
+        self.tooltips: dict[str, ExpandingToolTip] = {}
+        self.label_tooltips: dict[str, ExpandingToolTip] = {}
         self._extra_pages: list[str] = []
         self._loading = False
 
@@ -63,10 +67,16 @@ class SettingsPanel(QFrame):
         for spec in self.specs:
             w = self._make(spec)
             self.editors[spec.name] = w
+            short = help_text.PARAM_SHORT[spec.name]
+            detail = help_text.PARAM_DETAILS[spec.name]
+            self.tooltips[spec.name] = ExpandingToolTip(w, short, detail)
             if spec.kind == M.PAGES:
                 col.addWidget(w)
             else:
-                form.addRow(spec.name.replace("_", " "), w)
+                label = QLabel(spec.name.replace("_", " "))
+                label.setObjectName(f"label_{spec.name}")
+                self.label_tooltips[spec.name] = ExpandingToolTip(label, short, detail)
+                form.addRow(label, w)
         col.addStretch(1)
         scroll.setWidget(body)
         self.error_label = QLabel("")

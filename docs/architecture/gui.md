@@ -27,7 +27,7 @@ A desktop window to configure the agenda, preview pages as they will print, and 
 ```
 
 - **Tooltips:** every toolbar control has a detailed tooltip, with texts in `agenda/gui/help_text.py` (`TOOLTIPS`). This covers Open/Save config, Export PDF, prev/next, the Single/Spread/Sheet buttons and zoom. When the config is invalid, the Export tooltip also gives the reason it is disabled. A "debug grid" checkbox is not implemented.
-- **Settings panel (left):** generated from the same pydantic config model used by the CLI and YAML, so the three never drift apart. Loads and saves `config.yaml`.
+- **Settings panel (left):** generated from the same pydantic config model used by the CLI and YAML, so the three never drift apart. Loads and saves `config.yaml`. Every parameter editor and its row label has a two-stage tooltip: a short text on hover (`help_text.PARAM_SHORT`), which expands after `HOVER_EXPAND_MS` on the same widget to the short text, a newline and the detailed explanation (`help_text.PARAM_DETAILS`, naming cross-field rules). The mechanism is `ExpandingToolTip` in `hover_tooltip.py`; the `pages` group box carries one tooltip for the whole group.
 - **Preview (center):** three modes.
   - *Single:* one page.
   - *Spread:* left + right pages as they face each other when bound (the default; the way to check WO2P layouts and alternating margins).
@@ -109,7 +109,7 @@ Colors come from the validated reference palette (dataviz skill). The assignment
 
 ### Interaction
 
-- **Hover:** a tooltip appears for the page under the cursor, e.g. `Page 143 · Weekly · Week 12 (Mar 16–22) · Booklet 8, sheet 2`. The hit area is the full bar height, not just the page's 2 px. If the pointer stays over the same section for `HOVER_EXPAND_MS` (1500 ms, `section_bar.py`), the tooltip expands: the short text, a newline, then the section description (`help_text.section_tooltip`; padding pages use the padding description). Moving within a section keeps the expansion; moving to another section, leaving the bar, pressing or dragging, or a new plan resets it.
+- **Hover:** a tooltip appears for the page under the cursor, e.g. `Page 143 · Weekly · Week 12 (Mar 16–22) · Booklet 8, sheet 2`. The hit area is the full bar height, not just the page's 2 px. If the pointer stays over the same section for `HOVER_EXPAND_MS` (1500 ms, defined in `hover_tooltip.py`), the tooltip expands: the short text, a newline, then the section description (`help_text.section_tooltip`; padding pages use the padding description). Moving within a section keeps the expansion; moving to another section, leaving the bar, pressing or dragging, or a new plan resets it.
 - **Click:** jumps the preview to that page's spread. **Drag:** scrubs through pages.
 - **Keyboard:** arrow keys move by spread, Page Up/Down by booklet, Home/End to the start/end.
 - **Legend click:** jumps to the first page of that section.
