@@ -14,7 +14,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from agenda import templates
+from agenda import templates, themes
 from agenda.config import Config
 from agenda.configfile import ConfigFileError, load_yaml
 
@@ -38,8 +38,18 @@ TEXT, PATH, OPT_PATH, OPT_TEXT, MULTI_CHOICE, INT_LIST, TEXT_LIST, PAGES = (
     "pages",
 )
 
-# Fields whose list items are free-form catalog ids / texts, not literals.
-_SPECIAL = {"pages": PAGES, "daily_months": INT_LIST, "qr_urls": TEXT_LIST}
+THEME, COLOR, FONT = "theme", "color", "font"
+
+# Fields whose list items are free-form catalog ids / texts, not literals, and the PDF style fields.
+_SPECIAL = {
+    "pages": PAGES,
+    "daily_months": INT_LIST,
+    "qr_urls": TEXT_LIST,
+    "theme": THEME,
+    "font_primary": FONT,
+    "font_secondary": FONT,
+    **{n: COLOR for n in Config.model_fields if n.startswith("color_")},
+}
 
 
 @dataclass(frozen=True)
@@ -57,6 +67,8 @@ def _literals(tp: Any) -> tuple[str, ...]:
 
 
 def _kind(name: str, tp: Any) -> tuple[str, tuple[str, ...]]:
+    if name == "theme":
+        return THEME, tuple(themes.THEMES)
     if name in _SPECIAL:
         return _SPECIAL[name], ()
     origin = typing.get_origin(tp)

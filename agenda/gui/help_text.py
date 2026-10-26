@@ -40,6 +40,13 @@ TOOLTIPS: dict[str, str] = {
         "Application look: dark, light, or system (follow the desktop theme). "
         "The choice is saved between runs."
     ),
+    "color_swatch": "Click to pick this color in a color dialog. Shows the color in effect.",
+    "color_clear": "Clear the override and use the theme's color again.",
+    "font_browse": "Choose a .ttf or .otf font file. Bold and italic files next to it are used too.",
+    "styling_section": (
+        "Style of the generated PDF: theme, colors and fonts. The look of this application "
+        "is under Settings > Preferences and never changes the PDF."
+    ),
     "preferences": "GUI look; does not change the PDF.",
     "zoom": (
         "Preview zoom. Choose fit to scale the pages to the available space, "

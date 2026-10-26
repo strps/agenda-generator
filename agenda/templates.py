@@ -105,7 +105,7 @@ SECTIONS: tuple[SectionSpec, ...] = (
     ),
     SectionSpec(
         STYLING,
-        "Colors & styling",
+        "PDF colors & fonts",
         "style",
         {
             "theme": "theme",

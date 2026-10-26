@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from agenda import templates as T
+from agenda import themes
 from agenda.catalog import catalog_rows
 from agenda.config import Config
 from agenda.gui import export_model as EM
@@ -34,6 +35,7 @@ from agenda.gui import help_text
 from agenda.gui import settings_model as M
 from agenda.gui.collapsible import CollapsibleSection
 from agenda.gui.hover_tooltip import ExpandingToolTip
+from agenda.gui.style_editors import ColorEdit, FontEdit
 from agenda.gui.style_model import SPACING
 
 _BIG = 10**9
@@ -80,6 +82,7 @@ class SettingsPanel(QFrame):
             sec.expanded_changed.connect(lambda on, k=sp.key: on and self.activate(k))
             sec.enable_toggled.connect(lambda on, k=sp.key: self._section_toggled(k, on))
         self.sections[T.GLOBAL].set_expanded(True)
+        self.sections[T.STYLING].toggle_button.setToolTip(help_text.TOOLTIPS["styling_section"])
         for spec in self.specs:
             w = self._make(spec)
             self.editors[spec.name] = w
@@ -104,6 +107,7 @@ class SettingsPanel(QFrame):
         self.error_label.setObjectName("settings_error")
         outer.addWidget(self.error_label)
         self.changed.connect(self._sync_boxes)
+        self.changed.connect(self._refresh_swatches)
         app = QApplication.instance()
         if app is not None:
             app.focusChanged.connect(lambda _old, new: self.notify_focus(new))
@@ -144,6 +148,13 @@ class SettingsPanel(QFrame):
             if sec.enable_box is not None:
                 sec.set_enabled_state(T.is_enabled(cfg, key))
 
+    def _refresh_swatches(self) -> None:
+        palette = themes.palette_for(self.values()["theme"])
+        for spec in self.specs:
+            if spec.kind == M.COLOR:
+                w = self.editors[spec.name]
+                w.set_fallback(palette[spec.name.removeprefix("color_")])  # type: ignore[attr-defined]
+
     # --- widget factory ---
     def _make(self, spec: M.FieldSpec) -> QWidget:
         k = spec.kind
@@ -157,6 +168,17 @@ class SettingsPanel(QFrame):
             for c in spec.choices:
                 w.addItem(c, c)
             w.currentIndexChanged.connect(self._edited)
+        elif k == M.THEME:
+            w = QComboBox()
+            for c in spec.choices:
+                w.addItem(c, c)
+            w.currentIndexChanged.connect(self._edited)
+        elif k == M.COLOR:
+            w = ColorEdit()
+            w.edited.connect(self._edited)
+        elif k == M.FONT:
+            w = FontEdit()
+            w.edited.connect(self._edited)
         elif k == M.INT:
             w = QSpinBox()
             w.setRange(int(spec.minimum) if spec.minimum is not None else -_BIG, _BIG)
@@ -215,8 +237,10 @@ class SettingsPanel(QFrame):
             k = spec.kind
             if k == M.BOOL:
                 out[spec.name] = w.isChecked()  # type: ignore[attr-defined]
-            elif k in (M.CHOICE, M.OPT_CHOICE):
+            elif k in (M.CHOICE, M.OPT_CHOICE, M.THEME):
                 out[spec.name] = w.currentData()  # type: ignore[attr-defined]
+            elif k in (M.COLOR, M.FONT):
+                out[spec.name] = w.value()  # type: ignore[attr-defined]
             elif k in (M.INT, M.FLOAT):
                 out[spec.name] = w.value()  # type: ignore[attr-defined]
             elif k == M.MULTI_CHOICE:
@@ -258,6 +282,14 @@ class SettingsPanel(QFrame):
         elif k in (M.CHOICE, M.OPT_CHOICE):
             i = w.findData(v)  # type: ignore[attr-defined]
             w.setCurrentIndex(max(i, 0))  # type: ignore[attr-defined]
+        elif k == M.THEME:
+            i = w.findData(v)  # type: ignore[attr-defined]
+            if i < 0:  # legacy / unknown name: keep it, renders as minimal
+                w.addItem(str(v), v)  # type: ignore[attr-defined]
+                i = w.findData(v)  # type: ignore[attr-defined]
+            w.setCurrentIndex(i)  # type: ignore[attr-defined]
+        elif k in (M.COLOR, M.FONT):
+            w.set_value(v)  # type: ignore[attr-defined]
         elif k == M.INT:
             w.setValue(int(v))  # type: ignore[attr-defined]
         elif k == M.FLOAT:
