@@ -117,6 +117,30 @@ def run(
     daily_months: Annotated[
         str | None, typer.Option(help='Months with daily pages, e.g. "1-6,9".')
     ] = None,
+    daily_hour_start: Annotated[
+        int | None, typer.Option(help="First hour (0-23) on day pages.")
+    ] = None,
+    daily_hour_end: Annotated[
+        int | None, typer.Option(help="Last hour (0-23) on day pages.")
+    ] = None,
+    schedule_first_hour: Annotated[
+        int | None, typer.Option(help="First hour (0-23) of the weekly schedule.")
+    ] = None,
+    schedule_last_hour: Annotated[
+        int | None, typer.Option(help="Last hour (0-23) of the weekly schedule.")
+    ] = None,
+    habits_max: Annotated[
+        int | None, typer.Option(help="Maximum habit rows on the habit tracker (1-40).")
+    ] = None,
+    niche_entrepreneur_pages: Annotated[
+        int | None, typer.Option(help="Pages of the entrepreneur pack (1-20).")
+    ] = None,
+    niche_student_pages: Annotated[
+        int | None, typer.Option(help="Pages of the student pack (1-20).")
+    ] = None,
+    niche_fitness_pages: Annotated[
+        int | None, typer.Option(help="Pages of the fitness pack (1-20).")
+    ] = None,
     pages: Annotated[str | None, typer.Option(help="Comma list of catalog page ids.")] = None,
     category: Annotated[
         str | None, typer.Option(help="Comma list of categories: core,optional,value_added.")
@@ -169,6 +193,14 @@ def run(
             separate_covers=separate_covers,
             creep_mm=creep_mm,
             daily_months=daily_months,
+            daily_hour_start=daily_hour_start,
+            daily_hour_end=daily_hour_end,
+            schedule_first_hour=schedule_first_hour,
+            schedule_last_hour=schedule_last_hour,
+            habits_max=habits_max,
+            niche_entrepreneur_pages=niche_entrepreneur_pages,
+            niche_student_pages=niche_student_pages,
+            niche_fitness_pages=niche_fitness_pages,
             preset=preset,
             notes_pattern=notes_pattern,
             page_numbers=page_numbers,

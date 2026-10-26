@@ -387,7 +387,7 @@ class Daily(BasePage):
 
         # Hourly schedule: label row, then one block of `per` rows per hour.
         self._label(pdf, g, s("schedule"), sx, sw, 0)
-        n_hours = min(self.HOUR_END - self.HOUR_START + 1, g.rows - 1)
+        n_hours = min(config.daily_hour_end - config.daily_hour_start + 1, g.rows - 1)
         per = (g.rows - 1) // n_hours
         label_w = 8.0
         pdf.set_text_color(*tokens.COLORS["muted"])
@@ -395,7 +395,7 @@ class Daily(BasePage):
         for i in range(n_hours):
             r0 = 1 + i * per
             pdf.set_xy(sx, g.row(r0))
-            pdf.cell(label_w, g.baseline, f"{self.HOUR_START + i:02d}:00")
+            pdf.cell(label_w, g.baseline, f"{config.daily_hour_start + i:02d}:00")
             y = g.row(r0 + per)
             pdf.line(sx, y, sx + sw, y)
 

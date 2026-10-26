@@ -19,7 +19,17 @@ def test_partition_and_page_ids():
     assert len(seen) == len(set(seen))
     union = [f for s in T.SECTIONS for f in T.fields_of(s.key, Config.model_fields)]
     assert sorted(union) == sorted(Config.model_fields)
-    assert T.TEMPLATE_KEYS == ("notes", "daily", "weekly", "qr")
+    assert T.TEMPLATE_KEYS == (
+            "notes",
+            "daily",
+            "weekly",
+            "schedule",
+            "habits",
+            "qr",
+            "niche_entrepreneur",
+            "niche_student",
+            "niche_fitness",
+        )
 
 
 def test_group_of_and_order():

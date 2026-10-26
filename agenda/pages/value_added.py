@@ -1174,13 +1174,15 @@ class _Counted(BasePage):
     category = "value_added"
     section = "value_added"
 
-    def __init__(self, count: int = 1) -> None:
-        if count < 0:
+    def __init__(self, count: int | None = None) -> None:
+        if count is not None and count < 0:
             raise ValueError("count must be >= 0")
         self.count = count
 
     def instances(self, config: Config) -> list[Ctx]:
-        return [{} for _ in range(self.count)]
+        """``count`` pages if given to the constructor, else ``config.<id>_pages``."""
+        n = self.count if self.count is not None else getattr(config, f"{self.id}_pages")
+        return [{} for _ in range(n)]
 
     @staticmethod
     def _header(pdf: FPDF, g: Grid, title: str) -> None:

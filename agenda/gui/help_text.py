@@ -92,6 +92,14 @@ PARAM_SHORT: dict[str, str] = {
     "notes_pattern": "Pattern of the notes pages.",
     "page_numbers": "Print page numbers on the pages.",
     "qr_urls": "Texts or URLs for the QR page, one per line.",
+    "daily_hour_start": "First hour printed on day pages (0-23).",
+    "daily_hour_end": "Last hour printed on day pages (0-23).",
+    "schedule_first_hour": "First hour of the weekly schedule (0-23).",
+    "schedule_last_hour": "Last hour of the weekly schedule (0-23).",
+    "habits_max": "Maximum habit rows per month (1-40).",
+    "niche_entrepreneur_pages": "Number of Entrepreneur pack pages (1-20).",
+    "niche_student_pages": "Number of Student pack pages (1-20).",
+    "niche_fitness_pages": "Number of Fitness pack pages (1-20).",
     "year": "Calendar year of the agenda.",
     "week_start": "First day of the week.",
     "language": "Language of the printed texts.",
@@ -180,6 +188,39 @@ PARAM_DETAILS: dict[str, str] = {
     "qr_urls": (
         "Texts or URLs for the qr page, one QR code each, entered one per line. At most 24 "
         "entries of at most 200 characters, and empty lines are not allowed."
+    ),
+    "daily_hour_start": (
+        "First hour of the hourly schedule on day pages, 0-23 (default 6, shown as 06:00). It "
+        "must be less than daily_hour_end. The page still shows fewer hours when they do not fit."
+    ),
+    "daily_hour_end": (
+        "Last hour of the hourly schedule on day pages, 0-23 (default 21, shown as 21:00). It "
+        "must be greater than daily_hour_start. The page still shows fewer hours when they do not fit."
+    ),
+    "schedule_first_hour": (
+        "Hour of the first row of the weekly schedule page, 0-23 (default 7). It must be less "
+        "than schedule_last_hour. The page still shows fewer rows when they do not fit."
+    ),
+    "schedule_last_hour": (
+        "Hour of the last row of the weekly schedule page, 0-23 (default 21), which caps the "
+        "number of hours. It must be greater than schedule_first_hour. The page still shows "
+        "fewer rows when they do not fit."
+    ),
+    "habits_max": (
+        "Maximum number of habit rows on each monthly habit tracker page, 1-40 (default 20). "
+        "The page still shows fewer rows when they do not fit."
+    ),
+    "niche_entrepreneur_pages": (
+        "How many copies of the Entrepreneur pack page are printed, 1-20 (default 1). "
+        "It only applies when niche_entrepreneur is in pages."
+    ),
+    "niche_student_pages": (
+        "How many copies of the Student pack page are printed, 1-20 (default 1). "
+        "It only applies when niche_student is in pages."
+    ),
+    "niche_fitness_pages": (
+        "How many copies of the Fitness pack page are printed, 1-20 (default 1). "
+        "It only applies when niche_fitness is in pages."
     ),
     "year": (
         "Year of the calendar (1900-2200). It sets all dates, weekdays and holidays "

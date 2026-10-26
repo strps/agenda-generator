@@ -36,10 +36,50 @@ SECTIONS: tuple[SectionSpec, ...] = (
         page_id="notes",
     ),
     SectionSpec(
-        "daily", "Day pages", "daily", {"months": "daily_months"}, page_id="daily", enable="planner"
+        "daily",
+        "Day pages",
+        "daily",
+        {"months": "daily_months", "hour_start": "daily_hour_start", "hour_end": "daily_hour_end"},
+        page_id="daily",
+        enable="planner",
     ),
     SectionSpec("weekly", "Week pages", None, {}, page_id="weekly", enable="planner"),
+    SectionSpec(
+        "schedule",
+        "Weekly schedule",
+        "schedule",
+        {"first_hour": "schedule_first_hour", "last_hour": "schedule_last_hour"},
+        page_id="schedule",
+        enable="page",
+    ),
+    SectionSpec(
+        "habits", "Habit tracker", "habits", {"max": "habits_max"}, page_id="habits", enable="page"
+    ),
     SectionSpec("qr", "QR codes", "qr", {"urls": "qr_urls"}, page_id="qr", enable="page"),
+    SectionSpec(
+        "niche_entrepreneur",
+        "Entrepreneur pack",
+        "niche_entrepreneur",
+        {"pages": "niche_entrepreneur_pages"},
+        page_id="niche_entrepreneur",
+        enable="page",
+    ),
+    SectionSpec(
+        "niche_student",
+        "Student pack",
+        "niche_student",
+        {"pages": "niche_student_pages"},
+        page_id="niche_student",
+        enable="page",
+    ),
+    SectionSpec(
+        "niche_fitness",
+        "Fitness pack",
+        "niche_fitness",
+        {"pages": "niche_fitness_pages"},
+        page_id="niche_fitness",
+        enable="page",
+    ),
     SectionSpec(STYLING, "Colors & styling", "style", {"theme": "theme"}),
 )
 

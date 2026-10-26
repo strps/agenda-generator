@@ -387,9 +387,9 @@ class Habits(BasePage):
         return month_ctxs(config)
 
     @classmethod
-    def layout(cls, rows: int) -> int:
-        """Habit rows that fit in ``rows`` content rows."""
-        return max(0, min(cls.MAX_HABITS, rows - cls.HEADER_ROWS))
+    def layout(cls, rows: int, max_habits: int = MAX_HABITS) -> int:
+        """Habit rows that fit in ``rows`` content rows, at most ``max_habits``."""
+        return max(0, min(max_habits, rows - cls.HEADER_ROWS))
 
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         g = grids[0]
@@ -404,7 +404,7 @@ class Habits(BasePage):
 
         x = g.safe.x
         days = days_in_month(year, month)
-        n = self.layout(g.rows)
+        n = self.layout(g.rows, config.habits_max)
         name_w = g.span_width(self.NAME_COLS)
         gx = x + name_w + g.gutter
         cell_w = (g.safe.x2 - gx) / days
@@ -534,13 +534,13 @@ class Schedule(BasePage):
     DAYS = 7
 
     @classmethod
-    def layout(cls, rows: int) -> tuple[int, int]:
+    def layout(cls, rows: int, max_hours: int = MAX_HOURS) -> tuple[int, int]:
         """(hours, baselines per hour) for ``rows`` content rows (one is the weekday row)."""
         free = max(0, rows - 1)
         for rh in cls.BAND_ROWS:
             if free // rh >= cls.MIN_HOURS:
-                return min(cls.MAX_HOURS, free // rh), rh
-        return min(cls.MAX_HOURS, free), 1
+                return min(max_hours, free // rh), rh
+        return min(max_hours, free), 1
 
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         g = grids[0]
@@ -552,7 +552,8 @@ class Schedule(BasePage):
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("schedule.title"))
 
-        hours, rh = self.layout(g.rows)
+        max_hours = config.schedule_last_hour - config.schedule_first_hour + 1
+        hours, rh = self.layout(g.rows, max_hours)
         x = g.safe.x
         gx = x + g.col_width / 2
         day_w = (g.safe.x2 - gx) / self.DAYS
@@ -573,7 +574,7 @@ class Schedule(BasePage):
         pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
         for k in range(hours):
             pdf.set_xy(x, g.row(1 + k * rh))
-            pdf.cell(gx - x - g.gutter / 2, g.baseline, f"{self.FIRST_HOUR + k}:00", align="R")
+            pdf.cell(gx - x - g.gutter / 2, g.baseline, f"{config.schedule_first_hour + k}:00", align="R")
 
         pdf.set_draw_color(*tokens.COLORS["line"])
         pdf.set_line_width(tokens.STROKE_HAIRLINE)

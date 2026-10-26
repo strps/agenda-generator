@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 10
+Last phase: 11
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -12,6 +12,8 @@ Last phase: 10
 - Param texts: PARAM_SHORT/PARAM_DETAILS keyed by Config field name, cover every field, details name cross-field rules and list Literal choices; test derives names from Config.model_fields (phase 07)
 - SettingsPanel: `tooltips[name]` ExpandingToolTip on every editor (incl. `pages` group box); non-pages rows use explicit QLabel `label_<name>` with `label_tooltips[name]`; attached in __init__ after _make (phase 09)
 - Config stays flat; agenda/templates.py groups fields into sections (key mapping only, imports no Config/pydantic). YAML blocks flattened in configfile.flatten; save_yaml writes grouped form, booklet fields stay flat (phase 10)
+- Page settings are Config fields (daily_hour_start/end 6/21, schedule_first/last_hour 7/21, habits_max 20, niche_*_pages 1); class constants stay as defaults, `Schedule.layout(rows, max_hours=MAX_HOURS)` and `Habits.layout(rows, max_habits=MAX_HABITS)`; `_Counted(count=None)` falls back to `config.<id>_pages` (phase 11)
+- Cross-field hour rules (start < end) live in Config._check_booklet_rules; each new field needs a CLI option + PARAM_SHORT/DETAILS (phase 11)
 - with_enabled on a "page" section with empty pages copies preset_pages(preset) first (phase 10)
 
 ## Interfaces

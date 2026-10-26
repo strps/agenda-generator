@@ -70,6 +70,15 @@ class Config(BaseModel):
     # Texts or URLs for the `qr` page: one QR code each (<= QR_MAX_COUNT entries of
     # <= QR_MAX_CHARS characters, the byte-mode capacity of a QR code with ~15% error correction).
     qr_urls: list[str] = Field(default_factory=list)
+    # Per-template page settings (defaults = the former hard-coded page constants).
+    daily_hour_start: int = Field(6, ge=0, le=23)
+    daily_hour_end: int = Field(21, ge=0, le=23)
+    schedule_first_hour: int = Field(7, ge=0, le=23)
+    schedule_last_hour: int = Field(21, ge=0, le=23)
+    habits_max: int = Field(20, ge=1, le=40)
+    niche_entrepreneur_pages: int = Field(1, ge=1, le=20)
+    niche_student_pages: int = Field(1, ge=1, le=20)
+    niche_fitness_pages: int = Field(1, ge=1, le=20)
 
     # Calendar / locale
     year: int = Field(default_factory=lambda: _dt.date.today().year, ge=1900, le=2200)
@@ -158,6 +167,10 @@ class Config(BaseModel):
     def _check_booklet_rules(self) -> Config:
         if self.imposition and not self.booklet_folded:
             raise ValueError("imposition requires booklet_folded=true")
+        if self.daily_hour_start >= self.daily_hour_end:
+            raise ValueError("daily_hour_start must be less than daily_hour_end")
+        if self.schedule_first_hour >= self.schedule_last_hour:
+            raise ValueError("schedule_first_hour must be less than schedule_last_hour")
         if self.crop_marks and not self.imposition:
             raise ValueError("crop_marks requires imposition=true")
         if self.booklet_unit == "pages":
