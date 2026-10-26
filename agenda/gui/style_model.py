@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from agenda.gui.section_colors import is_dark
 from agenda.tokens import COLORS
 
 APPEARANCES = ("dark", "light", "system")
 DEFAULT_APPEARANCE = "dark"
 SPACING = {"gap": 8, "margin": 12, "pad": 6, "radius": 4}
+ICONS = Path(__file__).parent / "icons"
 
 REQUIRED_TOKENS = (
     "window", "panel", "text", "muted", "border", "accent", "accent_text",
@@ -89,22 +92,47 @@ def stylesheet(dark: bool) -> str:
     t = THEMES["dark" if dark else "light"]
     gap, margin, pad, radius = (SPACING[k] for k in ("gap", "margin", "pad", "radius"))
     inputs = "QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit"
+    check = (ICONS / f"check_{'dark' if dark else 'light'}.svg").as_posix()
     return f"""
 QMainWindow, QWidget {{ background-color: {t["window"]}; color: {t["text"]}; }}
 QWidget:disabled {{ color: {t["muted"]}; }}
 QScrollArea {{ border: none; background-color: {t["window"]}; }}
 QFrame#settings {{ border: none; background-color: {t["window"]}; }}
 QFrame[objectName^="section_"] {{
-    background-color: {t["panel"]}; border: none; border-radius: {radius}px;
+    background-color: {t["panel"]}; border: 1px solid transparent; border-radius: {radius}px;
     margin: {gap // 2}px {margin // 2}px;
 }}
+QFrame[objectName^="section_"][active="true"] {{ border: 1px solid {t["accent"]}; }}
 QFrame[objectName^="section_"] > QWidget {{ background-color: transparent; }}
-QToolButton#section_toggle {{
+QWidget#section_body {{ background-color: transparent; }}
+QPushButton#group_toggle {{
+    background-color: transparent; border: none; color: {t["muted"]}; font-weight: bold;
+    padding: {pad}px {gap}px; margin-top: {gap}px; text-align: left;
+}}
+QPushButton#group_toggle:hover, QPushButton#group_toggle:focus {{ color: {t["text"]}; }}
+QPushButton#group_toggle:checked, QPushButton#group_toggle:pressed {{
+    background-color: transparent; border: none;
+}}
+QPushButton#section_toggle {{
     background-color: transparent; border: none; font-weight: bold;
     padding: {pad}px {gap}px; text-align: left;
 }}
-QToolButton#section_toggle:hover {{ background-color: {t["selection"]}; }}
+QPushButton#section_toggle:hover, QPushButton#section_toggle:checked,
+QPushButton#section_toggle:pressed {{ background-color: transparent; border: none; }}
+QFrame#collapsible_header {{ background-color: transparent; border-radius: {radius}px; }}
+QFrame#collapsible_header:hover {{ background-color: {t["selection"]}; }}
+QPushButton#section_toggle[active="true"] {{ color: {t["accent"]}; }}
 QCheckBox#section_enable {{ background-color: transparent; spacing: {gap}px; }}
+QCheckBox::indicator {{
+    width: 14px; height: 14px; background-color: {t["input_bg"]};
+    border: 1px solid {t["muted"]}; border-radius: {radius // 2}px;
+}}
+QCheckBox::indicator:hover {{ border: 1px solid {t["accent"]}; }}
+QCheckBox::indicator:checked {{
+    background-color: {t["accent"]}; border: 1px solid {t["accent"]}; image: url({check});
+}}
+QCheckBox::indicator:disabled {{ background-color: {t["panel"]}; border: 1px solid {t["border"]}; }}
+QCheckBox::indicator:checked:disabled {{ background-color: {t["border"]}; }}
 QPushButton {{
     background-color: {t["input_bg"]}; color: {t["text"]}; border: 1px solid {t["border"]};
     border-radius: {radius}px; padding: {pad}px {margin}px;

@@ -1,7 +1,7 @@
 import pytest
 
 from agenda import templates as T
-from agenda.catalog import get_page, preset_pages
+from agenda.catalog import catalog_rows, get_page, preset_pages
 from agenda.config import Config
 from agenda.configfile import ConfigFileError, flatten, load_yaml
 from agenda.gui.settings_model import default_values, load_values, save_yaml
@@ -19,18 +19,9 @@ def test_partition_and_page_ids():
     assert len(seen) == len(set(seen))
     union = [f for s in T.SECTIONS for f in T.fields_of(s.key, Config.model_fields)]
     assert sorted(union) == sorted(Config.model_fields)
-    assert T.TEMPLATE_KEYS == (
-            "notes",
-            "daily",
-            "weekly",
-            "contacts",
-            "schedule",
-            "habits",
-            "qr",
-            "niche_entrepreneur",
-            "niche_student",
-            "niche_fitness",
-        )
+    noncore = [r["id"] for r in catalog_rows() if r["category"] != "core"]
+    assert T.TEMPLATE_KEYS[:4] == ("notes", "daily", "weekly", "contacts")
+    assert sorted(T.TEMPLATE_KEYS[4:]) == sorted(noncore)  # every optional/value-added page
 
 
 def test_group_of_and_order():
@@ -124,3 +115,10 @@ def test_save_grouped_roundtrip(tmp_path):
     assert isinstance(data["daily"], dict) and isinstance(data["style"], dict)
     assert "daily_months" not in data
     assert Config(**load_values(path)) == cfg
+
+
+def test_groups_partition_sections():
+    grouped = [k for g in T.GROUPS for k in g.sections]
+    assert sorted(grouped) == sorted(s.key for s in T.SECTIONS)
+    assert len(grouped) == len(set(grouped))
+    assert T.GROUPS[0].sections == (T.GLOBAL, T.STYLING)

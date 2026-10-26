@@ -33,12 +33,13 @@ from agenda.config import Config
 from agenda.gui import export_model as EM
 from agenda.gui import help_text
 from agenda.gui import settings_model as M
-from agenda.gui.collapsible import CollapsibleSection
+from agenda.gui.collapsible import CollapsibleGroup, CollapsibleSection
 from agenda.gui.hover_tooltip import ExpandingToolTip
 from agenda.gui.style_editors import ColorEdit, FontEdit
 from agenda.gui.style_model import SPACING
 
 _BIG = 10**9
+SECTION_SWITCHED = ("planners", "pages")  # set by the section boxes, not edited directly
 
 
 def _join_ints(v: Any) -> str:
@@ -74,15 +75,27 @@ class SettingsPanel(QFrame):
         gap = SPACING["gap"]
         col.setContentsMargins(gap, gap, gap, gap)
         self.sections: dict[str, CollapsibleSection] = {}
+        self.groups: dict[str, CollapsibleGroup] = {}
+        self._group_of: dict[str, CollapsibleGroup] = {}
         self.active_section = T.GLOBAL
         for sp in T.SECTIONS:
             sec = CollapsibleSection(sp.key, sp.label, sp.enable)
             self.sections[sp.key] = sec
-            col.addWidget(sec)
             sec.expanded_changed.connect(lambda on, k=sp.key: on and self.activate(k))
             sec.enable_toggled.connect(lambda on, k=sp.key: self._section_toggled(k, on))
+            sec.pressed.connect(lambda k=sp.key: self.activate(k, expand=False))
+        for g in T.GROUPS:
+            group = CollapsibleGroup(g.key, g.label)
+            self.groups[g.key] = group
+            col.addWidget(group)
+            for key in g.sections:
+                group.add(self.sections[key])
+                self._group_of[key] = group
+            group.set_expanded(g.expanded)
         self.sections[T.GLOBAL].set_expanded(True)
+        self.sections[T.GLOBAL].set_active(True)
         self.sections[T.STYLING].toggle_button.setToolTip(help_text.TOOLTIPS["styling_section"])
+        shown: set[str] = set()  # sections with at least one visible field
         for spec in self.specs:
             w = self._make(spec)
             self.editors[spec.name] = w
@@ -97,9 +110,15 @@ class SettingsPanel(QFrame):
                 label.setObjectName(f"label_{spec.name}")
                 self.label_tooltips[spec.name] = ExpandingToolTip(label, short, detail)
                 form.addRow(label, w)
-            if spec.name in EM.export_field_names():
-                # edited in the export dialog; widgets stay (hidden) so values() round-trips
+            if spec.name in EM.export_field_names() or spec.name in SECTION_SWITCHED:
+                # edited in the export dialog or by section boxes; widgets stay (hidden) so
+                # values() round-trips
                 form.setRowVisible(w, False)
+            else:
+                shown.add(T.group_of(spec.name))
+        for key, sec in self.sections.items():
+            if key not in shown:
+                sec.set_collapsible(False)
         col.addStretch(1)
         scroll.setWidget(body)
         self.error_label = QLabel("")
@@ -114,19 +133,23 @@ class SettingsPanel(QFrame):
         self.set_values(M.default_values())
 
     # --- sections ---
-    def activate(self, key: str) -> None:
+    def activate(self, key: str, expand: bool = True) -> None:
         sec = self.sections[key]
-        if not sec.is_expanded():
+        self._group_of[key].set_expanded(True)
+        if expand and sec.collapsible and not sec.is_expanded():
             sec.set_expanded(True)  # its expanded_changed handler re-enters and emits
             return
         self.active_section = key
+        for k, other in self.sections.items():
+            other.set_active(k == key)
         self.section_activated.emit(key)
 
     def notify_focus(self, widget: QWidget | None) -> None:
         w = widget
         while w is not None:
             if isinstance(w, CollapsibleSection) and self.sections.get(w.key) is w:
-                self.activate(w.key)
+                # header focus (a click on the toggle) must not expand: the click itself toggles
+                self.activate(w.key, expand=w.body.isAncestorOf(widget))
                 return
             w = w.parentWidget()
 

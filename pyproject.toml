@@ -29,6 +29,9 @@ agenda-gui = "agenda.gui.app:main"
 [tool.setuptools.packages.find]
 include = ["agenda*"]
 
+[tool.setuptools.package-data]
+"agenda.gui" = ["icons/*.svg"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

@@ -233,12 +233,16 @@ with a progress bar (Export PDF opens the export dialog described under Printing
 options no longer appear in the settings panel). Settings can be opened from and saved to YAML. See
 [docs/architecture/gui.md](docs/architecture/gui.md).
 
-The settings panel is a list of collapsible sections (Global starts open). Template sections have an
-enable checkbox in the header: for `daily` and `weekly` it adds or removes the planner, for
-`schedule`, `habits`, `qr` and the niche packs it adds or removes the page from `pages`, and for
-`contacts` it sets the page count (0 = off, on = 1). The main preview follows the focused or expanded
-section and shows that template's own sample page; Global shows the full agenda, and PDF colors & fonts
-keeps the last template. A disabled template is previewed grayed out.
+The settings panel groups its sections under flat collapsible headers: **General** (Global and PDF
+colors & fonts), **Planner pages**, **Optional pages** and **Value-added pages** (the last two start
+closed). Global starts open; a section with no settings of its own is a plain header that does not
+collapse. Template sections have an enable checkbox in the
+header: for `daily` and `weekly` it adds or removes the planner, for every optional and value-added
+page (one section each) it adds or removes the page from `pages`, and for `contacts` it sets the page
+count (0 = off, on = 1); `planners` and `pages` are not edited in Global. The main preview follows the
+active section (focused, clicked or expanded, shown with an accent ring) and shows that template's own
+sample page; Global shows the full agenda, and PDF colors & fonts keeps the last template. A disabled
+template is previewed grayed out.
 
 The look of the app itself (dark, light or system) is set in **Settings > Preferences...**
 (`GuiSettingsDialog`), is remembered between runs in the GUI's own settings and never affects the

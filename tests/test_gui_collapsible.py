@@ -5,9 +5,10 @@ import pytest
 pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtCore import QElapsedTimer  # noqa: E402
+from PySide6.QtWidgets import QApplication, QLineEdit  # noqa: E402
 
-from agenda.gui.collapsible import CollapsibleSection  # noqa: E402
+from agenda.gui.collapsible import ANIM_MS, CollapsibleSection  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -32,3 +33,25 @@ def test_expand_and_enable(qapp):
 
 def test_no_box_for_none(qapp):
     assert CollapsibleSection("x", "T", "none").enable_box is None
+
+
+def _settle(qapp):
+    t = QElapsedTimer()
+    t.start()
+    while t.elapsed() < ANIM_MS * 3:
+        qapp.processEvents()
+
+
+def test_click_slides(qapp):
+    s = CollapsibleSection("x", "Title")
+    for _ in range(4):
+        s.form.addRow("f", QLineEdit())
+    s.show()
+    s.toggle_button.click()
+    assert s.is_expanded() and s.body.isVisibleTo(s)
+    _settle(qapp)
+    assert s.body.isVisibleTo(s) and s._clip.height() == s._clip.natural_height() > 0
+    s.toggle_button.click()
+    assert not s.is_expanded() and s.body.isVisibleTo(s)  # still sliding shut
+    _settle(qapp)
+    assert not s.body.isVisibleTo(s)

@@ -40,7 +40,7 @@ def test_specs_kinds():
 
 def test_editors_in_styling_section(panel):
     sec = panel.sections[T.STYLING]
-    assert "PDF colors & fonts" in sec.toggle_button.text()
+    assert "PDF colors && fonts" in sec.toggle_button.text()
     for n in ["theme", *COLORS, *FONTS]:
         w = panel.editors[n]
         assert sec.isAncestorOf(w), n

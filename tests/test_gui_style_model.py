@@ -48,7 +48,7 @@ SELECTORS = [
     "QPushButton:disabled", "QPushButton:checked", "QPushButton#export_button",
     "QLineEdit", "QSpinBox", "QDoubleSpinBox", "QComboBox", "QPlainTextEdit",
     "QLineEdit:disabled", "QComboBox:disabled", "QGroupBox", "QGroupBox::title",
-    'QFrame[objectName^="section_"]', "QToolButton#section_toggle",
+    'QFrame[objectName^="section_"]', "QPushButton#section_toggle",
     "QCheckBox#section_enable", "QScrollArea", "QToolTip", "QProgressBar",
     "QProgressBar::chunk", "QLabel#settings_error", "QLabel#legend_title",
     'QLabel[objectName^="template_notice_"]',

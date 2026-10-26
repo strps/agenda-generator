@@ -27,6 +27,11 @@ class SectionSpec:
     count_field: str | None = None  # Config field for enable="count" (on = value > 0)
 
 
+def _page(page_id: str, label: str) -> SectionSpec:
+    """A catalog page with no settings, switched on and off through ``Config.pages``."""
+    return SectionSpec(page_id, label, None, page_id=page_id, enable="page")
+
+
 SECTIONS: tuple[SectionSpec, ...] = (
     SectionSpec(GLOBAL, "Global", None),
     SectionSpec(
@@ -67,6 +72,17 @@ SECTIONS: tuple[SectionSpec, ...] = (
         enable="count",
         count_field="contacts_pages",
     ),
+    # Optional pages, then value-added pages, in catalog order; most have no settings of their own.
+    _page("budget", "Monthly budget"),
+    _page("goals", "Yearly goals"),
+    SectionSpec(
+        "habits", "Habit tracker", "habits", {"max": "habits_max"}, page_id="habits", enable="page"
+    ),
+    _page("holidays", "Holidays"),
+    _page("important_dates", "Important dates"),
+    _page("monthly_review", "Monthly review"),
+    _page("passwords", "Passwords"),
+    _page("projects", "Project planner"),
     SectionSpec(
         "schedule",
         "Weekly schedule",
@@ -75,24 +91,13 @@ SECTIONS: tuple[SectionSpec, ...] = (
         page_id="schedule",
         enable="page",
     ),
-    SectionSpec(
-        "habits", "Habit tracker", "habits", {"max": "habits_max"}, page_id="habits", enable="page"
-    ),
-    SectionSpec("qr", "QR codes", "qr", {"urls": "qr_urls"}, page_id="qr", enable="page"),
+    _page("todo", "To-do list"),
     SectionSpec(
         "niche_entrepreneur",
         "Entrepreneur pack",
         "niche_entrepreneur",
         {"pages": "niche_entrepreneur_pages"},
         page_id="niche_entrepreneur",
-        enable="page",
-    ),
-    SectionSpec(
-        "niche_student",
-        "Student pack",
-        "niche_student",
-        {"pages": "niche_student_pages"},
-        page_id="niche_student",
         enable="page",
     ),
     SectionSpec(
@@ -103,6 +108,25 @@ SECTIONS: tuple[SectionSpec, ...] = (
         page_id="niche_fitness",
         enable="page",
     ),
+    SectionSpec(
+        "niche_student",
+        "Student pack",
+        "niche_student",
+        {"pages": "niche_student_pages"},
+        page_id="niche_student",
+        enable="page",
+    ),
+    _page("physical_extras", "Physical extras guide"),
+    SectionSpec("qr", "QR codes", "qr", {"urls": "qr_urls"}, page_id="qr", enable="page"),
+    _page("challenges30", "30-day challenges"),
+    _page("gratitude", "Gratitude journal"),
+    _page("health", "Health tracker"),
+    _page("meals", "Meal and grocery planner"),
+    _page("travel", "Travel planner"),
+    _page("vision_board", "Vision board"),
+    _page("ideas", "Idea map"),
+    _page("media_log", "Books, movies and series"),
+    _page("quotes", "Monthly quotes"),
     SectionSpec(
         STYLING,
         "PDF colors & fonts",
@@ -119,6 +143,30 @@ SECTIONS: tuple[SectionSpec, ...] = (
             "primary_font": "font_primary",
             "secondary_font": "font_secondary",
         },
+    ),
+)
+
+@dataclass(frozen=True)
+class GroupSpec:
+    key: str
+    label: str
+    sections: tuple[str, ...]  # section keys, in display order
+    expanded: bool = True  # initial state in the settings panel
+
+
+def _keys(start: str, stop: str) -> tuple[str, ...]:
+    """Section keys from ``start`` up to and including ``stop``, in ``SECTIONS`` order."""
+    keys = [s.key for s in SECTIONS]
+    return tuple(keys[keys.index(start) : keys.index(stop) + 1])
+
+
+# Settings panel grouping (GUI only; the YAML layout follows SECTIONS).
+GROUPS: tuple[GroupSpec, ...] = (
+    GroupSpec("general", "General", (GLOBAL, STYLING)),
+    GroupSpec("planner", "Planner pages", _keys("notes", "contacts")),
+    GroupSpec("optional", "Optional pages", _keys("budget", "todo"), expanded=False),
+    GroupSpec(
+        "value_added", "Value-added pages", _keys("niche_entrepreneur", "quotes"), expanded=False
     ),
 )
 

@@ -12,7 +12,8 @@ from agenda.catalog import preset_pages  # noqa: E402
 from agenda.config import Config  # noqa: E402
 from agenda.gui import settings_model as M  # noqa: E402
 from agenda.gui.collapsible import CollapsibleSection  # noqa: E402
-from agenda.gui.settings_panel import SettingsPanel  # noqa: E402
+from agenda.gui import export_model as EM  # noqa: E402
+from agenda.gui.settings_panel import SECTION_SWITCHED, SettingsPanel  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -34,7 +35,7 @@ def _section_of(w):
 def test_sections_in_order(panel):
     assert list(panel.sections) == [s.key for s in T.SECTIONS]
     for s in T.SECTIONS:
-        assert panel.sections[s.key].toggle_button.text().endswith(s.label)
+        assert panel.sections[s.key].toggle_button.text().replace("&&", "&").endswith(s.label)
     assert panel.sections[T.GLOBAL].is_expanded()
     assert not panel.sections["daily"].is_expanded()
 
@@ -104,7 +105,60 @@ def test_activation(panel):
     assert seen == []
 
 
+def test_active_header(panel):
+    def active():
+        return [k for k, s in panel.sections.items() if s.toggle_button.property("active")]
+
+    assert active() == [T.GLOBAL]
+    panel.notify_focus(panel.editors["qr_urls"])
+    assert active() == ["qr"]
+    panel.sections["daily"].pressed.emit()
+    assert active() == ["daily"] and not panel.sections["daily"].is_expanded()
+
+
+def test_header_focus_does_not_expand(panel):
+    sec = panel.sections["weekly"]
+    panel.notify_focus(sec.toggle_button)
+    assert panel.active_section == "weekly" and not sec.is_expanded()
+    panel.notify_focus(sec.enable_box)
+    assert not sec.is_expanded()
+
+
 def test_set_values_resyncs(panel):
     panel.set_values({**M.default_values(), "planners": ["daily"]})
     assert not panel.sections["weekly"].enable_box.isChecked()
     assert isinstance(panel.config()[0], Config)
+
+
+def test_page_sections_replace_global_lists(panel):
+    for name in ("planners", "pages"):
+        assert not panel.editors[name].isVisibleTo(panel.sections[T.GLOBAL])
+    sec = panel.sections["budget"]
+    assert not sec.collapsible and not sec.toggle_button.isCheckable()
+    panel.activate("budget")
+    assert panel.active_section == "budget" and not sec.is_expanded()
+    sec.enable_box.setChecked(True)
+    assert "budget" in panel.values()["pages"]
+    sec.enable_box.setChecked(False)
+    assert "budget" not in (panel.values()["pages"] or [])
+
+
+def test_collapsible_iff_visible_fields(panel):
+    hidden = {*EM.export_field_names(), *SECTION_SWITCHED}
+    with_fields = {T.group_of(s.name) for s in panel.specs if s.name not in hidden}
+    for key, sec in panel.sections.items():
+        assert sec.collapsible == (key in with_fields), key
+    assert not panel.sections["weekly"].collapsible and panel.sections["daily"].collapsible
+
+
+def test_groups(panel):
+    assert list(panel.groups) == [g.key for g in T.GROUPS]
+    for g in T.GROUPS:
+        group = panel.groups[g.key]
+        assert group.is_expanded() == g.expanded
+        for key in g.sections:
+            assert group.body.isAncestorOf(panel.sections[key])
+    group = panel.groups["optional"]
+    assert not group.is_expanded()
+    panel.activate("budget")  # activating a section inside a closed group opens the group
+    assert group.is_expanded() and panel.active_section == "budget"
