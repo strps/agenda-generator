@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 15
+Last phase: 16
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -17,6 +17,7 @@ Last phase: 15
 - Day extras: Config daily_holidays(True)/daily_quotes(False)/daily_quotes_file/daily_extra_file and global holidays_file (all files `Path|None`, validated at config time; relative paths resolve against cwd) (phase 13). `draw.merged_holidays(config)` is the single holiday source (library + holidays_file joined " · "; unsupported country raises ValueError unless file set); holiday_name_for/day_style_for/Holidays page use it; user holidays have no separate style (phase 14)
 - Daily header shows "<holiday> · <week>" (truncated, dropped if no room); footer band: quote left (italic), extra text right, each half width when both. File reads cached by (path, mtime[, year]) in draw.py (phase 14)
 - Template previews: `sample_plan` ignores planners/pages (disabled templates still preview); daily sample = first day in daily_months; qr uses placeholder URL when qr_urls empty; empty instances (contacts_pages=0) give a `{}` ctx; weekly gets a leading blank filler so it lands on a left/right pair (phase 15)
+- Settings panel is one CollapsibleSection per templates.SECTIONS entry (Global expanded, rest collapsed; not an accordion); header enable boxes are views synced from templates.is_enabled on every `changed`; toggling uses with_enabled and writes back only changed editors, emitting `changed` once; `activate(key)` expands (re-entrant via expanded_changed) and emits section_activated once; focus follows QApplication.focusChanged (phase 16)
 - Cross-field hour rules (start < end) live in Config._check_booklet_rules; each new field needs a CLI option + PARAM_SHORT/DETAILS (phase 11)
 - with_enabled on a "page" section with empty pages copies preset_pages(preset) first (phase 10)
 
@@ -32,6 +33,7 @@ Last phase: 15
 - agenda/day_extras.py (Qt-free, no Config import): `read_lines(path)`, `parse_dated(lines, year)->dict[date,str]` (entries joined " · "; Feb 29 MM-DD skipped in non-leap years), `builtin_quotes(lang)`, `quote_for(d, quotes)`; tests/test_day_extras.py
 - draw.py: `merged_holidays`, `dated_entries(path, year)`, `quotes_for(config)`; day_extras: `JOIN`, `truncate(text, max_width, width_of)`; tests/test_daily_extras.py, tests/test_user_holidays.py
 - agenda/gui/template_model.py (Qt-free): `sample_plan(cfg, key, instance=0)->PagePlan` (ValueError for GLOBAL/STYLING/unknown), `preview_mode(key)` (spread if page.pages==2 else single), `preview_target(active, last_template)`, `PLACEHOLDER_URLS`; tests/test_gui_template_model.py
+- agenda/gui/collapsible.py: `CollapsibleSection(key,title,enable)` (toggle_button, enable_box|None checked by default, body, form; set_expanded/is_expanded/set_enabled_state/enabled_state; signals expanded_changed, enable_toggled user-only). SettingsPanel: `sections`, `active_section`, `section_activated(str)`, `activate`, `notify_focus`; `pages` box sits in the Global form; tests/test_gui_collapsible.py, test_gui_settings_sections.py
 - settings_model `OPT_PATH` kind (Path|None); SettingsPanel maps "" <-> None
 - settings_model.config_to_yaml_data(cfg) grouped dict; config_to_data stays flat; tests/test_templates.py
 

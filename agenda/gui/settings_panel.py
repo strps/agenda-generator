@@ -6,14 +6,15 @@ Widgets only hold values; ``Config`` validates them (``config()`` returns it or 
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
-    QFormLayout,
     QFrame,
     QGroupBox,
     QLabel,
@@ -25,10 +26,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from agenda import templates as T
 from agenda.catalog import catalog_rows
 from agenda.config import Config
 from agenda.gui import help_text
 from agenda.gui import settings_model as M
+from agenda.gui.collapsible import CollapsibleSection
 from agenda.gui.hover_tooltip import ExpandingToolTip
 
 _BIG = 10**9
@@ -42,6 +45,7 @@ class SettingsPanel(QFrame):
     """Scrollable form. `changed` fires on any edit; `editors` maps field name -> widget."""
 
     changed = Signal()
+    section_activated = Signal(str)
 
     def __init__(self) -> None:
         super().__init__()
@@ -62,16 +66,24 @@ class SettingsPanel(QFrame):
         outer.addWidget(scroll, 1)
         body = QWidget()
         col = QVBoxLayout(body)
-        form = QFormLayout()
-        col.addLayout(form)
+        self.sections: dict[str, CollapsibleSection] = {}
+        self.active_section = T.GLOBAL
+        for sp in T.SECTIONS:
+            sec = CollapsibleSection(sp.key, sp.label, sp.enable)
+            self.sections[sp.key] = sec
+            col.addWidget(sec)
+            sec.expanded_changed.connect(lambda on, k=sp.key: on and self.activate(k))
+            sec.enable_toggled.connect(lambda on, k=sp.key: self._section_toggled(k, on))
+        self.sections[T.GLOBAL].set_expanded(True)
         for spec in self.specs:
             w = self._make(spec)
             self.editors[spec.name] = w
             short = help_text.PARAM_SHORT[spec.name]
             detail = help_text.PARAM_DETAILS[spec.name]
             self.tooltips[spec.name] = ExpandingToolTip(w, short, detail)
+            form = self.sections[T.group_of(spec.name)].form
             if spec.kind == M.PAGES:
-                col.addWidget(w)
+                form.addRow(w)
             else:
                 label = QLabel(spec.name.replace("_", " "))
                 label.setObjectName(f"label_{spec.name}")
@@ -83,7 +95,46 @@ class SettingsPanel(QFrame):
         self.error_label.setWordWrap(True)
         self.error_label.setObjectName("settings_error")
         outer.addWidget(self.error_label)
+        self.changed.connect(self._sync_boxes)
+        app = QApplication.instance()
+        if app is not None:
+            app.focusChanged.connect(lambda _old, new: self.notify_focus(new))
         self.set_values(M.default_values())
+
+    # --- sections ---
+    def activate(self, key: str) -> None:
+        sec = self.sections[key]
+        if not sec.is_expanded():
+            sec.set_expanded(True)  # its expanded_changed handler re-enters and emits
+            return
+        self.active_section = key
+        self.section_activated.emit(key)
+
+    def notify_focus(self, widget: QWidget | None) -> None:
+        w = widget
+        while w is not None:
+            if isinstance(w, CollapsibleSection) and self.sections.get(w.key) is w:
+                self.activate(w.key)
+                return
+            w = w.parentWidget()
+
+    def _section_toggled(self, key: str, on: bool) -> None:
+        before = self.values()
+        after = T.with_enabled(before, key, on)
+        self._loading = True
+        try:
+            for spec in self.specs:
+                if after[spec.name] != before[spec.name]:
+                    self._set(spec, self.editors[spec.name], after[spec.name])
+        finally:
+            self._loading = False
+        self.changed.emit()
+
+    def _sync_boxes(self) -> None:
+        cfg = SimpleNamespace(**self.values())
+        for key, sec in self.sections.items():
+            if sec.enable_box is not None:
+                sec.set_enabled_state(T.is_enabled(cfg, key))
 
     # --- widget factory ---
     def _make(self, spec: M.FieldSpec) -> QWidget:
