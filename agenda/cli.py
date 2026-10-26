@@ -233,6 +233,18 @@ def run(
             "--color-holiday-fill", help="Override the theme's holiday fill color (#rrggbb)."
         ),
     ] = None,
+    font_primary: Annotated[
+        str | None,
+        typer.Option(
+            "--font-primary", help="Font for headings and bold text: 'inter' or a .ttf/.otf file."
+        ),
+    ] = None,
+    font_secondary: Annotated[
+        str | None,
+        typer.Option(
+            "--font-secondary", help="Font for body text and numbers: 'inter' or a .ttf/.otf file."
+        ),
+    ] = None,
     imposition: Annotated[bool | None, typer.Option("--imposition/--no-imposition")] = None,
     crop_marks: Annotated[bool | None, typer.Option("--crop-marks/--no-crop-marks")] = None,
     spreads: Annotated[bool | None, typer.Option("--spreads/--no-spreads")] = None,
@@ -314,6 +326,8 @@ def run(
             color_tint=color_tint,
             color_weekend_fill=color_weekend_fill,
             color_holiday_fill=color_holiday_fill,
+            font_primary=font_primary,
+            font_secondary=font_secondary,
             imposition=imposition,
             crop_marks=crop_marks,
             spreads=spreads,

@@ -163,6 +163,8 @@ PARAM_SHORT: dict[str, str] = {
     "color_tint": "Light tint color of the PDF (empty = theme).",
     "color_weekend_fill": "Weekend cell fill of the PDF (empty = theme).",
     "color_holiday_fill": "Holiday cell fill of the PDF (empty = theme).",
+    "font_primary": "Font of headings, titles and bold text.",
+    "font_secondary": "Font of body text, labels and numbers.",
     "imposition": "Export in booklet print order.",
     "crop_marks": "Draw crop marks on the imposed or spread sheets.",
     "spreads": "Export as 2-up reader spreads.",
@@ -383,6 +385,18 @@ PARAM_DETAILS: dict[str, str] = {
     "color_holiday_fill": (
         "Holiday cell fill of the PDF, used for the background of holiday days in calendars. Hex color such as #c85028 (also #abc or without the "
         "#). Empty = use the theme's color."
+    ),
+    "font_primary": (
+        "Font for headings, titles and every bold text: the bundled \"inter\" or the path of a "
+        ".ttf/.otf file. Bold/italic variants are looked up next to the file (MyFont-Regular.ttf "
+        "-> MyFont-Bold.ttf); missing styles use the regular file. The font must contain the "
+        "characters of the agenda language."
+    ),
+    "font_secondary": (
+        "Font for body text, labels, numbers and italic text: the bundled \"inter\" or the path "
+        "of a .ttf/.otf file. Bold/italic variants are looked up next to the file (MyFont-Regular.ttf "
+        "-> MyFont-Italic.ttf); missing styles use the regular file. The font must contain the "
+        "characters of the agenda language."
     ),
     "theme": (
         "Name of the color palette of the PDF: minimal (default), mono, ocean or forest. "

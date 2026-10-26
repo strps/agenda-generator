@@ -118,6 +118,8 @@ class Config(BaseModel):
     color_tint: str | None = None
     color_weekend_fill: str | None = None
     color_holiday_fill: str | None = None
+    font_primary: str = "inter"  # headings, titles, bold text: "inter" or a .ttf/.otf path
+    font_secondary: str = "inter"  # body text, labels, numbers
     imposition: bool = False
     crop_marks: bool = False
     spreads: bool = False
@@ -151,6 +153,20 @@ class Config(BaseModel):
             return normalize_hex(v)
         except ValueError:
             raise ValueError(f"{info.field_name} must be a hex color like #c85028") from None
+
+    @field_validator("font_primary", "font_secondary")
+    @classmethod
+    def _check_font(cls, v: str, info: ValidationInfo) -> str:
+        from agenda.fonts import BUILTIN, resolve
+
+        v = v.strip()
+        if v.lower() in BUILTIN:
+            return v.lower()
+        try:
+            resolve(v)
+        except ValueError as e:
+            raise ValueError(f"{info.field_name}: {e}") from None
+        return v
 
     @field_validator("page_number_format")
     @classmethod

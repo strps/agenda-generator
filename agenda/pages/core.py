@@ -19,6 +19,7 @@ from agenda.draw import (
     day_style_for,
     draw_mini_month,
     draw_pattern,
+    font,
     holiday_name_for,
     quotes_for,
 )
@@ -40,11 +41,11 @@ def _cover_panel(pdf: FPDF, g: Grid, title: str, year: str) -> None:
     pdf.c_margin = 0
     title_y = g.row(g.rows_in(panel.h) - 8)
     pdf.set_text_color(*color(pdf, "accent"))
-    pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[4])
+    pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[4])
     pdf.set_xy(panel.x + tokens.SPACING[3], title_y)
     pdf.cell(panel.w - 2 * tokens.SPACING[3], 2 * g.baseline, title)
     pdf.set_text_color(*color(pdf, "ink"))
-    pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[5])
+    pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[5])
     pdf.set_xy(panel.x + tokens.SPACING[3], title_y + 2 * g.baseline)
     pdf.cell(panel.w - 2 * tokens.SPACING[3], 3 * g.baseline, year)
 
@@ -102,7 +103,7 @@ class PersonalInfo(BasePage):
         x, w = g.col(0, g.columns)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[4])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[4])
         pdf.set_xy(x, g.row(0))
         pdf.cell(w, 2 * g.baseline, s("personal.title"))
 
@@ -113,7 +114,7 @@ class PersonalInfo(BasePage):
             if row + 1 + lines > g.rows:  # no room left: drop the remaining fields
                 break
             pdf.set_text_color(*color(pdf, "ink"))
-            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
+            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[1])
             pdf.set_xy(x, g.row(row))
             pdf.cell(w, g.baseline, s(key))
             for i in range(lines):
@@ -138,7 +139,7 @@ class Yearly(BasePage):
         g = grids[0]
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[4])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[4])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, str(config.year))
@@ -173,7 +174,7 @@ class Monthly(BasePage):
         x, w = g.col(0, g.columns)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[4])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[4])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("month.title", month=s.month_name(month), year=config.year))
@@ -187,7 +188,7 @@ class Monthly(BasePage):
         box_h = grid_rows * g.baseline / len(weeks)
 
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
         for i, name in enumerate(s.weekday_names(config.week_start, "short")):
             pdf.set_xy(x + i * box_w, g.row(0))
             pdf.cell(box_w, g.baseline, name, align="C")
@@ -207,14 +208,14 @@ class Monthly(BasePage):
                 if d is None:
                     continue
                 pdf.set_text_color(*((style and style.color) or color(pdf, "ink")))
-                pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+                pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
                 pdf.set_xy(bx + pad, by + pad)
                 pdf.cell(box_w - 2 * pad, g.baseline, str(d.day))
 
         # Priorities: label then write-in lines at row bottoms.
         n0 = 1 + grid_rows + 1
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(x, g.row(n0))
         pdf.cell(w, g.baseline, s("priorities"))
         for n in range(n0 + 2, g.rows + 1):
@@ -289,7 +290,7 @@ class Weekly(BasePage):
         x, w = g.col(0, g.columns)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, title)
@@ -309,22 +310,22 @@ class Weekly(BasePage):
                     pdf.set_fill_color(*style.fill)
                     pdf.rect(x, y0, w, g.baseline, style="F")
                 pdf.set_text_color(*((style and style.color) or color(pdf, "ink")))
-                pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+                pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
                 pdf.set_xy(x + pad, y0)
                 label = f"{names[d.weekday()]} {d.day}"
                 pdf.cell(w - 2 * pad, g.baseline, label)
                 holiday = name_of(d)
                 if holiday:  # right-aligned, only if it fits next to the day label
-                    pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+                    pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
                     hw = pdf.get_string_width(holiday)
-                    pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+                    pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
                     if hw + pdf.get_string_width(label) + 2 * pad < w - 2 * pad:
-                        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+                        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
                         pdf.set_xy(x + pad, y0)
                         pdf.cell(w - 2 * pad, g.baseline, holiday, align="R")
             elif notes:
                 pdf.set_text_color(*color(pdf, "accent"))
-                pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+                pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
                 pdf.set_xy(x + pad, y0)
                 pdf.cell(w - 2 * pad, g.baseline, s("notes.title"))
             else:
@@ -370,7 +371,7 @@ class Daily(BasePage):
             pdf.set_fill_color(*style.fill)
             pdf.rect(h.x, h.y, h.w, h.h, style="F")
         pdf.set_text_color(*((style and style.color) or color(pdf, "accent")))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         title = s(
             "day.title",
             weekday=s.weekday_names("monday", "full")[d.weekday()],
@@ -380,13 +381,13 @@ class Daily(BasePage):
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, title)
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[1])
         right = s("week.number", n=ctx["week"])
         holiday = holiday_name_for(config)(d) if config.daily_holidays else None
         if holiday:
-            pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
             title_w = pdf.get_string_width(title)
-            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
+            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[1])
             room = h.w - title_w - 4 - pdf.get_string_width(f"{JOIN}{right}")
             holiday = truncate(holiday, max(room, 0), pdf.get_string_width) if room > 0 else None
             if holiday == "…":
@@ -410,7 +411,7 @@ class Daily(BasePage):
         per = (g.rows - 1) // n_hours
         label_w = 8.0
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
         for i in range(n_hours):
             r0 = 1 + i * per
             pdf.set_xy(sx, g.row(r0))
@@ -439,18 +440,18 @@ class Daily(BasePage):
         width = f.w / 2 if quote and extra else f.w
         pdf.set_text_color(*color(pdf, "muted"))
         if quote:
-            pdf.set_font("Inter", "I", tokens.TYPE_SIZES_PT[0])
+            pdf.set_font(font(pdf, "secondary"), "I", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(f.x, f.y)
             pdf.cell(width, f.h, truncate(quote, width, pdf.get_string_width))
         if extra:
-            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(f.x2 - width, f.y)
             pdf.cell(width, f.h, truncate(extra, width, pdf.get_string_width), align="R")
 
     @staticmethod
     def _label(pdf: FPDF, g: Grid, text: str, x: float, w: float, row: int) -> None:
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(x, g.row(row))
         pdf.cell(w, g.baseline, text)
 
@@ -483,7 +484,7 @@ class Notes(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("notes.title"))
@@ -523,7 +524,7 @@ class Contacts(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("contacts.title"))
@@ -533,7 +534,7 @@ class Contacts(BasePage):
         per_col = g.rows // self.ENTRY_ROWS
         pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
         for c in range(ncols):
             x, w = g.col(c * span, span if c < ncols - 1 else g.columns - c * span)
             if c < ncols - 1:  # keep a column gap

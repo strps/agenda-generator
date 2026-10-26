@@ -116,6 +116,8 @@ SECTIONS: tuple[SectionSpec, ...] = (
             "tint": "color_tint",
             "weekend_fill": "color_weekend_fill",
             "holiday_fill": "color_holiday_fill",
+            "primary_font": "font_primary",
+            "secondary_font": "font_secondary",
         },
     ),
 )

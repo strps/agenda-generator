@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 
 from fpdf import FPDF
 
-from agenda import __version__, themes
+from agenda import __version__, fonts, themes
 from agenda.config import Config
-from agenda.draw import color, draw_debug_grid
+from agenda.draw import color, draw_debug_grid, font
 from agenda.grid import Grid
 
 if TYPE_CHECKING:
@@ -19,15 +19,9 @@ if TYPE_CHECKING:
 
 DEFAULT_OUTPUT = Path("output") / "agenda.pdf"
 
-FONT_DIR = Path(__file__).resolve().parents[1] / "assets" / "fonts"
+FONT_DIR = fonts.FONT_DIR
 FONT_FAMILY = "Inter"
-# fpdf2 style code -> file name. Use `pdf.set_font("Inter", style, size)` with "", "B", "I", "BI".
-FONT_FILES = {
-    "": "Inter-Regular.ttf",
-    "B": "Inter-Bold.ttf",
-    "I": "Inter-Italic.ttf",
-    "BI": "Inter-BoldItalic.ttf",
-}
+FONT_FILES = fonts.FONT_FILES  # fpdf2 style code -> bundled Inter file name
 
 
 class FontsMissingError(FileNotFoundError):
@@ -51,6 +45,30 @@ def register_fonts(pdf: FPDF, font_dir: str | Path = FONT_DIR) -> FPDF:
     return pdf
 
 
+def register_document_fonts(pdf: FPDF, cfg: Config, font_dir: str | Path = FONT_DIR) -> None:
+    """Register the primary/secondary fonts; roles with the same files share one family.
+
+    Built-in Inter is always family "Inter"; user fonts are "AgendaPrimary"/"AgendaSecondary".
+    Sets ``pdf.agenda_fonts`` ({"primary": family, "secondary": family}).
+    """
+    families: dict[tuple, str] = {}
+    roles: dict[str, str] = {}
+    for role, spec in (("primary", cfg.font_primary), ("secondary", cfg.font_secondary)):
+        files = fonts.resolve(spec)
+        key = tuple(str(files[s]) for s in fonts.STYLES)
+        if key not in families:
+            if spec.strip().lower() == "inter":
+                family = FONT_FAMILY
+                register_fonts(pdf, font_dir)
+            else:
+                family = "Agenda" + role.capitalize()
+                for style, path in files.items():
+                    pdf.add_font(family, style, str(path))
+            families[key] = family
+        roles[role] = families[key]
+    pdf.agenda_fonts = roles
+
+
 def new_document(cfg: Config, font_dir: str | Path = FONT_DIR) -> FPDF:
     """Create an empty FPDF in mm sized from `cfg.page_dimensions`, no auto page breaks."""
     pdf = FPDF(unit="mm", format=tuple(cfg.page_dimensions))
@@ -59,7 +77,7 @@ def new_document(cfg: Config, font_dir: str | Path = FONT_DIR) -> FPDF:
     pdf.set_title(f"Agenda {cfg.year}")
     pdf.set_creator(f"agenda-gen {__version__}")
     pdf.set_author("agenda-gen")
-    register_fonts(pdf, font_dir)
+    register_document_fonts(pdf, cfg, font_dir)
     overrides = {
         name.removeprefix("color_"): themes.hex_to_rgb(value)
         for name in COLOR_FIELDS
@@ -130,7 +148,7 @@ def _draw_number(pdf: FPDF, cfg: Config, grid: Grid, entry_number: int, total: i
         y = safe.y2 - h
     else:
         y = safe.y2 + (grid.page_h - safe.y2 - h) / 2
-    pdf.set_font(FONT_FAMILY, "", 7)
+    pdf.set_font(font(pdf, "secondary"), "", 7)
     pdf.set_text_color(*color(pdf, "muted"))
     pdf.set_xy(safe.x, y)
     pdf.cell(safe.w, h, text, align=align_for(grid.side, cfg.page_number_position))

@@ -12,7 +12,15 @@ from agenda import tokens
 from agenda.calendar import days_in_month
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import MOOD_LEVELS, color, draw_checkbox, draw_circle, draw_label_rule, draw_mood
+from agenda.draw import (
+    MOOD_LEVELS,
+    color,
+    draw_checkbox,
+    draw_circle,
+    draw_label_rule,
+    draw_mood,
+    font,
+)
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx, month_ctxs
@@ -59,7 +67,7 @@ class MonthlyQuotes(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("quotes.title", month=s.month_name(ctx["month"]), year=ctx["year"]))
@@ -71,7 +79,7 @@ class MonthlyQuotes(BasePage):
         text = s(f"quotes.{ctx['month']}")
         size = self.QUOTE_SIZES[-1]
         for size in self.QUOTE_SIZES:
-            pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[size])
+            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[size])
             lines = pdf.multi_cell(w, line_h, text, dry_run=True, output="LINES")
             if len(lines) <= max_lines:
                 break
@@ -83,7 +91,7 @@ class MonthlyQuotes(BasePage):
             pdf.cell(w, line_h, line)
 
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(x, g.row(q_rows))
         pdf.cell(w, g.baseline, s("quotes.reflection"))
         pdf.set_draw_color(*color(pdf, "line"))
@@ -149,7 +157,7 @@ class VisionBoard(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("vision.title"))
@@ -157,7 +165,7 @@ class VisionBoard(BasePage):
         x, w = g.safe.x, g.safe.w
         lay = self.layout(g.rows, w / g.baseline)
         pdf.set_text_color(*color(pdf, "ink"))
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[2])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[2])
         pdf.set_xy(x, g.row(0))
         pdf.cell(w, g.baseline * self.INTRO_ROWS, s("vision.subtitle", year=config.year))
 
@@ -168,7 +176,7 @@ class VisionBoard(BasePage):
         pdf.set_line_width(tokens.STROKE_REGULAR)
         pdf.rect(x, wy, w, wh)
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(x + tokens.GUTTER, wy)
         pdf.cell(w - 2 * tokens.GUTTER, g.baseline * 2, s("vision.word"))
         pdf.set_draw_color(*color(pdf, "line"))
@@ -242,7 +250,7 @@ class HealthTracker(BasePage):
         month, year = ctx["month"], ctx["year"]
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("health.title", month=s.month_name(month), year=year))
@@ -257,7 +265,7 @@ class HealthTracker(BasePage):
 
         # mood legend: label, then the five faces with their level numbers
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
         ly = g.row(0)
         pdf.set_xy(x, ly)
         pdf.cell(name_w, g.baseline * self.LEGEND_ROWS, s("health.mood"))
@@ -346,7 +354,7 @@ class Meals(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("meals.title"))
@@ -358,11 +366,11 @@ class Meals(BasePage):
         row_h = day_rows * g.baseline
 
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
         for i, key in enumerate(self.MEALS):
             pdf.set_xy(gx + i * cell_w, g.row(0))
             pdf.cell(cell_w, g.baseline, s(f"meals.{key}"), align="C")
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
         pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         for d, name in enumerate(s.weekday_names(config.week_start, "short")):
@@ -374,7 +382,7 @@ class Meals(BasePage):
 
         top = 1 + self.DAYS * day_rows + 1
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(x, g.row(top))
         pdf.cell(g.safe.w, g.baseline, s("meals.groceries"))
         box = min(self.BOX, g.baseline - 1.0)
@@ -439,12 +447,12 @@ class Gratitude(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("gratitude.title"))
 
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
         label = s("gratitude.date")
         dx, dw = g.col(g.columns - self.DATE_COLS, self.DATE_COLS)
         draw_label_rule(pdf, dx, dw, g.row(1), label, pdf.get_string_width(label) + g.gutter)
@@ -460,10 +468,10 @@ class Gratitude(BasePage):
                 else ("gratitude.best" if b == self.GRATEFUL_BLOCKS else "gratitude.intention")
             )
             pdf.set_text_color(*color(pdf, "muted"))
-            pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(x, g.row(top))
             pdf.cell(g.safe.w, g.baseline, s(key))
-            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
             pdf.set_draw_color(*color(pdf, "line"))
             pdf.set_line_width(tokens.STROKE_HAIRLINE)
             for k in range(n):
@@ -552,14 +560,14 @@ class Media(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("media.title"))
 
         x, w = g.safe.x, g.safe.w
         small = tokens.TYPE_SIZES_PT[0]
-        pdf.set_font("Inter", "", small)
+        pdf.set_font(font(pdf, "secondary"), "", small)
         type_w = max(pdf.get_string_width(s(f"media.{t}")) for t in self.TYPES) + g.gutter / 2
         date_w = g.span_width(self.DATE_COLS)
         lay = self.layout(g.rows, w, type_w, date_w, g.span_width(self.TITLE_COLS), g)
@@ -572,7 +580,7 @@ class Media(BasePage):
         row_h = g.baseline * self.ROW_ROWS
 
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "B", small)
+        pdf.set_font(font(pdf, "primary"), "B", small)
         for cx, cw, key in (
             (x, type_w, "media.type"),
             (title_x, title_end - title_x, "media.name"),
@@ -584,7 +592,7 @@ class Media(BasePage):
             pdf.set_xy(cx, g.row(0))
             pdf.cell(cw, g.baseline, s(key))
 
-        pdf.set_font("Inter", "", small)
+        pdf.set_font(font(pdf, "secondary"), "", small)
         pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         line_h = row_h / len(self.TYPES)
@@ -662,13 +670,13 @@ class Travel(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("travel.title"))
 
         x, w = g.safe.x, g.safe.w
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
         keys = ("destination", "from", "to", "budget")
         label_w = max(pdf.get_string_width(s(f"travel.{k}")) for k in keys) + g.gutter
         draw_label_rule(pdf, x, w, g.row(1), s("travel.destination"), label_w)
@@ -683,10 +691,10 @@ class Travel(BasePage):
         top = self.FIELD_ROWS + 1
         small = tokens.TYPE_SIZES_PT[0]
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "B", small)
+        pdf.set_font(font(pdf, "primary"), "B", small)
         pdf.set_xy(x, g.row(top))
         pdf.cell(w, g.baseline, s("travel.itinerary"))
-        pdf.set_font("Inter", "", small)
+        pdf.set_font(font(pdf, "secondary"), "", small)
         day_w = pdf.get_string_width(f"{s('travel.day')} {self.MAX_DAYS}") + g.gutter
         pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
@@ -699,7 +707,7 @@ class Travel(BasePage):
 
         top += days + 2
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "B", small)
+        pdf.set_font(font(pdf, "primary"), "B", small)
         pdf.set_xy(x, g.row(top))
         pdf.cell(w, g.baseline, s("travel.packing"))
         box = g.baseline * self.BOX_RATIO
@@ -778,13 +786,13 @@ class Challenge30(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("challenge.title"))
 
         x, w = g.safe.x, g.safe.w
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
         label_w = (
             max(pdf.get_string_width(s(k)) for k in ("challenge.mine", "challenge.why")) + g.gutter
         )
@@ -796,7 +804,7 @@ class Challenge30(BasePage):
         cw = (w - (lay.cols - 1) * g.gutter) / lay.cols
         ch = lay.cell_rows * g.baseline
         d = g.baseline * self.CIRCLE_RATIO
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
         for k in range(self.DAYS):
             r, c = divmod(k, lay.cols)
             cx = x + c * (cw + g.gutter)
@@ -811,7 +819,7 @@ class Challenge30(BasePage):
 
         top += 1 + lay.grid_rows * lay.cell_rows + 1
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(x, g.row(top))
         pdf.cell(w, g.baseline, s("challenge.reflection"))
         pdf.set_draw_color(*color(pdf, "line"))
@@ -889,7 +897,7 @@ class IdeaMap(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("ideas.title"))
@@ -919,7 +927,7 @@ class IdeaMap(BasePage):
         y = cy + cry * self.RULE_Y
         pdf.line(cx - crx * self.RULE_W, y, cx + crx * self.RULE_W, y)
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(cx - crx, cy - g.baseline)
         pdf.cell(2 * crx, g.baseline, s("ideas.main"), align="C")
 
@@ -995,14 +1003,14 @@ class QRCodes(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("qr.title"))
 
         c = g.content
         lay = self.layout(c.w, c.h, g.baseline, g.gutter)
-        pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
         label_w = pdf.get_string_width(s("qr.label")) + g.gutter
         for k, text in enumerate(ctx["urls"]):
             r, col = divmod(k, lay.cols)
@@ -1019,7 +1027,7 @@ class QRCodes(BasePage):
                         pdf.rect(x0 + j * mod, y0 + i * mod, mod, mod, style="F")
             cap = y + lay.side
             pdf.set_text_color(*color(pdf, "muted"))
-            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(x, cap)
             pdf.cell(lay.cell_w, g.baseline, _fit(pdf, text, lay.cell_w))
             draw_label_rule(pdf, x, lay.cell_w, cap + 2 * g.baseline, s("qr.label"), label_w)
@@ -1119,7 +1127,7 @@ class ExtrasGuide(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("extras.title"))
@@ -1133,13 +1141,13 @@ class ExtrasGuide(BasePage):
             top = 1 + k * self.TIP_ROWS
             y = g.row(top)
             pdf.set_text_color(*color(pdf, "accent"))
-            pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(g.safe.x, y)
             pdf.cell(num_w, g.baseline, str(k + 1))
             self._icon(pdf, key, g.safe.x + num_w, y, icon)
             pdf.set_text_color(*color(pdf, "ink"))
             pdf.set_xy(text_x, y)
-            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
             lines = pdf.multi_cell(
                 text_w, g.baseline, s(f"extras.{key}"), dry_run=True, output="LINES"
             )
@@ -1152,7 +1160,7 @@ class ExtrasGuide(BasePage):
         if lay.supply_rows:
             top = 1 + lay.tips * self.TIP_ROWS
             pdf.set_text_color(*color(pdf, "muted"))
-            pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(g.safe.x, g.row(top))
             pdf.cell(g.safe.w, g.baseline, s("extras.supplies"))
             pdf.set_draw_color(*color(pdf, "line"))
@@ -1186,7 +1194,7 @@ class _Counted(BasePage):
     def _header(pdf: FPDF, g: Grid, title: str) -> None:
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         pdf.set_xy(g.header.x, g.header.y)
         pdf.cell(g.header.w, g.header.h, title)
 
@@ -1194,7 +1202,7 @@ class _Counted(BasePage):
     def _label(pdf: FPDF, g: Grid, x: float, w: float, row: int, text: str) -> None:
         """Small bold muted label whose text cell starts at ``g.row(row)``."""
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(x, g.row(row))
         pdf.cell(w, g.baseline, text)
 
@@ -1251,7 +1259,7 @@ class PackEntrepreneur(_Counted):
         self._header(pdf, g, s("entre.title"))
         x, w = g.safe.x, g.safe.w
         metric, pipe, dec = self.layout(g.rows)
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
         goal = s("entre.goal")
         draw_label_rule(pdf, x, w, g.row(1), goal, pdf.get_string_width(goal) + g.gutter)
 
@@ -1381,7 +1389,7 @@ class PackFitness(_Counted):
         self._header(pdf, g, s("fitness.title"))
         x, w = g.safe.x, g.safe.w
         ex, notes = self.layout(g.rows)
-        pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
+        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
         date = s("fitness.date")
         draw_label_rule(pdf, x, w, g.row(1), date, pdf.get_string_width(date) + g.gutter)
         for col, span, key in self.COLS:
