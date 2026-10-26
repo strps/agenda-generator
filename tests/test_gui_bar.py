@@ -138,6 +138,17 @@ def test_first_page_of_section():
     assert B.first_page_of(pl, "daily") is None
 
 
+def test_next_run_of_cycles_and_wraps():
+    pl = plan(P)
+    # front_back runs start at 0 and 7
+    assert B.next_run_of(pl, "front_back", 0) == 7
+    assert B.next_run_of(pl, "front_back", 3) == 7
+    assert B.next_run_of(pl, "front_back", 7) == 0  # wraps
+    assert B.next_run_of(pl, "weekly", 4) == 3  # single run: inside it goes back to its start
+    assert B.next_run_of(pl, "weekly", 0) == 3
+    assert B.next_run_of(pl, "daily", 0) is None
+
+
 def test_tooltip_text():
     import datetime as dt
 
@@ -211,5 +222,9 @@ def test_widget_click_drag_keys_and_legend():
     assert bar.first_page_of("weekly") == B.first_page_of(bar.plan, "weekly")
     assert win.preview.index == bar.index == B.first_page_of(bar.plan, "weekly")
     assert bar.first_page_of("nope") is None
+    w0 = bar.index
+    assert bar.next_page_of("weekly") == B.next_run_of(bar.plan, "weekly", w0) > w0
+    assert win.preview.index == bar.index
+    assert bar.next_page_of("nope") is None
     assert bar.tooltip_for(x40).startswith(f"Page {geo.page_at(x40) + 1} ")
     win.preview.wait_idle()

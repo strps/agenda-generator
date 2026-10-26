@@ -21,7 +21,7 @@ A desktop window to configure the agenda, preview pages as they will print, and 
 ├────────────────────┴─────────────────────────────────────────────────┤
 │ Front│Monthly│Weekly│Daily│Weekly│Daily│ … │Optional│Value│Back│pad  │ ← section bar
 │ ┆    ┆    ┆    ┆    ┆    ┆    ┆    ┆    ┆    ┆    ┆    ┆    ┆    ┆    │ ← booklet ticks
-│ ■ Front/back 6  ■ Monthly 12  ■ Weekly 106  ■ Daily 365  ■ Optional 18 … │ ← legend + counts
+│ [Front/back 6][ Monthly 12 ][ Weekly 106 ][ Daily 365 ][Optional 18]… │ ← legend chips
 │ 498 pages · 125 sheets · 25 booklets · 2 padding pages                 │ ← summary
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -117,7 +117,7 @@ default output folder). The page range is kept per window and never saved. With 
 - **Consecutive pages of the same section merge** into one segment. A **2 px gap** separates segments of different sections. The gap is required, not decorative (see 3.3).
 - **Booklet ticks** under the bar mark where each booklet starts.
 - **A position marker** shows the spread currently in the preview.
-- **A legend** lists every section shown, with a swatch, name and page count, plus a one-line summary (pages, sheets, booklets, padding). Hovering a swatch, a section button or the "Legend:" title explains what the color means (`help_text.section_tooltip`); the padding swatch carries the same 45-degree hatch as the bar.
+- **A legend** sits under the bar as a second, full-width labeled bar: one equal-width chip per section shown, filled with its color and labeled with the name and page count (black or white text, whichever contrasts more). The chips paint themselves, so the app stylesheet can't hide the colors. Below it is a one-line summary (pages, sheets, booklets, padding). Hovering a chip or the "Legend:" title explains what the color means (`help_text.section_tooltip`); the padding chip carries the same 45-degree hatch as the bar.
 
 ### Sections and colors
 
@@ -148,13 +148,13 @@ Colors come from the validated reference palette (dataviz skill). The assignment
 - **Hover:** a tooltip appears for the page under the cursor, e.g. `Page 143 · Weekly · Week 12 (Mar 16–22) · Booklet 8, sheet 2`. The hit area is the full bar height, not just the page's 2 px. If the pointer stays over the same section for `HOVER_EXPAND_MS` (1500 ms, defined in `hover_tooltip.py`), the tooltip expands: the short text, a newline, then the section description (`help_text.section_tooltip`; padding pages use the padding description). Moving within a section keeps the expansion; moving to another section, leaving the bar, pressing or dragging, or a new plan resets it.
 - **Click:** jumps the preview to that page's spread. **Drag:** scrubs through pages.
 - **Keyboard:** arrow keys move by spread, Page Up/Down by booklet, Home/End to the start/end.
-- **Legend click:** jumps to the first page of that section.
+- **Legend click:** jumps to the next run of that section after the current page, wrapping to the first. Repeated clicks cycle through it (e.g. week by week).
 
 ### Accessibility
 
 - Identity is never color alone. The legend is always shown, the tooltip names the section, and section names are drawn inside segments wide enough to fit them.
 - Padding uses a hatch pattern as well as gray.
-- Text (legend labels, counts, tooltip) uses normal text colors, never the section color. The colored swatch carries identity.
+- Text never uses a section color as its own color. Legend chip labels are black or white on the section fill, picked by WCAG contrast (`section_colors.text_on`).
 - Light and dark values are separate validated steps that follow the system theme. They are not an automatic inversion.
 
 ## 4. Open questions

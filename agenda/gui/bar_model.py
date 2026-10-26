@@ -132,6 +132,13 @@ def first_page_of(plan: Sequence, section: str) -> int | None:
     return None
 
 
+def next_run_of(plan: Sequence, section: str, index: int) -> int | None:
+    """First page of the next run of ``section`` after ``index``, wrapping to the first run
+    (repeated legend clicks cycle through the section); None if absent."""
+    starts = [first for k, first, _n in geometry(plan, 0.0).runs if k == section]
+    return next((s for s in starts if s > index), starts[0] if starts else None)
+
+
 def _day(d) -> str:
     return f"{d:%b} {d.day}"
 

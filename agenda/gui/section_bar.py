@@ -116,6 +116,13 @@ class SectionBar(QWidget):
             self._request(i)
         return i
 
+    def next_page_of(self, section: str) -> int | None:
+        """Legend click target: emit and return the next run of ``section`` (wraps around)."""
+        i = B.next_run_of(self.plan, section, self.index)
+        if i is not None:
+            self._request(i)
+        return i
+
     def _request(self, index: int) -> None:
         self.set_position(index)
         self.page_requested.emit(index)

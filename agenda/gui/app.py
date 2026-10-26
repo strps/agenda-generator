@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
         self.preview.page_changed.connect(self.section_bar.set_position)
         self.section_bar.page_requested.connect(self.preview.goto)
         self.section_bar.page_requested.connect(lambda _i: self.show_preview_for(GLOBAL))
-        self.legend.section_clicked.connect(self.section_bar.first_page_of)
+        self.legend.section_clicked.connect(self.section_bar.next_page_of)
         self.legend.section_clicked.connect(lambda _k: self.show_preview_for(GLOBAL))
         self.settings.section_activated.connect(self.show_preview_for)
         menu = self.menuBar().addMenu("&Settings")

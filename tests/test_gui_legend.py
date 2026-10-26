@@ -58,11 +58,14 @@ def test_widget_legend_summary_click_and_error():
     assert win.summary_label.text().startswith(f"{len(plan)} pages")
     key = "weekly"
     win.legend.buttons[key].click()
-    from agenda.gui.bar_model import first_page_of
+    from agenda.gui.bar_model import first_page_of, next_run_of
+    from agenda.gui.section_colors import section_color
 
-    assert win.preview.index == first_page_of(plan, key)
-    sw = win.legend.findChild(type(win.summary_label), f"swatch_{key}")
-    assert sw.styleSheet().startswith("background-color: #")
+    first = first_page_of(plan, key)
+    assert win.preview.index == first
+    win.legend.buttons[key].click()
+    assert win.preview.index == next_run_of(plan, key, first) > first
+    assert win.legend.buttons[key].color.name() == section_color(key, win.legend.dark())
     win.preview.wait_idle()
     win.settings.editors["imposition"].setChecked(True)
     win.settings.editors["booklet_folded"].setChecked(False)
@@ -93,9 +96,9 @@ def test_legend_tooltips_explain_colors():
     lg = _legend_with(M.legend_entries(build_plan(Config())))
     assert lg.entries
     for e in lg.entries:
-        for tip in (lg.buttons[e.key].toolTip(), lg.findChild(QLabel, f"swatch_{e.key}").toolTip()):
-            assert SECTION_DESCRIPTIONS[e.key] in tip
-            assert "first" in tip
+        tip = lg.buttons[e.key].toolTip()
+        assert SECTION_DESCRIPTIONS[e.key] in tip
+        assert "first" in tip and "next" in tip
     title = lg.findChild(QLabel, "legend_title")
     assert title is not None and title.toolTip()
     lg.set_entries(lg.entries)
@@ -114,12 +117,18 @@ def _colors(widget):
     return {img.pixel(x, y) for x in range(img.width()) for y in range(img.height())}
 
 
-def test_padding_swatch_is_hatched():
-    from PySide6.QtWidgets import QLabel
+def _corner(widget):
+    """Colors of a text-free 8x8 corner of a legend chip."""
+    img = widget.grab().toImage()
+    return {img.pixel(x, y) for x in range(2, 10) for y in range(2, 10)}
 
+
+def test_chips_fill_color_and_padding_is_hatched():
     lg = _legend_with([M.LegendEntry("padding", "Padding", 2), M.LegendEntry("monthly", "Monthly", 3)])
+    lg.resize(600, 40)
     lg.show()
-    assert len(_colors(lg.findChild(QLabel, "swatch_padding"))) >= 2
-    assert len(_colors(lg.findChild(QLabel, "swatch_monthly"))) == 1
+    assert len(_corner(lg.buttons["padding"])) >= 2
+    monthly = _corner(lg.buttons["monthly"])
+    assert len(monthly) == 1 and lg.buttons["monthly"].color.rgb() in monthly
     lg.recolor()
-    assert len(_colors(lg.findChild(QLabel, "swatch_padding"))) >= 2
+    assert len(_corner(lg.buttons["padding"])) >= 2

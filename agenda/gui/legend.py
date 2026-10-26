@@ -1,13 +1,52 @@
-"""Legend widget: colored swatch + label + count per section; click jumps to its first page."""
+"""Legend widget: one full-width colored chip (label + count) per section, like a labeled bar.
+Each click jumps to the next run of that section, wrapping to the first."""
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QBrush, QColor, QPainter, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
+from PySide6.QtGui import QBrush, QColor, QPainter, QPen
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QWidget
 
 from agenda.gui import help_text
 from agenda.gui import legend_model as M
 from agenda.gui import section_colors as C
+from agenda.gui.bar_model import PADDING
 from agenda.gui.style_model import SPACING
+
+CHIP_H = 24
+HATCH_ALPHA = 110  # padding hatch over the gray, light enough to keep the label readable
+
+
+class LegendChip(QPushButton):
+    """Paints itself (immune to the app stylesheet): section color fill, contrasting label,
+    the padding hatch, and a highlight outline on hover/focus."""
+
+    def __init__(self, entry: M.LegendEntry) -> None:
+        super().__init__(f"{entry.label} {entry.count}")
+        self.key = entry.key
+        self.color = QColor(C.GRAY)
+        self.setObjectName(f"legend_{entry.key}")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFixedHeight(CHIP_H)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    def set_color(self, color: QColor) -> None:
+        self.color = color
+        self.update()
+
+    def paintEvent(self, _event) -> None:
+        p = QPainter(self)
+        r = self.rect()
+        fill = self.color.darker(115) if self.isDown() else self.color
+        p.fillRect(r, fill)
+        if self.key == PADDING:
+            hatch = QColor(self.palette().window().color())
+            hatch.setAlpha(HATCH_ALPHA)
+            p.fillRect(r, QBrush(hatch, Qt.BrushStyle.BDiagPattern))
+        p.setPen(QColor(C.text_on(fill.name())))
+        p.drawText(r, Qt.AlignmentFlag.AlignCenter, self.text())
+        if self.underMouse() or self.hasFocus():
+            p.setPen(QPen(self.palette().highlight().color(), 2))
+            p.drawRect(r.adjusted(1, 1, -1, -1))
+        p.end()
 
 
 class Legend(QWidget):
@@ -18,7 +57,7 @@ class Legend(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.entries: list[M.LegendEntry] = []
-        self.buttons: dict[str, QPushButton] = {}
+        self.buttons: dict[str, LegendChip] = {}
         self._row = QHBoxLayout(self)
         self._row.setContentsMargins(SPACING["margin"], 2, SPACING["margin"], 2)
         self._row.setSpacing(SPACING["gap"])
@@ -43,43 +82,20 @@ class Legend(QWidget):
         self.buttons = {}
         self._row.addWidget(self.title)
         for e in self.entries:
-            btn = QPushButton(f"{e.label} {e.count}")
-            btn.setFlat(True)
-            tip = f"{help_text.section_tooltip(e.key)}\nClick to go to the first {e.label} page."
-            btn.setToolTip(tip)
-            btn.clicked.connect(lambda _=False, k=e.key: self.section_clicked.emit(k))
-            sw = QLabel()
-            sw.setFixedSize(12, 12)
-            sw.setObjectName(f"swatch_{e.key}")
-            sw.setToolTip(tip)
-            self._row.addWidget(sw)
-            self._row.addWidget(btn)
-            self.buttons[e.key] = btn
-        self._row.addStretch(1)
+            chip = LegendChip(e)
+            chip.setToolTip(
+                f"{help_text.section_tooltip(e.key)}\n"
+                f"Click to go to the first {e.label} page; click again for the next one."
+            )
+            chip.clicked.connect(lambda _=False, k=e.key: self.section_clicked.emit(k))
+            self._row.addWidget(chip, 1)
+            self.buttons[e.key] = chip
         self.recolor()
 
     def recolor(self) -> None:
-        """Apply section colors for the current light/dark palette (text keeps normal color)."""
-        for e in self.entries:
-            sw = self.findChild(QLabel, f"swatch_{e.key}")
-            if sw is None:
-                continue
-            color = QColor(C.section_color(e.key, self.dark()))
-            if e.key == "padding":
-                sw.setStyleSheet("")
-                sw.setPixmap(self._hatched(color))
-            else:
-                sw.setPixmap(QPixmap())
-                sw.setStyleSheet(f"background-color: {color.name()};")
-
-    def _hatched(self, color: QColor) -> QPixmap:
-        """Gray swatch with the same 45 degree hatch the section bar uses for padding."""
-        pm = QPixmap(12, 12)
-        pm.fill(color)
-        p = QPainter(pm)
-        p.fillRect(pm.rect(), QBrush(self.palette().window().color(), Qt.BrushStyle.BDiagPattern))
-        p.end()
-        return pm
+        """Apply section colors for the current light/dark palette."""
+        for key, chip in self.buttons.items():
+            chip.set_color(QColor(C.section_color(key, self.dark())))
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)

@@ -110,8 +110,6 @@ def test_swatch_unchanged_in_dark(qapp, tmp_path):
     apply_style(qapp)
     win = MainWindow(prefs=prefs(tmp_path))
     win.show()
-    swatch = win.legend.findChild(QLabel, "swatch_monthly")
-    assert swatch is not None
-    img = swatch.grab().toImage()
-    colors = {img.pixelColor(x, y).name() for x in range(img.width()) for y in range(img.height())}
-    assert colors == {section_color("monthly", True)}
+    chip = win.legend.buttons["monthly"]
+    img = chip.grab().toImage()
+    assert img.pixelColor(3, 3).name() == section_color("monthly", True)
