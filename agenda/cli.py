@@ -205,6 +205,10 @@ def run(
     sheet_size: Annotated[
         str | None, typer.Option("--sheet-size", help="auto, letter or a4 (spreads/imposition).")
     ] = None,
+    page_range: Annotated[
+        str | None,
+        typer.Option("--page-range", help='Export only these pages, e.g. "1-4,9" (single pages only).'),
+    ] = None,
     output: Annotated[
         Path | None, typer.Option("-o", "--output", help="Output PDF (default output/agenda.pdf).")
     ] = None,
@@ -284,9 +288,20 @@ def run(
         typer.echo(summarize(build_plan(cfg), cfg).format())
         raise typer.Exit()
     target = cfg.output if "output" in merged else DEFAULT_OUTPUT
+    pages = None
+    if page_range is not None:
+        from agenda.assembler import build_plan
+        from agenda.pagerange import parse_page_range
+
+        try:
+            if cfg.imposition or cfg.spreads:
+                raise ValueError("a page range can only be exported as single pages")
+            pages = parse_page_range(page_range, len(build_plan(cfg)))
+        except ValueError as exc:
+            raise _fail(f"page range: {exc}", 2) from None
     try:
         if blank_pages is None:
-            out = export_agenda(cfg, target)
+            out = export_agenda(cfg, target) if pages is None else export_agenda(cfg, target, pages=pages)
         else:
             out = export_blank(cfg, blank_pages, target)
     except FontsMissingError as exc:

@@ -185,3 +185,13 @@ def test_sample_config_yaml_is_valid_and_dry_runs(captured):
     res = runner.invoke(app, ["--dry-run", "--config", str(path)])
     assert res.exit_code == 0, res.output
     assert "cfg" not in captured
+
+
+def test_page_range_flag(tmp_path, capsys):
+    base = ["--year", "2026", "--planners", "weekly", "--daily-months", ""]
+    out = tmp_path / "r.pdf"
+    assert main([*base, "--page-range", "2-3", "--output", str(out)]) == 0
+    assert len(PdfReader(str(out)).pages) == 2
+    assert main([*base, "--page-range", "2-3", "--imposition", "--folded", "--output", str(out)]) == 2
+    assert "page range" in capsys.readouterr().err
+    assert main([*base, "--page-range", "999", "--output", str(out)]) == 2

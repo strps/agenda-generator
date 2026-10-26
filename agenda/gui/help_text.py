@@ -46,6 +46,16 @@ TOOLTIPS: dict[str, str] = {
     ),
 }
 
+EXPORT_HELP: dict[str, str] = {
+    "page_range": "Export only some pages, e.g. 1-4,9. Leave empty or type all for every page.",
+    "page_range_detail": (
+        "Pages are numbered by their position in the agenda, starting at 1. "
+        "A page range only works with the single pages layout (not spreads or booklets). "
+        "Page numbers printed on the pages keep their full-agenda values. "
+        "It is not saved in the settings file. CLI: --page-range."
+    ),
+}
+
 EXPORT_DISABLED_REASON = (
     "Export is disabled because the current settings are invalid. "
     "Fix the highlighted settings to enable it."

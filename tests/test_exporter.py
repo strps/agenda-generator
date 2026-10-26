@@ -126,3 +126,27 @@ def test_cli_default_writes_full_agenda(tmp_path):
     out = tmp_path / "a.pdf"
     assert main(["-o", str(out), "--page-size", "a5"]) == 0
     assert len(PdfReader(out).pages) > 100
+
+
+def test_export_page_range_matches_full_export(tmp_path):
+    from pypdf import PdfReader
+
+    from agenda.config import Config
+    from agenda.exporter import export_agenda
+
+    cfg = Config(year=2026, planners=["weekly"], daily_months=[], page_numbers=True)
+    full = PdfReader(str(export_agenda(cfg, tmp_path / "f.pdf")))
+    part = PdfReader(str(export_agenda(cfg, tmp_path / "p.pdf", pages=[2, 3])))
+    assert len(part.pages) == 2
+    assert [p.extract_text() for p in part.pages] == [full.pages[i].extract_text() for i in (1, 2)]
+
+
+def test_export_page_range_rejects_layouts(tmp_path):
+    import pytest
+
+    from agenda.config import Config
+    from agenda.exporter import export_agenda
+
+    cfg = Config(year=2026, planners=["weekly"], daily_months=[], spreads=True)
+    with pytest.raises(ValueError, match="page range"):
+        export_agenda(cfg, tmp_path / "x.pdf", pages=[1])

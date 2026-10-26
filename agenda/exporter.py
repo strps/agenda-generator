@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -197,6 +197,7 @@ def export_agenda(
     cfg: Config,
     path: str | Path = DEFAULT_OUTPUT,
     progress: Callable[[int, int], None] | None = None,
+    pages: Sequence[int] | None = None,
 ) -> Path:
     """Render the full agenda by iterating ``build_plan(cfg)`` (see ``_render_plan``).
 
@@ -204,10 +205,20 @@ def export_agenda(
     With ``cfg.imposition`` the finished PDF is re-laid 2-up in booklet print order
     (``agenda.imposition.impose_booklets``); with ``cfg.spreads`` as reader spreads (``impose_spreads``);
     both with crop marks if ``cfg.crop_marks`` and the sheet from ``cfg.sheet_size``. Otherwise the output is untouched.
+    ``pages`` (1-based) writes only those pages as single pages (ValueError with imposition/spreads).
     """
     from agenda.assembler import build_plan
 
+    if pages is not None and (cfg.imposition or cfg.spreads):
+        raise ValueError("a page range can only be exported as single pages")
     plan = build_plan(cfg)
+    if pages is not None:
+        if progress is not None:
+            progress(len(plan), len(plan))
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(render_pages(cfg, plan, [p - 1 for p in pages]))
+        return path
     pdf = _render_plan(cfg, plan, progress=progress)
     if not (cfg.imposition or cfg.spreads):
         return write_pdf(pdf, path)
