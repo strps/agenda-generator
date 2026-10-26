@@ -69,3 +69,161 @@ def section_tooltip(key: str) -> str:
     label = SECTION_LABELS.get(key, key)
     desc = SECTION_DESCRIPTIONS.get(key)
     return f"{label}: {desc}" if desc else label
+
+
+# Short (one phrase) and detailed texts for every Config field, keyed by field name.
+PARAM_SHORT: dict[str, str] = {
+    "page_size": "Page size: a name or custom WxH in mm.",
+    "orientation": "Page orientation.",
+    "inner_margin": "Margin on the binding side, in mm.",
+    "outer_margin": "Margin on the outer edges, in mm.",
+    "bleed": "Gap before each crop mark, in mm.",
+    "booklet_size": "Size of one booklet, in sheets or pages.",
+    "booklet_unit": "Unit of the booklet size.",
+    "booklet_folded": "Folded (4 pages per sheet) or flat booklets.",
+    "num_booklets": "Number of booklets, or auto.",
+    "pad_with": "Page id used to fill the last booklet.",
+    "separate_covers": "Keep the covers apart from the booklets.",
+    "creep_mm": "Creep compensation for folded sheets, in mm.",
+    "planners": "Which planner pages to include.",
+    "daily_months": "Months that get daily pages.",
+    "pages": "Catalog pages to include.",
+    "preset": "Page selection by value score.",
+    "notes_pattern": "Pattern of the notes pages.",
+    "page_numbers": "Print page numbers on the pages.",
+    "qr_urls": "Texts or URLs for the QR page, one per line.",
+    "year": "Calendar year of the agenda.",
+    "week_start": "First day of the week.",
+    "language": "Language of the printed texts.",
+    "holiday_country": "Country code used for holidays, e.g. CR.",
+    "theme": "Color palette and typography.",
+    "imposition": "Export in booklet print order.",
+    "crop_marks": "Draw crop marks on the imposed sheets.",
+    "output": "Path of the exported PDF.",
+    "debug_grid": "Overlay margins, columns and baseline.",
+}
+
+PARAM_DETAILS: dict[str, str] = {
+    "page_size": (
+        "Size of the finished page. Use a known name (half_letter, a5, letter, a4, b6) or a "
+        "custom size written as WxH in millimetres. Orientation is applied on top of it."
+    ),
+    "orientation": (
+        "Whether the page is taller than wide (portrait) or wider than tall (landscape). "
+        "It swaps the width and height of the page size for every page."
+    ),
+    "inner_margin": (
+        "Free space, in mm, on the side of the page where the booklet is bound. "
+        "A larger value moves the content away from the fold and shrinks the content width."
+    ),
+    "outer_margin": (
+        "Free space, in mm, on the outer edges of the page, away from the binding. "
+        "A larger value shrinks the area available for the content."
+    ),
+    "bleed": (
+        "Gap, in mm, left between the page and each crop mark. It only has an effect when "
+        "crop_marks is on, which in turn needs imposition."
+    ),
+    "booklet_size": (
+        "How big one booklet is. It is counted in sheets or in pages depending on "
+        "booklet_unit (sheets or pages). With pages it must be a multiple of 4 for folded "
+        "booklets and of 2 for flat ones."
+    ),
+    "booklet_unit": (
+        "Whether booklet_size counts sheets or pages. A folded sheet holds 4 pages and a "
+        "flat double-sided sheet holds 2, so 5 sheets are 20 folded pages."
+    ),
+    "booklet_folded": (
+        "On: saddle-stitched booklets with 4 pages per sheet. Off: flat double-sided sheets "
+        "with 2 pages per sheet. Imposition requires folded booklets."
+    ),
+    "num_booklets": (
+        "How many booklets the agenda is split into. Use auto to derive the number from the "
+        "content, or a whole number of at least 1. The last booklet is filled with pad_with."
+    ),
+    "pad_with": (
+        "Catalog page id repeated to fill the last booklet so that it ends on a whole sheet. "
+        "These filler pages show as padding in the section bar. The default is notes."
+    ),
+    "separate_covers": (
+        "When on, the cover and back cover are excluded from the booklet count, so padding "
+        "goes before the back cover and the covers can be printed separately on card stock."
+    ),
+    "creep_mm": (
+        "Shift, in mm, applied to the inner pages of folded sheets on the imposed output to "
+        "compensate for paper thickness. It is negligible for small booklets and 0 disables it."
+    ),
+    "planners": (
+        "Which planner page types are generated: weekly, daily or both. Daily pages are "
+        "limited to the months in daily_months, which also limits the page count."
+    ),
+    "daily_months": (
+        "Months (1-12) that get daily pages, for example 1-6,9. Fewer months give fewer pages "
+        "and a thinner agenda. It only matters when the daily planner is selected."
+    ),
+    "pages": (
+        "Explicit list of catalog page ids to include. When set, it always overrides the "
+        "preset. When empty and no preset is chosen, all core pages are used."
+    ),
+    "preset": (
+        "Selects pages by value score: essential, complete or premium. It is only used when "
+        "pages is empty, because explicit pages always win over the preset."
+    ),
+    "notes_pattern": (
+        "Ruling printed on the notes pages: lined, dotted, grid or blank. "
+        "It also applies to notes pages added as booklet padding."
+    ),
+    "page_numbers": (
+        "When on, a page number is printed on each page. When off, the pages carry "
+        "no numbers."
+    ),
+    "qr_urls": (
+        "Texts or URLs for the qr page, one QR code each, entered one per line. At most 24 "
+        "entries of at most 200 characters, and empty lines are not allowed."
+    ),
+    "year": (
+        "Year of the calendar (1900-2200). It sets all dates, weekdays and holidays "
+        "on the monthly, weekly and daily pages."
+    ),
+    "week_start": (
+        "First day of the week, monday or sunday. It changes the column order of the "
+        "monthly grids and where each weekly page begins."
+    ),
+    "language": (
+        "Language of month names, weekdays and other printed texts: es (Spanish) or "
+        "en (English)."
+    ),
+    "holiday_country": (
+        "ISO country code, for example CR, whose public holidays are marked on the calendar "
+        "pages. It is converted to upper case."
+    ),
+    "theme": (
+        "Name of the theme that sets the color palette and typography of the PDF. "
+        "The default is minimal."
+    ),
+    "imposition": (
+        "Export the pages in booklet print order, so the printed sheets can be folded into a "
+        "booklet. It requires booklet_folded to be on."
+    ),
+    "crop_marks": (
+        "Draw crop marks on the imposed sheets to show where to cut. It requires imposition "
+        "to be on, and the bleed setting controls the gap before each mark."
+    ),
+    "output": (
+        "File path of the exported PDF. The file is written there when you use Export "
+        "and is overwritten if it exists."
+    ),
+    "debug_grid": (
+        "Overlay the margins, columns and baseline grid on every page. Use it to check "
+        "the layout, and turn it off for the final print."
+    ),
+}
+
+
+def param_tooltip(name: str, expanded: bool = False) -> str:
+    """Short text for a Config field, plus detail after a newline when expanded."""
+    short = PARAM_SHORT.get(name)
+    if short is None:
+        return name
+    detail = PARAM_DETAILS.get(name)
+    return f"{short}\n{detail}" if expanded and detail else short
