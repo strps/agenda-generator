@@ -9,7 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -28,11 +28,12 @@ from PySide6.QtWidgets import (
 
 from agenda import templates as T
 from agenda import themes
-from agenda.catalog import catalog_rows
+from agenda.catalog import catalog_rows, get_page
 from agenda.config import Config
 from agenda.gui import export_model as EM
 from agenda.gui import help_text
 from agenda.gui import settings_model as M
+from agenda.gui import template_model as TM
 from agenda.gui.collapsible import CollapsibleGroup, CollapsibleSection
 from agenda.gui.hover_tooltip import ExpandingToolTip
 from agenda.gui.style_editors import ColorEdit, FontEdit
@@ -94,7 +95,8 @@ class SettingsPanel(QFrame):
             group.set_expanded(g.expanded)
         self.sections[T.GLOBAL].set_expanded(True)
         self.sections[T.GLOBAL].set_active(True)
-        self.sections[T.STYLING].toggle_button.setToolTip(help_text.TOOLTIPS["styling_section"])
+        for key in (T.GLOBAL, T.PADDING, T.MONTH_START, T.MONTH_END, T.STYLING):
+            self.sections[key].toggle_button.setToolTip(help_text.TOOLTIPS[f"{key}_section"])
         shown: set[str] = set()  # sections with at least one visible field
         for spec in self.specs:
             w = self._make(spec)
@@ -103,7 +105,7 @@ class SettingsPanel(QFrame):
             detail = help_text.PARAM_DETAILS[spec.name]
             self.tooltips[spec.name] = ExpandingToolTip(w, short, detail)
             form = self.sections[T.group_of(spec.name)].form
-            if spec.kind == M.PAGES:
+            if spec.kind in (M.PAGES, M.PAGE_LIST):
                 form.addRow(w)
             else:
                 label = QLabel(spec.name.replace("_", " "))
@@ -127,6 +129,7 @@ class SettingsPanel(QFrame):
         outer.addWidget(self.error_label)
         self.changed.connect(self._sync_boxes)
         self.changed.connect(self._refresh_swatches)
+        self.changed.connect(self._refresh_pad_uses)
         app = QApplication.instance()
         if app is not None:
             app.focusChanged.connect(lambda _old, new: self.notify_focus(new))
@@ -178,6 +181,21 @@ class SettingsPanel(QFrame):
                 w = self.editors[spec.name]
                 w.set_fallback(palette[spec.name.removeprefix("color_")])  # type: ignore[attr-defined]
 
+    def _refresh_pad_uses(self) -> None:
+        """Badge, ring and tooltip of the sections whose page is used as padding or filler."""
+        roles = TM.pad_roles(self.values())
+        for key, sec in self.sections.items():
+            if T.section(key).page_id is None:
+                continue
+            fields = roles.get(key, [])
+            sec.set_pad_use(TM.pad_label(fields))
+            sec.toggle_button.setToolTip(TM.header_tooltip(key, fields))
+            if sec.enable_box is not None:
+                note = TM.pad_text(fields)
+                sec.enable_box.setToolTip(
+                    "Include this template in the agenda." + (f"\n{note}" if note else "")
+                )
+
     # --- widget factory ---
     def _make(self, spec: M.FieldSpec) -> QWidget:
         k = spec.kind
@@ -195,6 +213,11 @@ class SettingsPanel(QFrame):
             w = QComboBox()
             for c in spec.choices:
                 w.addItem(c, c)
+            w.currentIndexChanged.connect(self._edited)
+        elif k == M.PAGE_CHOICE:
+            w = QComboBox()
+            for c in spec.choices:
+                self._add_page_item(w, c)
             w.currentIndexChanged.connect(self._edited)
         elif k == M.COLOR:
             w = ColorEdit()
@@ -228,10 +251,32 @@ class SettingsPanel(QFrame):
             w.textChanged.connect(self._edited)
         elif k == M.PAGES:
             w = self._make_pages()
+        elif k == M.PAGE_LIST:
+            w = QWidget()  # bare column of checkboxes: no frame or title, the section names it
+            w.setObjectName("page_list")
+            lay = QVBoxLayout(w)
+            lay.setContentsMargins(0, 0, 0, 0)
+            for c in spec.choices:
+                cb = QCheckBox(get_page(c).name)
+                cb.setProperty("page_id", c)
+                cb.setToolTip(TM.page_text(c))
+                cb.toggled.connect(self._edited)
+                lay.addWidget(cb)
         else:  # text, path, opt_path, int_list, auto_int: edited as text, parsed by Config
             w = QLineEdit()
             w.textEdited.connect(self._edited)
         return w
+
+    @staticmethod
+    def _add_page_item(w: QComboBox, value: str) -> None:
+        """One page-select item: the page name (or filler mode), its id, a tooltip."""
+        try:
+            text = f"{get_page(value).name} ({value})"
+            tip = TM.choice_tooltip(value)
+        except KeyError:  # filler mode, or an unknown id kept so Config reports it
+            text, tip = value, TM.FILLER_TEXT.get(value, "")
+        w.addItem(text, value)
+        w.setItemData(w.count() - 1, tip, Qt.ItemDataRole.ToolTipRole)
 
     def _make_pages(self) -> QGroupBox:
         box = QGroupBox("pages (none checked = default core pages)")
@@ -260,7 +305,7 @@ class SettingsPanel(QFrame):
             k = spec.kind
             if k == M.BOOL:
                 out[spec.name] = w.isChecked()  # type: ignore[attr-defined]
-            elif k in (M.CHOICE, M.OPT_CHOICE, M.THEME):
+            elif k in (M.CHOICE, M.OPT_CHOICE, M.THEME, M.PAGE_CHOICE):
                 out[spec.name] = w.currentData()  # type: ignore[attr-defined]
             elif k in (M.COLOR, M.FONT):
                 out[spec.name] = w.value()  # type: ignore[attr-defined]
@@ -271,6 +316,10 @@ class SettingsPanel(QFrame):
                     cb.text()
                     for cb in w.findChildren(QCheckBox)
                     if cb.isChecked()  # type: ignore[attr-defined]
+                ]
+            elif k == M.PAGE_LIST:
+                out[spec.name] = [
+                    cb.property("page_id") for cb in w.findChildren(QCheckBox) if cb.isChecked()
                 ]
             elif k == M.TEXT_LIST:
                 out[spec.name] = M.parse_lines(w.toPlainText())  # type: ignore[attr-defined]
@@ -305,6 +354,13 @@ class SettingsPanel(QFrame):
         elif k in (M.CHOICE, M.OPT_CHOICE):
             i = w.findData(v)  # type: ignore[attr-defined]
             w.setCurrentIndex(max(i, 0))  # type: ignore[attr-defined]
+        elif k == M.PAGE_CHOICE:
+            v = str(v).strip()
+            if v.lower() in TM.FILLER_TEXT:  # Config lower-cases the filler modes
+                v = v.lower()
+            if w.findData(v) < 0:  # type: ignore[attr-defined]
+                self._add_page_item(w, v)  # type: ignore[arg-type]
+            w.setCurrentIndex(w.findData(v))  # type: ignore[attr-defined]
         elif k == M.THEME:
             i = w.findData(v)  # type: ignore[attr-defined]
             if i < 0:  # legacy / unknown name: keep it, renders as minimal
@@ -320,6 +376,9 @@ class SettingsPanel(QFrame):
         elif k == M.MULTI_CHOICE:
             for cb in w.findChildren(QCheckBox):
                 cb.setChecked(cb.text() in (v or []))
+        elif k == M.PAGE_LIST:
+            for cb in w.findChildren(QCheckBox):
+                cb.setChecked(cb.property("page_id") in (v or []))
         elif k == M.TEXT_LIST:
             w.setPlainText("\n".join(v or []))  # type: ignore[attr-defined]
         elif k == M.PAGES:

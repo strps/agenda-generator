@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QFrame,
     QHBoxLayout,
+    QLabel,
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
@@ -174,6 +175,10 @@ class CollapsibleSection(_Expandable, QFrame):
         self.toggle_button.setFlat(True)
         self._title = title
         hl.addWidget(self.toggle_button, 1)
+        self.pad_label = QLabel()  # badge naming the padding/filler uses of this section's page
+        self.pad_label.setObjectName("section_pad")
+        self.pad_label.setVisible(False)
+        hl.addWidget(self.pad_label)
         self.enable_box: QCheckBox | None = None
         if enable in BOX_KINDS:
             self.enable_box = QCheckBox()
@@ -241,6 +246,17 @@ class CollapsibleSection(_Expandable, QFrame):
             self.enable_box.setChecked(on)
             self.enable_box.blockSignals(False)
         self.body.setEnabled(on)
+
+    def set_pad_use(self, label: str) -> None:
+        """Badge ``label`` and ring the enable box: the page is printed as padding or filler
+        ("" = not used that way)."""
+        self.pad_label.setText(label)
+        self.pad_label.setVisible(bool(label))
+        box = self.enable_box
+        if box is not None and box.property("pad") != bool(label):
+            box.setProperty("pad", bool(label))
+            box.style().unpolish(box)
+            box.style().polish(box)
 
     def enabled_state(self) -> bool:
         return self.enable_box.isChecked() if self.enable_box is not None else True

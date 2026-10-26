@@ -79,6 +79,7 @@ def test_contacts_enable():
     assert T.with_enabled({**v, "contacts_pages": 0}, "contacts", True)["contacts_pages"] == 1
     assert T.with_enabled({**v, "contacts_pages": 4}, "contacts", True)["contacts_pages"] == 4
     assert T.with_enabled(v, "contacts", False)["contacts_pages"] == 0
-    assert not T.has_enable_box("notes")
-    assert T.group_of("extra_padding") == T.group_of("notes_pages") == "notes"
+    assert T.has_enable_box("notes")
+    assert T.group_of("extra_padding") == T.group_of("pad_with") == T.PADDING
+    assert T.group_of("notes_pages") == "notes"
     assert T.group_of("contacts_pages") == "contacts"

@@ -43,6 +43,7 @@ class MonthlyQuotes(BasePage):
     """
 
     id = "quotes"
+    per_month = True
     added_value = 3
     name = "Monthly quotes"
     category = "value_added"
@@ -220,6 +221,7 @@ class HealthTracker(BasePage):
     """
 
     id = "health"
+    per_month = True
     added_value = 4
     name = "Health tracker"
     category = "value_added"

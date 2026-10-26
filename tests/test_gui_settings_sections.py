@@ -5,14 +5,15 @@ import pytest
 pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtWidgets import QApplication, QCheckBox, QLabel  # noqa: E402
 
 from agenda import templates as T  # noqa: E402
 from agenda.catalog import preset_pages  # noqa: E402
 from agenda.config import Config  # noqa: E402
+from agenda.gui import export_model as EM  # noqa: E402
 from agenda.gui import settings_model as M  # noqa: E402
 from agenda.gui.collapsible import CollapsibleSection  # noqa: E402
-from agenda.gui import export_model as EM  # noqa: E402
 from agenda.gui.settings_panel import SECTION_SWITCHED, SettingsPanel  # noqa: E402
 
 
@@ -50,12 +51,13 @@ def test_default_boxes(panel):
         assert panel.sections[k].enable_box.isChecked()
     for k in ("qr", "schedule", "habits", "niche_entrepreneur", "niche_student", "niche_fitness"):
         assert not panel.sections[k].enable_box.isChecked()
-    for k in (T.GLOBAL, "notes", T.STYLING):
+    for k in (T.GLOBAL, T.PADDING, T.STYLING):
         assert panel.sections[k].enable_box is None
+    assert panel.sections["notes"].enable_box.isChecked()
     assert not panel.editors["qr_urls"].isEnabled()
     assert not panel.editors["habits_max"].isEnabled()
     for n in ("extra_padding", "pad_with"):
-        assert _section_of(panel.editors[n]).key == "notes"
+        assert _section_of(panel.editors[n]).key == T.PADDING
         assert panel.editors[n].isEnabled()
 
 
@@ -160,5 +162,55 @@ def test_groups(panel):
             assert group.body.isAncestorOf(panel.sections[key])
     group = panel.groups["optional"]
     assert not group.is_expanded()
-    panel.activate("budget")  # activating a section inside a closed group opens the group
-    assert group.is_expanded() and panel.active_section == "budget"
+    panel.activate("todo")  # activating a section inside a closed group opens the group
+    assert group.is_expanded() and panel.active_section == "todo"
+
+
+def test_page_selects(panel):
+    w = panel.editors["pad_with"]
+    assert w.currentData() == "notes"
+    assert "Notes" in w.currentText()
+    assert w.itemData(w.currentIndex(), Qt.ItemDataRole.ToolTipRole)
+    f = panel.editors["weekly_filler"]
+    assert [f.itemData(i) for i in range(2)] == ["blank", "none"]
+    assert f.findData("weekly") < 0  # a spread can't fill a one-page slot
+    panel.set_values({"weekly_filler": "todo", "pad_with": "nope"})
+    assert f.currentData() == "todo"
+    assert w.currentData() == "nope" and panel.config()[0] is None  # kept so Config reports it
+
+
+def test_pad_use_badges(panel):
+    notes = panel.sections["notes"]
+    assert notes.pad_label.text() == "padding" and not notes.pad_label.isHidden()
+    assert notes.enable_box.property("pad") is True
+    assert "Padding: pads the last booklet" in notes.toggle_button.toolTip()
+    todo = panel.sections["todo"]
+    assert todo.pad_label.isHidden() and not todo.enable_box.property("pad")
+    panel.set_values({"weekly_filler": "todo", "daily_filler": "todo", "pad_with": "todo"})
+    assert todo.pad_label.text() == "padding · week filler · day filler"
+    assert todo.enable_box.property("pad") is True
+    assert not todo.enable_box.isChecked()  # used as padding only, the page itself stays off
+    assert notes.pad_label.isHidden() and not notes.enable_box.property("pad")
+    assert "Week pages" in todo.toggle_button.toolTip()
+
+
+def test_month_checkboxes(panel):
+    boxes = {
+        k: {cb.property("page_id"): cb for cb in panel.editors[f].findChildren(QCheckBox)}
+        for k, f in ((T.MONTH_START, "month_start_pages"), (T.MONTH_END, "month_end_pages"))
+    }
+    assert set(boxes[T.MONTH_START]) == {"budget", "habits", "monthly_review", "health", "quotes"}
+    assert boxes[T.MONTH_START]["budget"].text() == "Monthly budget"
+    boxes[T.MONTH_START]["budget"].setChecked(True)
+    boxes[T.MONTH_END]["monthly_review"].setChecked(True)
+    v = panel.values()
+    assert v["month_start_pages"] == ["budget"] and v["month_end_pages"] == ["monthly_review"]
+    budget = panel.sections["budget"]
+    assert budget.pad_label.text() == "month start" and budget.enable_box.property("pad")
+    assert not budget.enable_box.isChecked()
+    assert "Start of each month" in budget.toggle_button.toolTip()
+    assert panel.sections["monthly_review"].pad_label.text() == "month end"
+    boxes[T.MONTH_END]["budget"].setChecked(True)  # start and end: Config rejects it
+    assert panel.config()[0] is None
+    panel.set_values({"month_end_pages": ["health"]})
+    assert boxes[T.MONTH_END]["health"].isChecked() and not boxes[T.MONTH_END]["budget"].isChecked()

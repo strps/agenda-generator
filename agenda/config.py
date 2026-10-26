@@ -91,6 +91,10 @@ class Config(BaseModel):
     # daily setting applies when the slot follows a day page, the weekly one otherwise.
     weekly_filler: str = "blank"
     daily_filler: str = "blank"
+    # Per-month pages (BasePage.per_month) printed after each monthly overview / after each
+    # month's last week; they are then left out of the optional/value-added block.
+    month_start_pages: list[str] = Field(default_factory=list)
+    month_end_pages: list[str] = Field(default_factory=list)
     schedule_first_hour: int = Field(7, ge=0, le=23)
     schedule_last_hour: int = Field(21, ge=0, le=23)
     habits_max: int = Field(20, ge=1, le=40)
@@ -249,6 +253,24 @@ class Config(BaseModel):
             raise ValueError(f"{info.field_name}: page {v!r} must be a single page with no side")
         return v
 
+    @field_validator("month_start_pages", "month_end_pages")
+    @classmethod
+    def _check_month_pages(cls, v: list[str], info: ValidationInfo) -> list[str]:
+        """Ids of per-month catalog pages, each once."""
+        from agenda.catalog import get_page
+
+        out = [i.strip() for i in v]
+        for i in out:
+            try:
+                page = get_page(i)
+            except KeyError:
+                raise ValueError(f"{info.field_name}: unknown page {i!r}") from None
+            if not page.per_month:
+                raise ValueError(f"{info.field_name}: page {i!r} is not a per-month page")
+        if len(set(out)) != len(out):
+            raise ValueError(f"{info.field_name}: a page is listed twice")
+        return out
+
     @field_validator("holiday_country")
     @classmethod
     def _upper_country(cls, v: str) -> str:
@@ -274,6 +296,16 @@ class Config(BaseModel):
             from agenda.catalog import preset_pages  # lazy: the catalog imports this module
 
             self.__dict__["pages"] = preset_pages(self.preset)  # no re-validation (no recursion)
+        return self
+
+    @model_validator(mode="after")
+    def _check_month_placement(self) -> Config:
+        both = set(self.month_start_pages) & set(self.month_end_pages)
+        if both:
+            raise ValueError(
+                f"{', '.join(sorted(both))}: a page can be at the start or the end of each "
+                "month, not both"
+            )
         return self
 
     @model_validator(mode="after")

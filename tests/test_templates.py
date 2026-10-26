@@ -20,17 +20,18 @@ def test_partition_and_page_ids():
     union = [f for s in T.SECTIONS for f in T.fields_of(s.key, Config.model_fields)]
     assert sorted(union) == sorted(Config.model_fields)
     noncore = [r["id"] for r in catalog_rows() if r["category"] != "core"]
-    assert T.TEMPLATE_KEYS[:4] == ("notes", "daily", "weekly", "contacts")
-    assert sorted(T.TEMPLATE_KEYS[4:]) == sorted(noncore)  # every optional/value-added page
+    core = ("daily", "weekly", "notes", "contacts")
+    assert sorted(T.TEMPLATE_KEYS) == sorted((*core, *noncore))  # every optional/value-added page
 
 
 def test_group_of_and_order():
     assert T.group_of("daily_months") == "daily"
-    assert T.group_of("pad_with") == T.group_of("notes_pattern") == "notes"
+    assert T.group_of("pad_with") == T.group_of("extra_padding") == T.PADDING
+    assert T.group_of("notes_pattern") == T.group_of("notes_pages") == "notes"
     assert T.group_of("theme") == T.STYLING
     assert T.group_of("planners") == T.group_of("pages") == T.group_of("year") == T.GLOBAL
     assert T.SECTIONS[0].key == T.GLOBAL
-    assert T.SECTIONS[1].key == "notes"
+    assert T.SECTIONS[1].key == T.PADDING
     assert T.SECTIONS[-1].key == T.STYLING
     with pytest.raises(KeyError):
         T.section("nope")
@@ -39,7 +40,8 @@ def test_group_of_and_order():
 def test_is_enabled():
     assert not T.is_enabled(Config(planners=["weekly"]), "daily")
     assert T.is_enabled(Config(planners=["weekly"]), "weekly")
-    assert not T.has_enable_box("notes")
+    assert T.has_enable_box("notes") and not T.has_enable_box(T.PADDING)
+    assert not T.is_enabled(Config(notes_pages=0), "notes")
     assert T.has_enable_box("qr")
     assert T.is_enabled(Config(pages=["qr"], qr_urls=["x"]), "qr")
     assert T.is_enabled(Config(), "notes")
@@ -58,15 +60,17 @@ def test_with_enabled():
     again = T.with_enabled(out, "qr", True)
     assert again["pages"].count("qr") == 1
     assert "qr" not in T.with_enabled(out, "qr", False)["pages"]
+    assert T.with_enabled(v, "notes", False)["notes_pages"] == 0
     with pytest.raises(ValueError):
-        T.with_enabled(v, "notes", False)
+        T.with_enabled(v, T.PADDING, False)
 
 
 def test_flatten_blocks():
     flat = flatten(
         {
             "daily": {"months": "1-3"},
-            "notes": {"pattern": "grid", "pad_with": "notes"},
+            "notes": {"pattern": "grid"},
+            "padding": {"pad_with": "notes"},
             "style": {"theme": "x"},
         }
     )
@@ -121,4 +125,29 @@ def test_groups_partition_sections():
     grouped = [k for g in T.GROUPS for k in g.sections]
     assert sorted(grouped) == sorted(s.key for s in T.SECTIONS)
     assert len(grouped) == len(set(grouped))
-    assert T.GROUPS[0].sections == (T.GLOBAL, T.STYLING)
+    assert T.GROUPS[0].sections == (T.GLOBAL, T.PADDING, T.STYLING)
+    by_key = {g.key: g.sections for g in T.GROUPS}
+    assert "contacts" in by_key["optional"] and "notes" in by_key["planner"]
+
+
+def test_month_sections():
+    """Per-month pages are those with one instance per month; month placement is in Planner pages."""
+    cfg = Config()
+    monthly = {
+        r["id"]
+        for r in catalog_rows()
+        if [c.get("month") for c in get_page(str(r["id"]))().instances(cfg)] == list(range(1, 13))
+        and r["category"] != "core"
+    }
+    assert {p for p in monthly if get_page(p).per_month} == monthly
+    assert {"budget", "habits", "monthly_review", "health", "quotes"} == monthly
+    planner = next(g.sections for g in T.GROUPS if g.key == "planner")
+    assert planner[0] == T.MONTH_START and T.MONTH_END in planner
+    assert T.group_of("month_start_pages") == T.MONTH_START
+    assert "budget" in next(g.sections for g in T.GROUPS if g.key == "optional")
+    assert "quotes" in next(g.sections for g in T.GROUPS if g.key == "value_added")
+
+
+def test_legacy_notes_block_keys():
+    flat = flatten({"notes": {"pad_with": "todo", "extra_padding": 2}})
+    assert flat == {"pad_with": "todo", "extra_padding": 2}

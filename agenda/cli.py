@@ -32,6 +32,8 @@ def build_overrides(
     planners: str | None = None,
     qr_url: list[str] | None = None,
     num_booklets: str | None = None,
+    month_start_pages: str | None = None,
+    month_end_pages: str | None = None,
     **fields: Any,
 ) -> dict[str, Any]:
     """Map flag values to ``Config`` kwargs; ``None`` (flag not given) is dropped.
@@ -50,6 +52,12 @@ def build_overrides(
         out["pages"] = list(dict.fromkeys(ids))
     if planners is not None:
         out["planners"] = split_csv(planners)
+    for name, value in (
+        ("month_start_pages", month_start_pages),
+        ("month_end_pages", month_end_pages),
+    ):
+        if value is not None:
+            out[name] = split_csv(value)
     if qr_url:
         out["qr_urls"] = list(qr_url)
     if num_booklets is not None:
@@ -130,6 +138,14 @@ def run(
     daily_filler: Annotated[
         str | None,
         typer.Option(help="Filler after a week's day pages: blank, none or a page id."),
+    ] = None,
+    month_start_pages: Annotated[
+        str | None,
+        typer.Option(help="Comma list of per-month pages printed after each monthly page."),
+    ] = None,
+    month_end_pages: Annotated[
+        str | None,
+        typer.Option(help="Comma list of per-month pages printed at the end of each month."),
     ] = None,
     schedule_first_hour: Annotated[
         int | None, typer.Option(help="First hour (0-23) of the weekly schedule.")
@@ -302,6 +318,8 @@ def run(
             daily_hour_end=daily_hour_end,
             weekly_filler=weekly_filler,
             daily_filler=daily_filler,
+            month_start_pages=month_start_pages,
+            month_end_pages=month_end_pages,
             schedule_first_hour=schedule_first_hour,
             schedule_last_hour=schedule_last_hour,
             habits_max=habits_max,

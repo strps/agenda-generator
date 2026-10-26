@@ -37,6 +37,9 @@ class BasePage(ABC):
     section: ClassVar[str]
     pages: ClassVar[int] = 1
     starts_on: ClassVar[str] = "any"
+    # One instance per month ({"month": m, ...}): the page can be placed at the start or end of
+    # each month (config.month_start_pages / month_end_pages).
+    per_month: ClassVar[bool] = False
     # Value score 1-5 (plan section 3.3); 0 = unscored (core and optional pages). Drives presets.
     added_value: ClassVar[int] = 0
 

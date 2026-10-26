@@ -14,6 +14,8 @@ from agenda.templates import SECTIONS
 
 # plan §8.3 nested block -> flat Config fields
 BOOKLET_KEYS = {"size": "booklet_size", "unit": "booklet_unit", "folded": "booklet_folded"}
+# Keys a block used to hold before they moved to another block; still read, never written.
+LEGACY_BLOCK_KEYS = {"notes": {"pad_with": "pad_with", "extra_padding": "extra_padding"}}
 
 
 # GUI-only preferences (stored in QSettings, never in a config file); ignored when found
@@ -39,7 +41,10 @@ def _flatten_block(out: dict[str, Any], name: str, block: Any, keys: dict[str, s
 def flatten(data: dict[str, Any]) -> dict[str, Any]:
     """Replace the nested ``booklet:`` and section blocks (``daily:``, ``notes:``, ...) by flat
     Config field names (``booklet_size``, ``daily_months``, ...)."""
-    blocks = {"booklet": BOOKLET_KEYS, **{s.block: s.fields for s in SECTIONS if s.block}}
+    blocks = {
+        "booklet": BOOKLET_KEYS,
+        **{s.block: {**s.fields, **LEGACY_BLOCK_KEYS.get(s.block, {})} for s in SECTIONS if s.block},
+    }
     out = {k: v for k, v in data.items() if k not in blocks}
     for name, keys in blocks.items():
         if data.get(name) is not None:

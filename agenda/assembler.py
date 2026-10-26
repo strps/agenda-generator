@@ -175,14 +175,17 @@ def _extras(config: Any, category: str) -> list[type[BasePage]]:
 
     if config.pages is None:
         return []
-    return [c for c in pages_by_category(category) if c.id in config.pages]
+    placed = {*config.month_start_pages, *config.month_end_pages}  # drawn inside each month
+    return [c for c in pages_by_category(category) if c.id in config.pages and c.id not in placed]
 
 
 def build_plan(config: Any) -> PagePlan:
     """Ordered ``PagePlan`` for ``config`` (page numbers 1..N, 1-based ``booklet_index``).
 
-    Order: front matter (cover, personal info, yearly) -> per month: monthly, then per owned
-    week its weekly spread and that week's dailies (dates inside ``config.year`` and in ``config.daily_months``) -> optional ->
+    Order: front matter (cover, personal info, yearly) -> per month: monthly, that month's
+    ``config.month_start_pages``, then per owned week its weekly spread and that week's dailies
+    (dates inside ``config.year`` and in ``config.daily_months``), then that month's
+    ``config.month_end_pages`` (both in the monthly section) -> optional ->
     value-added -> back matter (notes and contacts, ``config.notes_pages``/``contacts_pages`` each; padding of at
     least ``config.extra_padding`` units; back cover). With
     ``config.separate_covers`` the cover is page 1 followed by a blank inside-cover filler, and a
@@ -210,7 +213,7 @@ def build_plan(config: Any) -> PagePlan:
     entries: list[PlanEntry] = []
     filled = [0]  # filler pages drawn so far, to rotate the filler page's instances
 
-    def fill(cls: type[BasePage]) -> None:
+    def fill(cls: type[BasePage], section: str) -> None:
         """The filler before ``cls`` per ``config.daily_filler``/``weekly_filler``."""
         if cls is not Weekly:
             mode = "blank"
@@ -221,21 +224,25 @@ def build_plan(config: Any) -> PagePlan:
         if mode == "none":
             return
         if mode == "blank":
-            entries.append(make_entry(None, {}, len(entries) + 1, cls.section, kind="filler"))
+            entries.append(make_entry(None, {}, len(entries) + 1, section, kind="filler"))
             return
         fill_cls = get_page(mode)
         ctxs = fill_cls().instances(config) or [{}]
         ctx = dict(ctxs[filled[0] % len(ctxs)])
         filled[0] += 1
-        entries.append(make_entry(fill_cls, ctx, len(entries) + 1, cls.section, kind="filler"))
+        entries.append(make_entry(fill_cls, ctx, len(entries) + 1, section, kind="filler"))
 
-    def put(cls: type[BasePage], ctx: dict[str, Any], kind: Kind = "page") -> None:
+    def put(
+        cls: type[BasePage], ctx: dict[str, Any], kind: Kind = "page", section: str | None = None
+    ) -> None:
+        """Add one instance of ``cls`` (in ``section``, default its own) after a side filler."""
+        section = section or cls.section
         want = cls.starts_on
         if want != "any" and side_for_page(len(entries) + 1) != want:
-            fill(cls)
+            fill(cls, section)
         for k in range(cls.pages):
             entries.append(
-                make_entry(cls, ctx, len(entries) + 1, cls.section, page_in_instance=k, kind=kind)
+                make_entry(cls, ctx, len(entries) + 1, section, page_in_instance=k, kind=kind)
             )
 
     sep = bool(config.separate_covers)
@@ -262,8 +269,18 @@ def build_plan(config: Any) -> PagePlan:
             if d in daily_ctx and d.month in config.daily_months:
                 put(Daily, daily_ctx[d])
 
+    month_pages = {
+        i: {c["month"]: c for c in get_page(i)().instances(config)}
+        for i in (*config.month_start_pages, *config.month_end_pages)
+    }
+
+    def put_month_pages(ids: Sequence[str], month: int) -> None:
+        for i in ids:
+            put(get_page(i), month_pages[i][month], section=Monthly.section)
+
     for month, weeks in by_month.items():
         put(Monthly, {"month": month})
+        put_month_pages(config.month_start_pages, month)
         if month == 1:
             put_dailies([d for d in orphans if d < first_day])
         for week in weeks:
@@ -273,6 +290,7 @@ def build_plan(config: Any) -> PagePlan:
                 put_dailies(week.days)
         if month == 12:
             put_dailies([d for d in orphans if d > first_day])
+        put_month_pages(config.month_end_pages, month)
     for category in ("optional", "value_added"):
         for cls in _extras(config, category):
             for ctx in cls().instances(config):

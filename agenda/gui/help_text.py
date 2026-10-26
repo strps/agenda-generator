@@ -43,6 +43,25 @@ TOOLTIPS: dict[str, str] = {
     "color_swatch": "Click to pick this color in a color dialog. Shows the color in effect.",
     "color_clear": "Clear the override and use the theme's color again.",
     "font_browse": "Choose a .ttf or .otf font file. Bold and italic files next to it are used too.",
+    "global_section": (
+        "Settings for the whole agenda: page size, margins, booklets, year, language, "
+        "planners and page numbers."
+    ),
+    "padding_section": (
+        "Which page fills the last booklet so it ends on a whole sheet, and the minimum "
+        "number of padding pages. The pad page itself is set up in its own section, which "
+        "shows a padding badge and a ringed box."
+    ),
+    "month_start_section": (
+        "Pages printed right after each monthly page, one per month (e.g. that month's budget "
+        "or habit tracker). A checked page is ringed in its own section and is no longer "
+        "printed after the planner."
+    ),
+    "month_end_section": (
+        "Pages printed after each month's last week, one per month (e.g. that month's review). "
+        "A checked page is ringed in its own section and is no longer printed after the "
+        "planner. A page can be at the start or the end, not both."
+    ),
     "styling_section": (
         "Style of the generated PDF: theme, colors and fonts. The look of this application "
         "is under Settings > Preferences and never changes the PDF."
@@ -127,7 +146,7 @@ PARAM_SHORT: dict[str, str] = {
     "booklet_unit": "Unit of the booklet size.",
     "booklet_folded": "Folded (4 pages per sheet) or flat booklets.",
     "num_booklets": "Number of booklets, or auto.",
-    "pad_with": "Page id used to fill the last booklet.",
+    "pad_with": "Page used to fill the last booklet.",
     "separate_covers": "Keep the covers apart from the booklets.",
     "creep_mm": "Creep compensation for folded sheets, in mm.",
     "planners": "Which planner pages to include.",
@@ -144,8 +163,10 @@ PARAM_SHORT: dict[str, str] = {
     "qr_urls": "Texts or URLs for the QR page, one per line.",
     "daily_hour_start": "First hour printed on day pages (0-23).",
     "daily_hour_end": "Last hour printed on day pages (0-23).",
-    "weekly_filler": "What fills the page before a week spread: blank, none or a page id.",
-    "daily_filler": "What fills the page after a week's day pages: blank, none or a page id.",
+    "weekly_filler": "What fills the page before a week spread: blank, none or a page.",
+    "daily_filler": "What fills the page after a week's day pages: blank, none or a page.",
+    "month_start_pages": "Per-month pages printed right after each monthly page.",
+    "month_end_pages": "Per-month pages printed after each month's last week.",
     "schedule_first_hour": "First hour of the weekly schedule (0-23).",
     "schedule_last_hour": "Last hour of the weekly schedule (0-23).",
     "habits_max": "Maximum habit rows per month (1-40).",
@@ -221,8 +242,9 @@ PARAM_DETAILS: dict[str, str] = {
         "content, or a whole number of at least 1. The last booklet is filled with pad_with."
     ),
     "pad_with": (
-        "Catalog page id repeated to fill the last booklet so that it ends on a whole sheet. "
-        "These filler pages show as padding in the section bar. The default is notes."
+        "Catalog page repeated to fill the last booklet so that it ends on a whole sheet. "
+        "These filler pages show as padding in the section bar. The default is notes. The "
+        "page is set up in its own section (e.g. the Notes pattern), which is badged padding."
     ),
     "separate_covers": (
         "When on, the cover and back cover are excluded from the booklet count, so padding "
@@ -301,6 +323,16 @@ PARAM_DETAILS: dict[str, str] = {
         "Same as weekly_filler, for the filler slot that follows the last day page of a week "
         "(before the next week spread). blank (the default), none or a single-page catalog "
         "id such as notes. With both planners on, most fillers are in this slot."
+    ),
+    "month_start_pages": (
+        "Per-month pages (budget, habits, monthly_review, health, quotes) printed right after "
+        "each monthly page, with that month's date. A page listed here is not printed again "
+        "after the planner, and cannot also be in month_end_pages."
+    ),
+    "month_end_pages": (
+        "Per-month pages printed after the last week of each month, with that month's date. "
+        "A week belongs to the month it starts in, so the page can follow a day or two of the "
+        "next month. A page listed here is not printed again after the planner."
     ),
     "schedule_first_hour": (
         "Hour of the first row of the weekly schedule page, 0-23 (default 7). It must be less "

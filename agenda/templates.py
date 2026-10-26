@@ -11,6 +11,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 GLOBAL = "global"
+PADDING = "padding"
+MONTH_START = "month_start"
+MONTH_END = "month_end"
 STYLING = "styling"
 
 ENABLE_KINDS = ("planner", "page", "count", "none")
@@ -34,18 +37,15 @@ def _page(page_id: str, label: str) -> SectionSpec:
 
 SECTIONS: tuple[SectionSpec, ...] = (
     SectionSpec(GLOBAL, "Global", None),
+    # Which page fills the last booklet and how much; the pad page itself is set in its section.
     SectionSpec(
-        "notes",
-        "Notes & padding",
-        "notes",
-        {
-            "pattern": "notes_pattern",
-            "pages": "notes_pages",
-            "pad_with": "pad_with",
-            "extra_padding": "extra_padding",
-        },
-        page_id="notes",
+        PADDING,
+        "Padding",
+        "padding",
+        {"pad_with": "pad_with", "extra_padding": "extra_padding"},
     ),
+    # Per-month pages (BasePage.per_month) printed inside each month, picked by checkboxes.
+    SectionSpec(MONTH_START, "Start of each month", MONTH_START, {"pages": "month_start_pages"}),
     SectionSpec(
         "daily",
         "Day pages",
@@ -71,6 +71,17 @@ SECTIONS: tuple[SectionSpec, ...] = (
         page_id="weekly",
         enable="planner",
     ),
+    SectionSpec(MONTH_END, "End of each month", MONTH_END, {"pages": "month_end_pages"}),
+    SectionSpec(
+        "notes",
+        "Notes",
+        "notes",
+        {"pattern": "notes_pattern", "pages": "notes_pages"},
+        page_id="notes",
+        enable="count",
+        count_field="notes_pages",
+    ),
+    # Optional pages, then value-added pages, in catalog order; most have no settings of their own.
     SectionSpec(
         "contacts",
         "Contacts",
@@ -80,7 +91,6 @@ SECTIONS: tuple[SectionSpec, ...] = (
         enable="count",
         count_field="contacts_pages",
     ),
-    # Optional pages, then value-added pages, in catalog order; most have no settings of their own.
     _page("budget", "Monthly budget"),
     _page("goals", "Yearly goals"),
     SectionSpec(
@@ -170,9 +180,9 @@ def _keys(start: str, stop: str) -> tuple[str, ...]:
 
 # Settings panel grouping (GUI only; the YAML layout follows SECTIONS).
 GROUPS: tuple[GroupSpec, ...] = (
-    GroupSpec("general", "General", (GLOBAL, STYLING)),
-    GroupSpec("planner", "Planner pages", _keys("notes", "contacts")),
-    GroupSpec("optional", "Optional pages", _keys("budget", "todo"), expanded=False),
+    GroupSpec("general", "General", (GLOBAL, PADDING, STYLING)),
+    GroupSpec("planner", "Planner pages", _keys(MONTH_START, "notes")),
+    GroupSpec("optional", "Optional pages", _keys("contacts", "todo"), expanded=False),
     GroupSpec(
         "value_added", "Value-added pages", _keys("niche_entrepreneur", "quotes"), expanded=False
     ),

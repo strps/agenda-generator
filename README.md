@@ -93,17 +93,24 @@ Run `agenda-gen --help` for the full list.
 ### Sections
 
 The settings are grouped into sections, in the GUI and in the YAML file: **Global** (page size,
-year, language, booklets, page list, `holidays_file`), **Notes & padding**, one section per page
-template that has options (`daily`, `weekly`, `contacts`, `schedule`, `habits`, `qr`, and the niche
-packs `niche_entrepreneur`, `niche_student`, `niche_fitness`) and **PDF colors & fonts** (`style`).
-Each section can be written as a block (`notes:`, `daily:`, `weekly:`, `contacts:`, `schedule:`, `habits:`,
+year, language, booklets, page list, `holidays_file`), **Padding** (`pad_with`, `extra_padding`),
+one section per page template that has options (`daily`, `weekly`, `notes`, `contacts`, `schedule`,
+`habits`, `qr`, and the niche packs `niche_entrepreneur`, `niche_student`, `niche_fitness`) and
+**PDF colors & fonts** (`style`). The pad page itself is set up in its own section (e.g. the Notes
+pattern). Older files with `pad_with`/`extra_padding` in the `notes:` block still load.
+Per-month pages (`budget`, `habits`, `monthly_review`, `health`, `quotes`) listed in
+`month_start`/`month_end` are printed inside every month instead of after the planner.
+Each section can be written as a block (`padding:`, `month_start:`, `month_end:`, `notes:`, `daily:`, `weekly:`, `contacts:`, `schedule:`, `habits:`,
 `qr:`, `niche_*:`, `style:`) with short keys. Save writes the blocks; flat keys (`notes_pages`,
 `daily_hour_start`, ...) still load and give the same result.
 
 ```yaml
-notes:      {pattern: dotted, pages: 1, pad_with: notes, extra_padding: 0}
+padding:    {pad_with: notes, extra_padding: 0}
+notes:      {pattern: dotted, pages: 1}
 daily:      {months: "1-12", hour_start: 6, hour_end: 21, holidays: true, quotes: false, filler: blank}
 weekly:     {filler: blank}
+month_start: {pages: [budget, habits]}    # printed right after each monthly page
+month_end:  {pages: [monthly_review]}     # printed after each month's last week
 contacts:   {pages: 1}
 schedule:   {first_hour: 7, last_hour: 21}
 habits:     {max: 20}

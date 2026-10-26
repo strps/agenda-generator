@@ -78,9 +78,27 @@ PyMuPDF would also work for rasterising, but it is AGPL-licensed, which matters 
 ### Collapsible sections and preview target
 
 The settings panel holds one `CollapsibleSection` (`collapsible.py`) per entry of
-`agenda/templates.py` `SECTIONS`: Global (open), Notes & padding, the template sections and Colors &
+`agenda/templates.py` `SECTIONS`: Global (open), Padding, the template sections and Colors &
 styling. Template headers carry an enable checkbox, a view of `templates.is_enabled`. `activate(key)`
 expands a section and emits `section_activated`; focus changes do the same.
+
+`templates.GROUPS` sorts the sections under four headers: **General** (Global, Padding, PDF colors &
+fonts), **Planner pages** (Start of each month, Day pages, Week pages, End of each month, Notes),
+**Optional pages** (Contacts first) and **Value-added pages**.
+
+Start/End of each month are plain checkbox lists (`settings_model.PAGE_LIST`, no row label) of the
+per-month pages (`BasePage.per_month`: budget, habits, monthly_review, health, quotes), editing
+`month_start_pages`/`month_end_pages`. A page's own section box still prints it once after the
+planner; a month placement prints it inside every month instead.
+
+Padding holds only `pad_with` and `extra_padding`; the pad page is configured in its own section.
+`pad_with`, `weekly_filler` and `daily_filler` are page selects (`settings_model.PAGE_CHOICE`):
+each item shows the page name and id, with a tooltip from `template_model.choice_tooltip`. Every
+header has a tooltip (`template_model.header_tooltip` for templates). A section whose page is used
+by one of these fields or by a month placement (`template_model.pad_roles`) shows a badge in its
+header ("padding", "week filler", "day filler", "month start", "month end") and a marked enable box: an accent ring around an accent square when
+the page is off (printed only as padding or filler), a checked box with a text-colored outline when
+it is also on (icons `pad_dark.svg`/`pad_light.svg`).
 
 The main window keeps a `preview_stack`: page 0 is the full-agenda preview, then one container per
 template (`template_page_<key>`, a notice plus a `PreviewWidget`). `show_preview_for(key)` switches

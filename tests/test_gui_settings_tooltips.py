@@ -57,8 +57,8 @@ def test_editor_hover_expands(qapp):
 def test_labels_have_tooltips(qapp):
     panel = SettingsPanel()
     for n in Config.model_fields:
-        if n == "pages":
-            assert "pages" not in panel.label_tooltips
+        if n in ("pages", "month_start_pages", "month_end_pages"):  # unlabeled checkbox lists
+            assert n not in panel.label_tooltips
             continue
         label = panel.findChild(QLabel, f"label_{n}")
         assert label is not None and label.text() == n.replace("_", " ")

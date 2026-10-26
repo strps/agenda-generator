@@ -93,6 +93,7 @@ def stylesheet(dark: bool) -> str:
     gap, margin, pad, radius = (SPACING[k] for k in ("gap", "margin", "pad", "radius"))
     inputs = "QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit"
     check = (ICONS / f"check_{'dark' if dark else 'light'}.svg").as_posix()
+    pad_icon = (ICONS / f"pad_{'dark' if dark else 'light'}.svg").as_posix()  # accent square
     return f"""
 QMainWindow, QWidget {{ background-color: {t["window"]}; color: {t["text"]}; }}
 QWidget:disabled {{ color: {t["muted"]}; }}
@@ -105,6 +106,7 @@ QFrame[objectName^="section_"] {{
 QFrame[objectName^="section_"][active="true"] {{ border: 1px solid {t["accent"]}; }}
 QFrame[objectName^="section_"] > QWidget {{ background-color: transparent; }}
 QWidget#section_body {{ background-color: transparent; }}
+QWidget#page_list, QWidget#page_list > QCheckBox {{ background-color: transparent; }}
 QPushButton#group_toggle {{
     background-color: transparent; border: none; color: {t["muted"]}; font-weight: bold;
     padding: {pad}px {gap}px; margin-top: {gap}px; text-align: left;
@@ -133,6 +135,13 @@ QCheckBox::indicator:checked {{
 }}
 QCheckBox::indicator:disabled {{ background-color: {t["panel"]}; border: 1px solid {t["border"]}; }}
 QCheckBox::indicator:checked:disabled {{ background-color: {t["border"]}; }}
+QLabel#section_pad {{ background-color: transparent; color: {t["accent"]}; padding: 0 {gap}px; }}
+QCheckBox#section_enable[pad="true"]::indicator {{
+    border: 1px solid {t["accent"]}; image: url({pad_icon});
+}}
+QCheckBox#section_enable[pad="true"]::indicator:checked {{
+    background-color: {t["accent"]}; border: 1px solid {t["text"]}; image: url({check});
+}}
 QPushButton {{
     background-color: {t["input_bg"]}; color: {t["text"]}; border: 1px solid {t["border"]};
     border-radius: {radius}px; padding: {pad}px {margin}px;

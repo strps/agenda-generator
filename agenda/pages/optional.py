@@ -290,6 +290,7 @@ class Budget(BasePage):
     """
 
     id = "budget"
+    per_month = True
     name = "Monthly budget"
     category = "optional"
     section = "optional"
@@ -372,6 +373,7 @@ class Habits(BasePage):
     """
 
     id = "habits"
+    per_month = True
     name = "Habit tracker"
     category = "optional"
     section = "optional"
@@ -443,6 +445,7 @@ class MonthlyReview(BasePage):
     """
 
     id = "monthly_review"
+    per_month = True
     name = "Monthly review"
     category = "optional"
     section = "optional"

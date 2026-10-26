@@ -15,7 +15,7 @@ import yaml
 from pydantic import ValidationError
 
 from agenda import templates, themes
-from agenda.config import Config
+from agenda.config import FILLER_MODES, Config
 from agenda.configfile import ConfigFileError, load_yaml
 
 # widget kinds
@@ -39,6 +39,12 @@ TEXT, PATH, OPT_PATH, OPT_TEXT, MULTI_CHOICE, INT_LIST, TEXT_LIST, PAGES = (
 )
 
 THEME, COLOR, FONT = "theme", "color", "font"
+PAGE_CHOICE = "page_choice"  # a catalog page id (or a filler mode), picked from a list
+PAGE_LIST = "page_list"  # catalog page ids, one checkbox per eligible page
+
+# Fields holding a catalog page id (edited as a list of pages).
+PAGE_FIELDS = ("pad_with", "weekly_filler", "daily_filler")
+PAGE_LIST_FIELDS = ("month_start_pages", "month_end_pages")  # per-month pages, as checkboxes
 
 # Fields whose list items are free-form catalog ids / texts, not literals, and the PDF style fields.
 _SPECIAL = {
@@ -66,9 +72,26 @@ def _literals(tp: Any) -> tuple[str, ...]:
     return tuple(typing.get_args(tp))
 
 
+def page_choices(name: str) -> tuple[str, ...]:
+    """Values ``Config`` accepts for a page-id field: any page for pad_with; the filler modes and
+    single pages with no side for the fillers (the rule of ``Config._check_filler``)."""
+    from agenda.catalog import all_pages  # lazy: the catalog imports Config
+
+    if name == "pad_with":
+        return tuple(p.id for p in all_pages())
+    ok = [p.id for p in all_pages() if p.pages == 1 and p.starts_on == "any"]
+    return (*FILLER_MODES, *ok)
+
+
 def _kind(name: str, tp: Any) -> tuple[str, tuple[str, ...]]:
     if name == "theme":
         return THEME, tuple(themes.THEMES)
+    if name in PAGE_FIELDS:
+        return PAGE_CHOICE, page_choices(name)
+    if name in PAGE_LIST_FIELDS:
+        from agenda.catalog import all_pages  # lazy: the catalog imports Config
+
+        return PAGE_LIST, tuple(p.id for p in all_pages() if p.per_month)
     if name in _SPECIAL:
         return _SPECIAL[name], ()
     origin = typing.get_origin(tp)
