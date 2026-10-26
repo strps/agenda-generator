@@ -150,6 +150,20 @@ def run(
     extra_padding: Annotated[
         int | None, typer.Option(help="Minimum number of padding units (0-200).")
     ] = None,
+    daily_holidays: Annotated[
+        bool | None,
+        typer.Option("--daily-holidays/--no-daily-holidays", help="Holiday name on day pages."),
+    ] = None,
+    daily_quotes: Annotated[
+        bool | None,
+        typer.Option("--daily-quotes/--no-daily-quotes", help="Rotating phrase on day pages."),
+    ] = None,
+    daily_quotes_file: Annotated[
+        Path | None, typer.Option(help="Text file with one phrase per line (default: built-in).")
+    ] = None,
+    daily_extra_file: Annotated[
+        Path | None, typer.Option(help="Dated lines (MM-DD text) shown on the matching day page.")
+    ] = None,
     pages: Annotated[str | None, typer.Option(help="Comma list of catalog page ids.")] = None,
     category: Annotated[
         str | None, typer.Option(help="Comma list of categories: core,optional,value_added.")
@@ -165,6 +179,9 @@ def run(
     week_start: Annotated[str | None, typer.Option(help="monday or sunday.")] = None,
     language: Annotated[str | None, typer.Option(help="es or en.")] = None,
     holiday_country: Annotated[str | None, typer.Option(help="Country code, e.g. CR.")] = None,
+    holidays_file: Annotated[
+        Path | None, typer.Option(help="Extra holidays (MM-DD text), merged with the library.")
+    ] = None,
     # Look & output
     theme: Annotated[str | None, typer.Option(help="Theme name.")] = None,
     imposition: Annotated[bool | None, typer.Option("--imposition/--no-imposition")] = None,
@@ -213,6 +230,10 @@ def run(
             notes_pages=notes_pages,
             contacts_pages=contacts_pages,
             extra_padding=extra_padding,
+            daily_holidays=daily_holidays,
+            daily_quotes=daily_quotes,
+            daily_quotes_file=daily_quotes_file,
+            daily_extra_file=daily_extra_file,
             preset=preset,
             notes_pattern=notes_pattern,
             page_numbers=page_numbers,
@@ -220,6 +241,7 @@ def run(
             week_start=week_start,
             language=language,
             holiday_country=holiday_country,
+            holidays_file=holidays_file,
             theme=theme,
             imposition=imposition,
             crop_marks=crop_marks,

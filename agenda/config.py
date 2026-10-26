@@ -10,7 +10,14 @@ import datetime as _dt
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 from agenda.sizes import SIZES, PageSize, parse_size, resolve_size
 
@@ -83,12 +90,18 @@ class Config(BaseModel):
     notes_pages: int = Field(1, ge=0, le=50)
     contacts_pages: int = Field(1, ge=0, le=50)
     extra_padding: int = Field(0, ge=0, le=200)
+    # Day-page extras: holiday name, rotating phrase (built-in or from a file), dated extra data.
+    daily_holidays: bool = True
+    daily_quotes: bool = False
+    daily_quotes_file: Path | None = None  # one phrase per line; None = built-in quotes
+    daily_extra_file: Path | None = None  # dated lines shown on the matching day page
 
     # Calendar / locale
     year: int = Field(default_factory=lambda: _dt.date.today().year, ge=1900, le=2200)
     week_start: Literal["monday", "sunday"] = "monday"
     language: Literal["es", "en"] = "es"
     holiday_country: str = "CR"
+    holidays_file: Path | None = None  # user holidays (MM-DD text), merged with the library
 
     # Look & output
     theme: str = "minimal"
@@ -157,6 +170,19 @@ class Config(BaseModel):
     @classmethod
     def _upper_country(cls, v: str) -> str:
         return v.strip().upper()
+
+    @field_validator("daily_quotes_file", "daily_extra_file", "holidays_file")
+    @classmethod
+    def _check_data_file(cls, v: Path | None, info: ValidationInfo) -> Path | None:
+        """A set file must exist and parse. Lazy import keeps day_extras Config-free."""
+        if v is None:
+            return v
+        from agenda.day_extras import parse_dated, read_lines
+
+        lines = read_lines(v)
+        if info.field_name != "daily_quotes_file":
+            parse_dated(lines, 2000)
+        return v
 
     @model_validator(mode="after")
     def _resolve_preset(self) -> Config:

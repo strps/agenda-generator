@@ -103,10 +103,15 @@ PARAM_SHORT: dict[str, str] = {
     "notes_pages": "Number of back-matter Notes pages (0-50).",
     "contacts_pages": "Number of back-matter Contacts pages (0-50).",
     "extra_padding": "Minimum number of padding pages to add (0-200).",
+    "daily_holidays": "Print the holiday name on day pages.",
+    "daily_quotes": "Print a rotating phrase on day pages.",
+    "daily_quotes_file": "Text file with one phrase per line.",
+    "daily_extra_file": "File of dated notes shown on day pages.",
     "year": "Calendar year of the agenda.",
     "week_start": "First day of the week.",
     "language": "Language of the printed texts.",
     "holiday_country": "Country code used for holidays, e.g. CR.",
+    "holidays_file": "Extra holidays file, merged with the library.",
     "theme": "Color palette and typography.",
     "imposition": "Export in booklet print order.",
     "crop_marks": "Draw crop marks on the imposed sheets.",
@@ -238,6 +243,25 @@ PARAM_DETAILS: dict[str, str] = {
         "before the back cover, 0-200 (default 0). The agenda may get more padding than "
         "asked, to complete the last booklet, so booklets stay whole."
     ),
+    "daily_holidays": (
+        "When on (the default), the day pages print the name of the day's holiday in the "
+        "header, before the week number. It uses the same holidays as the calendar pages, "
+        "including those from holidays_file."
+    ),
+    "daily_quotes": (
+        "When on, the footer of each day page shows an inspirational phrase. Phrases rotate: "
+        "one per day of the year, cycling through the list. Off by default."
+    ),
+    "daily_quotes_file": (
+        "Optional text file with one phrase per line (UTF-8; blank lines and lines starting "
+        "with # are ignored). The phrases rotate, one per day of the year, cycling. Empty "
+        "means the built-in phrases of the chosen language. Used only with daily_quotes."
+    ),
+    "daily_extra_file": (
+        "Optional text file with one dated entry per line, as 'MM-DD text' (every year) or "
+        "'YYYY-MM-DD text' (that year only); lines starting with # are comments. The text is "
+        "shown in the footer of the matching day page. Several entries on one date are joined."
+    ),
     "year": (
         "Year of the calendar (1900-2200). It sets all dates, weekdays and holidays "
         "on the monthly, weekly and daily pages."
@@ -253,6 +277,11 @@ PARAM_DETAILS: dict[str, str] = {
     "holiday_country": (
         "ISO country code, for example CR, whose public holidays are marked on the calendar "
         "pages. It is converted to upper case."
+    ),
+    "holidays_file": (
+        "Optional text file of your own holidays, one per line as 'MM-DD name' (every year) "
+        "or 'YYYY-MM-DD name' (that year only); lines starting with # are comments. They are "
+        "merged with the country holidays and shown the same way on every page."
     ),
     "theme": (
         "Name of the theme that sets the color palette and typography of the PDF. "

@@ -124,7 +124,7 @@ class SettingsPanel(QFrame):
             w.textChanged.connect(self._edited)
         elif k == M.PAGES:
             w = self._make_pages()
-        else:  # text, path, int_list, auto_int: edited as text, parsed by Config
+        else:  # text, path, opt_path, int_list, auto_int: edited as text, parsed by Config
             w = QLineEdit()
             w.textEdited.connect(self._edited)
         return w
@@ -174,6 +174,8 @@ class SettingsPanel(QFrame):
                 out[spec.name] = ids or None
             else:
                 text = w.text().strip()  # type: ignore[attr-defined]
+                if k == M.OPT_PATH:
+                    text = text or None  # type: ignore[assignment]
                 if k == M.AUTO_INT:
                     text = int(text) if text.isdigit() else (text or "auto")  # type: ignore[assignment]
                 out[spec.name] = text
@@ -213,6 +215,8 @@ class SettingsPanel(QFrame):
                 cb.setChecked(pid in ids)
         elif k == M.INT_LIST:
             w.setText(_join_ints(v))  # type: ignore[attr-defined]
+        elif k == M.OPT_PATH:
+            w.setText("" if v is None else str(v))  # type: ignore[attr-defined]
         else:
             w.setText(str(v))  # type: ignore[attr-defined]
 

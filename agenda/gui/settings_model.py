@@ -27,9 +27,10 @@ BOOL, CHOICE, OPT_CHOICE, INT, FLOAT, AUTO_INT = (
     "float",
     "auto_int",
 )
-TEXT, PATH, MULTI_CHOICE, INT_LIST, TEXT_LIST, PAGES = (
+TEXT, PATH, OPT_PATH, MULTI_CHOICE, INT_LIST, TEXT_LIST, PAGES = (
     "text",
     "path",
+    "opt_path",
     "multi_choice",
     "int_list",
     "text_list",
@@ -65,6 +66,8 @@ def _kind(name: str, tp: Any) -> tuple[str, tuple[str, ...]]:
         optional = len(typing.get_args(tp)) > len(args) and len(args) == 1
         if optional and typing.get_origin(args[0]) is typing.Literal:
             return OPT_CHOICE, _literals(args[0])
+        if optional and args[0] is Path:
+            return OPT_PATH, ()
         if int in args:
             return AUTO_INT, ()
     if origin is list:

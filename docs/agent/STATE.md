@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 12
+Last phase: 13
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -14,6 +14,7 @@ Last phase: 12
 - Config stays flat; agenda/templates.py groups fields into sections (key mapping only, imports no Config/pydantic). YAML blocks flattened in configfile.flatten; save_yaml writes grouped form, booklet fields stay flat (phase 10)
 - Page settings are Config fields (daily_hour_start/end 6/21, schedule_first/last_hour 7/21, habits_max 20, niche_*_pages 1); class constants stay as defaults, `Schedule.layout(rows, max_hours=MAX_HOURS)` and `Habits.layout(rows, max_habits=MAX_HABITS)`; `_Counted(count=None)` falls back to `config.<id>_pages` (phase 11)
 - Back matter: `Notes`/`Contacts(count=None)` use config.notes_pages/contacts_pages (default 1, 0 removes); build_plan puts them per instances(config). Padding search starts at `units=config.extra_padding` (limit grows by it); fixed-num_booklets overflow rule applies at units==start; blank fallback unchanged (phase 12)
+- Day extras (phase 13): Config daily_holidays(True)/daily_quotes(False)/daily_quotes_file/daily_extra_file and global holidays_file (all files `Path|None`, validated to exist+parse via lazy day_extras import; relative paths resolve against cwd). Phase 14 must wire them into draw/Daily; nothing renders them yet
 - Cross-field hour rules (start < end) live in Config._check_booklet_rules; each new field needs a CLI option + PARAM_SHORT/DETAILS (phase 11)
 - with_enabled on a "page" section with empty pages copies preset_pages(preset) first (phase 10)
 
@@ -26,6 +27,8 @@ Last phase: 12
 - tests/test_gui_param_help.py: Qt-free tests for param texts (derive names from Config.model_fields)
 
 - agenda/templates.py: `GLOBAL`, `STYLING`, `SectionSpec(key,label,block,fields,page_id,enable)`, `SECTIONS`, `TEMPLATE_KEYS`, `section`, `group_of`, `fields_of(key, all_fields)`, `is_enabled(cfg,key)`, `has_enable_box`, `with_enabled(values,key,on)`; enable in planner|page|count|none; SectionSpec.count_field for "count" (is_enabled = field>0; with_enabled off=0, on=1 only if 0); contacts section sits after weekly
+- agenda/day_extras.py (Qt-free, no Config import): `read_lines(path)`, `parse_dated(lines, year)->dict[date,str]` (entries joined " · "; Feb 29 MM-DD skipped in non-leap years), `builtin_quotes(lang)`, `quote_for(d, quotes)`; tests/test_day_extras.py
+- settings_model `OPT_PATH` kind (Path|None); SettingsPanel maps "" <-> None
 - settings_model.config_to_yaml_data(cfg) grouped dict; config_to_data stays flat; tests/test_templates.py
 
 ## Open issues
