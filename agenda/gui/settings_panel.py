@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 from agenda import templates as T
 from agenda.catalog import catalog_rows
 from agenda.config import Config
+from agenda.gui import export_model as EM
 from agenda.gui import help_text
 from agenda.gui import settings_model as M
 from agenda.gui.collapsible import CollapsibleSection
@@ -94,6 +95,9 @@ class SettingsPanel(QFrame):
                 label.setObjectName(f"label_{spec.name}")
                 self.label_tooltips[spec.name] = ExpandingToolTip(label, short, detail)
                 form.addRow(label, w)
+            if spec.name in EM.export_field_names():
+                # edited in the export dialog; widgets stay (hidden) so values() round-trips
+                form.setRowVisible(w, False)
         self.appearance_box = QComboBox()
         self.appearance_box.setObjectName("appearance")
         self.appearance_box.addItems(list(APPEARANCES))

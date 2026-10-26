@@ -1,9 +1,10 @@
 """Main window shell and entry point. Regions are empty placeholders filled by later tasks."""
 
 import sys
+from pathlib import Path
 
-from PySide6.QtCore import Qt, QSettings, QThreadPool, QTimer
-from PySide6.QtGui import QColor, QPalette
+from PySide6.QtCore import Qt, QSettings, QThreadPool, QTimer, QUrl
+from PySide6.QtGui import QColor, QDesktopServices, QPalette
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -22,11 +23,13 @@ from PySide6.QtWidgets import (
 
 from agenda.assembler import build_plan, summarize
 from agenda.configfile import ConfigFileError
+from agenda.pagerange import parse_page_range
 from agenda.gui import export_model as EM
 from agenda.gui import help_text as HT
 from agenda.gui import layout as L
 from agenda.gui import legend_model as LM
 from agenda.gui import template_model as TM
+from agenda.gui.export_dialog import ExportDialog
 from agenda.gui.export_job import ExportJob, ExportSignals
 from agenda.gui.legend import Legend
 from agenda.gui.preview import PreviewWidget
@@ -40,6 +43,7 @@ DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-render
 
 
 PREFS_ORG, PREFS_APP, PREFS_KEY = "agenda-gen", "agenda-gui", "appearance"
+PREF_OPEN_AFTER, PREF_LAST_DIR = "export/open_after", "export/last_dir"
 
 
 def apply_style(app: QApplication, appearance: str = SM.DEFAULT_APPEARANCE) -> bool:
@@ -118,6 +122,8 @@ class MainWindow(QMainWindow):
         self._export_pool = QThreadPool()
         self._export_signals: ExportSignals | None = None
         self._export_interactive = False
+        self._open_after = False
+        self._last_page_range = ""
         row.addWidget(export)
         col.addWidget(toolbar)
 
@@ -279,21 +285,52 @@ class MainWindow(QMainWindow):
         self.export_button.setToolTip(tip)
 
     def export_dialog(self) -> None:
-        """Ask for a destination (default from the config), then export in the background."""
+        """Open the export dialog; on accept apply its values and export in the background."""
         cfg, _ = self.settings.config()
         if cfg is None or self.export_running:
             return
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export PDF", EM.default_path(cfg), "PDF (*.pdf)"
+        values = self.settings.values()
+        values["output"] = self._default_output(cfg)
+        dlg = ExportDialog(
+            values,
+            total_pages=len(build_plan(cfg)),
+            open_after=self.prefs.value(PREF_OPEN_AFTER, False, type=bool),
+            page_range=self._last_page_range,
+            parent=self,
         )
-        if path:
-            self.start_export(path, interactive=True)
+        if not dlg.exec():
+            return
+        self._last_page_range = dlg.page_range()
+        self.prefs.setValue(PREF_OPEN_AFTER, dlg.open_after())
+        result = dlg.result_values()
+        self.settings.set_values({**self.settings.values(), **result})
+        self.flush_preview()
+        out = str(result["output"])
+        if Path(out).parent != Path():
+            self.prefs.setValue(PREF_LAST_DIR, str(Path(out).parent))
+        self.prefs.sync()
+        self._open_after = dlg.open_after()
+        self.start_export(out, interactive=True, page_range=self._last_page_range)
 
-    def start_export(self, path: str, interactive: bool = False) -> bool:
+    def _default_output(self, cfg) -> str:
+        path = EM.default_path(cfg)
+        last = str(self.prefs.value(PREF_LAST_DIR, "") or "")
+        return str(Path(last) / Path(path).name) if last else path
+
+    def open_file(self, path: str) -> None:
+        QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+
+    def start_export(self, path: str, interactive: bool = False, page_range: str = "") -> bool:
         """Export the current settings to ``path`` off the GUI thread. False if not started."""
         cfg, _ = self.settings.config()
         if cfg is None or self.export_running:
             return False
+        pages = None
+        if page_range.strip():
+            try:
+                pages = parse_page_range(page_range, len(build_plan(cfg)))
+            except ValueError:
+                return False
         self.export_running, self._export_interactive = True, interactive
         self.export_result = ""
         sig = self._export_signals = ExportSignals()
@@ -304,7 +341,7 @@ class MainWindow(QMainWindow):
         self.export_progress.show()
         self.export_status.setText("Exporting...")
         self._sync_export_button(valid=True)
-        self._export_pool.start(ExportJob(cfg, str(EM.ensure_pdf(path)), sig))
+        self._export_pool.start(ExportJob(cfg, str(EM.ensure_pdf(path)), sig, pages))
         return True
 
     def wait_export(self, timeout: float = 120.0) -> bool:
@@ -334,6 +371,8 @@ class MainWindow(QMainWindow):
     def _on_export_done(self, path: str) -> None:
         self.export_progress.setValue(100)
         self._finish_export(f"Exported {path}", True)
+        if self._export_interactive and self._open_after:
+            self.open_file(path)
 
     def _on_export_failed(self, msg: str) -> None:
         self._finish_export(f"Export failed: {msg}", False)
