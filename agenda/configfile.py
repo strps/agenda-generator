@@ -4,6 +4,7 @@ No rules live here. Keys are mapped to ``Config`` field names and everything (in
 keys, which ``Config`` forbids) is validated once by ``Config(**merged)``.
 """
 
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,10 @@ from agenda.templates import SECTIONS
 
 # plan §8.3 nested block -> flat Config fields
 BOOKLET_KEYS = {"size": "booklet_size", "unit": "booklet_unit", "folded": "booklet_folded"}
+
+
+# GUI-only preferences (stored in QSettings, never in a config file); ignored when found
+LEGACY_GUI_KEYS = ("appearance",)
 
 
 class ConfigFileError(ValueError):
@@ -55,7 +60,26 @@ def load_yaml(path: Path | str) -> dict[str, Any]:
         return {}
     if not isinstance(data, dict):
         raise ConfigFileError(f"{path}: top level must be a mapping of settings")
-    return flatten(data)
+    return flatten(_drop_legacy_gui_keys(data, path))
+
+
+def _drop_legacy_gui_keys(data: dict[str, Any], path: Path) -> dict[str, Any]:
+    """Remove GUI preference keys (top level and inside ``style:``), one warning per key."""
+    data = dict(data)
+    style = data.get("style")
+    if isinstance(style, dict):
+        data["style"] = dict(style)
+    for key in LEGACY_GUI_KEYS:
+        for where, container in (("", data), ("style.", data.get("style"))):
+            if isinstance(container, dict) and key in container:
+                del container[key]
+                warnings.warn(
+                    f"{path}: '{where}{key}' is a GUI setting and is ignored; "
+                    "set it in GUI Settings (Settings > Preferences)",
+                    UserWarning,
+                    stacklevel=3,
+                )
+    return data
 
 
 def merge(yaml_values: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any]:

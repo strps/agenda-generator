@@ -1,9 +1,10 @@
 import pytest
 from PySide6.QtCore import QSettings
-from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtWidgets import QApplication, QComboBox, QDialog, QLabel
 
 from agenda.gui import style_model as S
 from agenda.gui.app import MainWindow, apply_style
+from agenda.gui.prefs_dialog import GuiSettingsDialog
 from agenda.gui.section_colors import section_color
 from agenda.templates import STYLING
 
@@ -34,25 +35,61 @@ def test_apply_style_default_dark(qapp):
 def test_window_default_dark_and_names(qapp, tmp_path):
     win = MainWindow(prefs=prefs(tmp_path))
     assert win.appearance == "dark"
-    assert win.settings.appearance_box.currentText() == "dark"
     assert win.export_button.objectName() == "export_button"
 
 
-def test_appearance_box_changes_and_persists(qapp, tmp_path):
+def test_appearance_changes_and_persists(qapp, tmp_path, monkeypatch):
     p = prefs(tmp_path)
     win = MainWindow(prefs=p)
-    box = win.settings.appearance_box
-    assert win.settings.sections[STYLING].isAncestorOf(box)
-    before = win.settings.config()[0]
-    box.setCurrentText("light")
+    before = win.settings.values()
+
+    def accept_light(self):
+        self.appearance_box.setCurrentText("light")
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(GuiSettingsDialog, "exec", accept_light)
+    win.open_preferences()
+    assert win.appearance == "light"
     assert qapp.styleSheet() == S.stylesheet(False)
     assert p.value("appearance") == "light"
-    assert "appearance" not in win.settings.values()
+    assert win.settings.values() == before
     assert "appearance" not in win.settings.editors
-    assert win.settings.config()[0] == before
-    win2 = MainWindow(prefs=prefs(tmp_path))
-    assert win2.appearance == "light"
-    assert win2.settings.appearance_box.currentText() == "light"
+    assert MainWindow(prefs=prefs(tmp_path)).appearance == "light"
+
+
+def test_cancel_changes_nothing(qapp, tmp_path, monkeypatch):
+    p = prefs(tmp_path)
+    win = MainWindow(prefs=p)
+
+    def reject(self):
+        self.appearance_box.setCurrentText("light")
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(GuiSettingsDialog, "exec", reject)
+    win.open_preferences()
+    assert win.appearance == "dark"
+    assert not p.contains("appearance")
+
+
+def test_settings_menu_and_panel(qapp, tmp_path):
+    win = MainWindow(prefs=prefs(tmp_path))
+    menus = [a for a in win.menuBar().actions() if a.menu()]
+    settings = [a.menu() for a in menus if a.text().replace("&", "") == "Settings"]
+    assert settings
+    assert "action_preferences" in [a.objectName() for a in settings[0].actions()]
+    assert not hasattr(win.settings, "appearance_box")
+    assert not [w for w in win.settings.findChildren(QComboBox) if w.objectName() == "appearance"]
+
+
+def test_dialog_widgets(qapp):
+    dlg = GuiSettingsDialog(appearance="dark")
+    assert [dlg.appearance_box.itemText(i) for i in range(dlg.appearance_box.count())] == list(
+        S.APPEARANCES
+    )
+    assert dlg.appearance_box.objectName() == "appearance"
+    assert dlg.appearance_box.toolTip()
+    dlg.appearance_box.setCurrentText("system")
+    assert dlg.appearance() == "system"
 
 
 def test_no_write_without_user_change(qapp, tmp_path):

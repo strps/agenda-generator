@@ -40,6 +40,7 @@ TOOLTIPS: dict[str, str] = {
         "Application look: dark, light, or system (follow the desktop theme). "
         "The choice is saved between runs."
     ),
+    "preferences": "GUI look; does not change the PDF.",
     "zoom": (
         "Preview zoom. Choose fit to scale the pages to the available space, "
         "or a fixed percentage such as 100%."

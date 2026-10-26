@@ -4,9 +4,10 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QSettings, QThreadPool, QTimer, QUrl
-from PySide6.QtGui import QColor, QDesktopServices, QPalette
+from PySide6.QtGui import QAction, QColor, QDesktopServices, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QApplication,
+    QDialog,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -31,6 +32,7 @@ from agenda.gui import legend_model as LM
 from agenda.gui import template_model as TM
 from agenda.gui.export_dialog import ExportDialog
 from agenda.gui.export_job import ExportJob, ExportSignals
+from agenda.gui.prefs_dialog import GuiSettingsDialog
 from agenda.gui.legend import Legend
 from agenda.gui.preview import PreviewWidget
 from agenda.gui.render_cache import Debounce
@@ -190,14 +192,24 @@ class MainWindow(QMainWindow):
         self.legend.section_clicked.connect(self.section_bar.first_page_of)
         self.legend.section_clicked.connect(lambda _k: self.show_preview_for(GLOBAL))
         self.settings.section_activated.connect(self.show_preview_for)
-        self.settings.appearance_box.blockSignals(True)
-        self.settings.appearance_box.setCurrentText(self.appearance)
-        self.settings.appearance_box.blockSignals(False)
-        self.settings.appearance_changed.connect(self._set_appearance)
+        menu = self.menuBar().addMenu("&Settings")
+        self.preferences_action = QAction("Preferences...", self)
+        self.preferences_action.setObjectName("action_preferences")
+        self.preferences_action.setShortcut(QKeySequence(QKeySequence.StandardKey.Preferences))
+        self.preferences_action.setToolTip(HT.TOOLTIPS["preferences"])
+        self.preferences_action.setStatusTip(HT.TOOLTIPS["preferences"])
+        self.preferences_action.triggered.connect(lambda _checked=False: self.open_preferences())
+        menu.addAction(self.preferences_action)
         self.update_preview()
         self.open_button.clicked.connect(self.open_config_dialog)
         self.save_button.clicked.connect(self.save_config_dialog)
         self.export_button.clicked.connect(self.export_dialog)
+
+    def open_preferences(self) -> None:
+        """Show the GUI Settings dialog; apply and persist the appearance on accept."""
+        dlg = GuiSettingsDialog(self.appearance, self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self._set_appearance(dlg.appearance())
 
     def _set_appearance(self, appearance: str) -> None:
         """User picked an appearance: restyle the running app and remember the choice."""
