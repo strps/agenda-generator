@@ -46,6 +46,8 @@ agenda/
     ├── app.py               # Main window, wiring
     ├── settings_panel.py    # Form built from the config model
     ├── preview.py           # Page/spread/sheet viewer, zoom, cache
+    ├── collapsible.py       # CollapsibleSection: header toggle, enable checkbox, form body
+    ├── style_model.py       # Qt-free themes, spacing, stylesheet(dark), contrast checks
     ├── section_bar.py       # Color-coded bar, ticks, legend, navigation
     └── workers.py           # Background rendering/export threads
 ```
@@ -72,6 +74,23 @@ Rendering a single spread instead of ~500 pages keeps the preview interactive.
 | `pypdfium2` | Rasterising PDF pages for the preview (permissive license, pip-installable) |
 
 PyMuPDF would also work for rasterising, but it is AGPL-licensed, which matters if the tool is ever sold. NiceGUI (web-based UI in the browser) is a lighter alternative to PySide6 if a browser UI is preferred.
+
+### Collapsible sections and preview target
+
+The settings panel holds one `CollapsibleSection` (`collapsible.py`) per entry of
+`agenda/templates.py` `SECTIONS`: Global (open), Notes & padding, the template sections and Colors &
+styling. Template headers carry an enable checkbox, a view of `templates.is_enabled`. `activate(key)`
+expands a section and emits `section_activated`; focus changes do the same.
+
+The main window keeps a `preview_stack`: page 0 is the full-agenda preview, then one container per
+template (`template_page_<key>`, a notice plus a `PreviewWidget`). `show_preview_for(key)` switches
+to the page given by `template_model.preview_target(active, last_template)`: Global gives the full
+agenda, Colors & styling keeps the last template, and a template gives its own sample page
+(`sample_plan`), grayed out when disabled.
+
+`style_model.py` is the Qt-free source of the minimalist stylesheet: themes (dark default, light),
+spacing, `stylesheet(dark)` and a contrast check. `app.apply_style` applies it; the choice is saved
+in QSettings.
 
 ## 3. Section bar
 

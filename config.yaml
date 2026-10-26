@@ -35,6 +35,17 @@ pages:
   - contacts
   - back_cover
 
+# Day pages (grouped form; flat keys such as daily_months also work). Uncomment to change:
+# daily:
+#   months: "1-6"               # months that get day pages
+#   hour_start: 6               # first hour of the day schedule
+#   hour_end: 21                # last hour (must be after hour_start)
+#   holidays: true              # print the holiday name in the header
+#   quotes: false               # print a rotating phrase in the footer
+#   quotes_file: examples/daily_quotes.txt   # one phrase per line (default: built-in)
+#   extra_file: examples/daily_extra.txt     # "MM-DD text" lines shown in the footer
+# holidays_file: examples/holidays.txt       # extra holidays, merged on every page
+
 # Other options (defaults shown, uncomment to change):
 # qr_urls: ["https://example.com"]   # URLs for the qr page
 # page_numbers: false

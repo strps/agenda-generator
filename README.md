@@ -90,6 +90,63 @@ Common flags:
 
 Run `agenda-gen --help` for the full list.
 
+### Sections
+
+The settings are grouped into sections, in the GUI and in the YAML file: **Global** (page size,
+year, language, booklets, page list, `holidays_file`), **Notes & padding**, one section per page
+template that has options (`daily`, `weekly`, `contacts`, `schedule`, `habits`, `qr`, and the niche
+packs `niche_entrepreneur`, `niche_student`, `niche_fitness`) and **Colors & styling** (`style`).
+Each section can be written as a block (`notes:`, `daily:`, `contacts:`, `schedule:`, `habits:`,
+`qr:`, `niche_*:`, `style:`) with short keys. Save writes the blocks; flat keys (`notes_pages`,
+`daily_hour_start`, ...) still load and give the same result.
+
+```yaml
+notes:      {pattern: dotted, pages: 1, pad_with: notes, extra_padding: 0}
+daily:      {months: "1-12", hour_start: 6, hour_end: 21, holidays: true, quotes: false}
+contacts:   {pages: 1}
+schedule:   {first_hour: 7, last_hour: 21}
+habits:     {max: 20}
+qr:         {urls: ["https://example.com"]}
+niche_student: {pages: 1}
+style:      {theme: minimal}
+holidays_file: examples/holidays.txt
+```
+
+Values that used to be fixed in the pages are now settings; the defaults reproduce the old output:
+
+| Setting (flat key) | Default | Meaning |
+|---|---|---|
+| `daily_hour_start` / `daily_hour_end` | 6 / 21 | Hours listed on day pages (start < end) |
+| `schedule_first_hour` / `schedule_last_hour` | 7 / 21 | Hours on the weekly schedule page |
+| `habits_max` | 20 | Habit rows on the habit tracker |
+| `notes_pages`, `contacts_pages` | 1 | Back-matter Notes / Contacts pages (0 removes them) |
+| `niche_entrepreneur_pages`, `niche_student_pages`, `niche_fitness_pages` | 1 | Copies of each pack |
+
+### Padding
+
+A padding unit is one copy of the `pad_with` page (a catalog id, default `notes`), placed before
+the back cover. `extra_padding` (default 0) is the minimum number of units; the count is rounded
+up so the last booklet is whole, so you may get more than asked. `notes_pages` are separate,
+regular back-matter pages and are not padding.
+
+### Day extras
+
+Day pages can show, besides the date:
+
+- **Holiday names** (`daily_holidays`, on by default): in the header. Holidays come from the
+  `holiday_country` library merged with `holidays_file` (lines `MM-DD name`), the same on every
+  page that uses holidays.
+- **A rotating phrase** (`daily_quotes`, off by default): in the footer, one per day of the year,
+  cycling through the list (day 1 uses the first phrase). `daily_quotes_file` gives your own list,
+  one phrase per line; otherwise the built-in phrases are used.
+- **Extra data** (`daily_extra_file`): lines `MM-DD text` (every year) or `YYYY-MM-DD text` (that
+  year only), shown right of the footer; several on one date are joined with " · ".
+
+Files are UTF-8; blank lines and lines starting with `#` are ignored. See
+[examples/](examples/). Paths are checked when the config is built and relative paths are resolved
+against the current directory. Files are read once and cached by path and modification time. A file edited while the GUI is open
+is re-read only when its timestamp changes; if the preview looks stale, touch the file or restart.
+
 ## Pages
 
 `agenda-gen --list` prints the catalog with categories, value scores and presets:
@@ -117,6 +174,14 @@ booklet order on landscape letter/A4, so you can print duplex, fold and stack. A
 spread or sheet view), a section bar showing where each section and booklet falls, and export
 with a progress bar. Settings can be opened from and saved to YAML. See
 [docs/architecture/gui.md](docs/architecture/gui.md).
+
+The settings panel is a list of collapsible sections (Global starts open). Template sections have an
+enable checkbox in the header: for `daily` and `weekly` it adds or removes the planner, for
+`schedule`, `habits`, `qr` and the niche packs it adds or removes the page from `pages`, and for
+`contacts` it sets the page count (0 = off, on = 1). The main preview follows the focused or expanded
+section and shows that template's own sample page; Global shows the full agenda, and Colors & styling
+keeps the last template. A disabled template is previewed grayed out. The appearance (dark by
+default, or light) is set in Colors & styling and remembered between runs.
 
 ## Development
 
