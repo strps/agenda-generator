@@ -103,7 +103,21 @@ SECTIONS: tuple[SectionSpec, ...] = (
         page_id="niche_fitness",
         enable="page",
     ),
-    SectionSpec(STYLING, "Colors & styling", "style", {"theme": "theme"}),
+    SectionSpec(
+        STYLING,
+        "Colors & styling",
+        "style",
+        {
+            "theme": "theme",
+            "ink": "color_ink",
+            "muted": "color_muted",
+            "line": "color_line",
+            "accent": "color_accent",
+            "tint": "color_tint",
+            "weekend_fill": "color_weekend_fill",
+            "holiday_fill": "color_holiday_fill",
+        },
+    ),
 )
 
 TEMPLATE_KEYS: tuple[str, ...] = tuple(s.key for s in SECTIONS if s.page_id)

@@ -110,6 +110,14 @@ class Config(BaseModel):
 
     # Look & output
     theme: str = "minimal"
+    # Per-color overrides on top of the theme palette (None = use the theme's color).
+    color_ink: str | None = None
+    color_muted: str | None = None
+    color_line: str | None = None
+    color_accent: str | None = None
+    color_tint: str | None = None
+    color_weekend_fill: str | None = None
+    color_holiday_fill: str | None = None
     imposition: bool = False
     crop_marks: bool = False
     spreads: bool = False
@@ -123,6 +131,26 @@ class Config(BaseModel):
         v = v.strip()
         parse_size(v)  # raises ValueError on bad names / out-of-range custom sizes
         return v.lower() if v.lower() in SIZES else v
+
+    @field_validator(
+        "color_ink",
+        "color_muted",
+        "color_line",
+        "color_accent",
+        "color_tint",
+        "color_weekend_fill",
+        "color_holiday_fill",
+    )
+    @classmethod
+    def _check_color(cls, v: str | None, info: ValidationInfo) -> str | None:
+        if v is None:
+            return None
+        from agenda.themes import normalize_hex
+
+        try:
+            return normalize_hex(v)
+        except ValueError:
+            raise ValueError(f"{info.field_name} must be a hex color like #c85028") from None
 
     @field_validator("page_number_format")
     @classmethod

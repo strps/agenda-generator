@@ -201,6 +201,38 @@ def run(
     theme: Annotated[
         str | None, typer.Option(help="Color theme: minimal, mono, ocean or forest.")
     ] = None,
+    color_ink: Annotated[
+        str | None,
+        typer.Option("--color-ink", help="Override the theme's ink color (#rrggbb)."),
+    ] = None,
+    color_muted: Annotated[
+        str | None,
+        typer.Option("--color-muted", help="Override the theme's muted color (#rrggbb)."),
+    ] = None,
+    color_line: Annotated[
+        str | None,
+        typer.Option("--color-line", help="Override the theme's line color (#rrggbb)."),
+    ] = None,
+    color_accent: Annotated[
+        str | None,
+        typer.Option("--color-accent", help="Override the theme's accent color (#rrggbb)."),
+    ] = None,
+    color_tint: Annotated[
+        str | None,
+        typer.Option("--color-tint", help="Override the theme's tint color (#rrggbb)."),
+    ] = None,
+    color_weekend_fill: Annotated[
+        str | None,
+        typer.Option(
+            "--color-weekend-fill", help="Override the theme's weekend fill color (#rrggbb)."
+        ),
+    ] = None,
+    color_holiday_fill: Annotated[
+        str | None,
+        typer.Option(
+            "--color-holiday-fill", help="Override the theme's holiday fill color (#rrggbb)."
+        ),
+    ] = None,
     imposition: Annotated[bool | None, typer.Option("--imposition/--no-imposition")] = None,
     crop_marks: Annotated[bool | None, typer.Option("--crop-marks/--no-crop-marks")] = None,
     spreads: Annotated[bool | None, typer.Option("--spreads/--no-spreads")] = None,
@@ -275,6 +307,13 @@ def run(
             holiday_country=holiday_country,
             holidays_file=holidays_file,
             theme=theme,
+            color_ink=color_ink,
+            color_muted=color_muted,
+            color_line=color_line,
+            color_accent=color_accent,
+            color_tint=color_tint,
+            color_weekend_fill=color_weekend_fill,
+            color_holiday_fill=color_holiday_fill,
             imposition=imposition,
             crop_marks=crop_marks,
             spreads=spreads,

@@ -103,7 +103,7 @@ SECTION_DESCRIPTIONS: dict[str, str] = {
 
 
 def section_tooltip(key: str) -> str:
-    """"<Label>: <description>" for a section key; unknown keys fall back to the key."""
+    """ "<Label>: <description>" for a section key; unknown keys fall back to the key."""
     label = SECTION_LABELS.get(key, key)
     desc = SECTION_DESCRIPTIONS.get(key)
     return f"{label}: {desc}" if desc else label
@@ -156,6 +156,13 @@ PARAM_SHORT: dict[str, str] = {
     "holiday_country": "Country code used for holidays, e.g. CR.",
     "holidays_file": "Extra holidays file, merged with the library.",
     "theme": "Color palette of the PDF.",
+    "color_ink": "Main text color of the PDF (empty = theme).",
+    "color_muted": "Secondary text color of the PDF (empty = theme).",
+    "color_line": "Line color of the PDF (empty = theme).",
+    "color_accent": "Accent color of the PDF (empty = theme).",
+    "color_tint": "Light tint color of the PDF (empty = theme).",
+    "color_weekend_fill": "Weekend cell fill of the PDF (empty = theme).",
+    "color_holiday_fill": "Holiday cell fill of the PDF (empty = theme).",
     "imposition": "Export in booklet print order.",
     "crop_marks": "Draw crop marks on the imposed or spread sheets.",
     "spreads": "Export as 2-up reader spreads.",
@@ -338,8 +345,7 @@ PARAM_DETAILS: dict[str, str] = {
         "monthly grids and where each weekly page begins."
     ),
     "language": (
-        "Language of month names, weekdays and other printed texts: es (Spanish) or "
-        "en (English)."
+        "Language of month names, weekdays and other printed texts: es (Spanish) or en (English)."
     ),
     "holiday_country": (
         "ISO country code, for example CR, whose public holidays are marked on the calendar "
@@ -349,6 +355,34 @@ PARAM_DETAILS: dict[str, str] = {
         "Optional text file of your own holidays, one per line as 'MM-DD name' (every year) "
         "or 'YYYY-MM-DD name' (that year only); lines starting with # are comments. They are "
         "merged with the country holidays and shown the same way on every page."
+    ),
+    "color_ink": (
+        "Main text color of the PDF, used for titles, day numbers and body text. Hex color such as #c85028 (also #abc or without the "
+        "#). Empty = use the theme's color."
+    ),
+    "color_muted": (
+        "Secondary text color of the PDF, used for labels, captions, week numbers and page numbers. Hex color such as #c85028 (also #abc or without the "
+        "#). Empty = use the theme's color."
+    ),
+    "color_line": (
+        "Line color of the PDF, used for rules, grid lines and dots. Hex color such as #c85028 (also #abc or without the "
+        "#). Empty = use the theme's color."
+    ),
+    "color_accent": (
+        "Accent color of the PDF, used for month titles, holiday marks and highlights. Hex color such as #c85028 (also #abc or without the "
+        "#). Empty = use the theme's color."
+    ),
+    "color_tint": (
+        "Light tint color of the PDF, used for header bands and soft backgrounds. Hex color such as #c85028 (also #abc or without the "
+        "#). Empty = use the theme's color."
+    ),
+    "color_weekend_fill": (
+        "Weekend cell fill of the PDF, used for the background of weekend days in calendars. Hex color such as #c85028 (also #abc or without the "
+        "#). Empty = use the theme's color."
+    ),
+    "color_holiday_fill": (
+        "Holiday cell fill of the PDF, used for the background of holiday days in calendars. Hex color such as #c85028 (also #abc or without the "
+        "#). Empty = use the theme's color."
     ),
     "theme": (
         "Name of the color palette of the PDF: minimal (default), mono, ocean or forest. "

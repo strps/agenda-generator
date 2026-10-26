@@ -54,3 +54,22 @@ def palette_for(theme: str, overrides: dict[str, tuple[int, int, int]] | None = 
         if name in palette:
             palette[name] = rgb
     return palette
+
+
+def normalize_hex(text: str) -> str:
+    """ "#rgb"/"#rrggbb" (``#`` optional, any case) -> lowercase "#rrggbb"; else ValueError."""
+    t = text.strip().lstrip("#")
+    if len(t) == 3:
+        t = "".join(c * 2 for c in t)
+    if len(t) != 6 or any(c not in "0123456789abcdefABCDEF" for c in t):
+        raise ValueError(f"not a hex color: {text!r}")
+    return "#" + t.lower()
+
+
+def hex_to_rgb(text: str) -> tuple[int, int, int]:
+    t = normalize_hex(text)[1:]
+    return int(t[0:2], 16), int(t[2:4], 16), int(t[4:6], 16)
+
+
+def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
+    return "#{:02x}{:02x}{:02x}".format(*rgb)

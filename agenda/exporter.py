@@ -60,8 +60,24 @@ def new_document(cfg: Config, font_dir: str | Path = FONT_DIR) -> FPDF:
     pdf.set_creator(f"agenda-gen {__version__}")
     pdf.set_author("agenda-gen")
     register_fonts(pdf, font_dir)
-    pdf.agenda_palette = themes.palette_for(cfg.theme)
+    overrides = {
+        name.removeprefix("color_"): themes.hex_to_rgb(value)
+        for name in COLOR_FIELDS
+        if (value := getattr(cfg, name)) is not None
+    }
+    pdf.agenda_palette = themes.palette_for(cfg.theme, overrides)
     return pdf
+
+
+COLOR_FIELDS = (
+    "color_ink",
+    "color_muted",
+    "color_line",
+    "color_accent",
+    "color_tint",
+    "color_weekend_fill",
+    "color_holiday_fill",
+)
 
 
 def add_page(pdf: FPDF, cfg: Config, page_number: int | None = None) -> Grid:
