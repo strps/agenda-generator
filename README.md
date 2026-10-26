@@ -294,3 +294,10 @@ tests/
 Design notes live in [docs/architecture/](docs/architecture/) and
 [docs/decisions/](docs/decisions/); progress is tracked in
 [docs/plan/phases.md](docs/plan/phases.md).
+
+### Adding a Config field
+
+Give the field in `agenda/config.py` a `description` (short help), `json_schema_extra["detail"]`
+(tooltip text) and `json_schema_extra["cli"]` (flags/type/csv/skip). The CLI option and the GUI
+tooltips are generated from these (`agenda/fields.py`). Also add the field to
+`agenda/templates.py` `SECTIONS`, and to the `settings_model` kind only if it is special.

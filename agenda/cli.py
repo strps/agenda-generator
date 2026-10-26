@@ -4,6 +4,7 @@ The CLI only maps flags to ``Config`` keyword arguments (``build_overrides``); e
 enforced by the ``Config`` model, which is validated once in ``run``.
 """
 
+import inspect
 import sys
 from pathlib import Path
 from typing import Annotated, Any
@@ -14,6 +15,7 @@ from agenda import __version__
 from agenda.config import Config
 from agenda.configfile import load_yaml, merge
 from agenda.exporter import DEFAULT_OUTPUT, FontsMissingError, export_agenda, export_blank
+from agenda.fields import cli_meta, field_names, short_help
 
 app = typer.Typer(add_completion=False, help="Generate a printable agenda PDF.")
 
@@ -84,284 +86,147 @@ def _fail(message: str, code: int) -> "typer.Exit":
     return typer.Exit(code)
 
 
-@app.command()
-def run(
-    version: Annotated[
-        bool, typer.Option("--version", callback=_version, is_eager=True, help="Show version.")
-    ] = False,
-    list_pages: Annotated[
-        bool,
-        typer.Option("--list", callback=_list, is_eager=True, help="List the page catalog."),
-    ] = False,
-    config: Annotated[
-        Path | None, typer.Option("--config", help="YAML settings file; flags override it.")
-    ] = None,
-    # Page geometry
-    page_size: Annotated[
-        str | None, typer.Option("--page-size", "--size", help="Named size or WxH in mm.")
-    ] = None,
-    orientation: Annotated[str | None, typer.Option(help="portrait or landscape.")] = None,
-    inner_margin: Annotated[float | None, typer.Option(help="Binding-side margin, mm.")] = None,
-    outer_margin: Annotated[float | None, typer.Option(help="Outer margin, mm.")] = None,
-    bleed: Annotated[float | None, typer.Option(help="Bleed, mm (with crop marks).")] = None,
-    # Booklets
-    booklet_size: Annotated[
-        int | None, typer.Option("--booklet-size", "--booklet", help="Booklet size.")
-    ] = None,
-    booklet_unit: Annotated[
-        str | None, typer.Option("--booklet-unit", "--unit", help="sheets or pages.")
-    ] = None,
-    booklet_folded: Annotated[
-        bool | None, typer.Option("--folded/--flat", help="Folded or flat booklets.")
-    ] = None,
-    num_booklets: Annotated[str | None, typer.Option(help="Number of booklets or auto.")] = None,
-    pad_with: Annotated[str | None, typer.Option(help="Page id used as padding.")] = None,
-    separate_covers: Annotated[
-        bool | None, typer.Option("--separate-covers/--no-separate-covers")
-    ] = None,
-    creep_mm: Annotated[float | None, typer.Option(help="Creep compensation, mm.")] = None,
-    # Content
-    planners: Annotated[str | None, typer.Option(help="Comma list: weekly,daily.")] = None,
-    daily_months: Annotated[
-        str | None, typer.Option(help='Months with daily pages, e.g. "1-6,9".')
-    ] = None,
-    daily_hour_start: Annotated[
-        int | None, typer.Option(help="First hour (0-23) on day pages.")
-    ] = None,
-    daily_hour_end: Annotated[
-        int | None, typer.Option(help="Last hour (0-23) on day pages.")
-    ] = None,
-    weekly_filler: Annotated[
-        str | None,
-        typer.Option(help="Filler before a week spread: blank, none or a page id."),
-    ] = None,
-    daily_filler: Annotated[
-        str | None,
-        typer.Option(help="Filler after a week's day pages: blank, none or a page id."),
-    ] = None,
-    month_start_pages: Annotated[
-        str | None,
-        typer.Option(help="Comma list of per-month pages printed after each monthly page."),
-    ] = None,
-    month_end_pages: Annotated[
-        str | None,
-        typer.Option(help="Comma list of per-month pages printed at the end of each month."),
-    ] = None,
-    schedule_first_hour: Annotated[
-        int | None, typer.Option(help="First hour (0-23) of the weekly schedule.")
-    ] = None,
-    schedule_last_hour: Annotated[
-        int | None, typer.Option(help="Last hour (0-23) of the weekly schedule.")
-    ] = None,
-    habits_max: Annotated[
-        int | None, typer.Option(help="Maximum habit rows on the habit tracker (1-40).")
-    ] = None,
-    niche_entrepreneur_pages: Annotated[
-        int | None, typer.Option(help="Pages of the entrepreneur pack (1-20).")
-    ] = None,
-    niche_student_pages: Annotated[
-        int | None, typer.Option(help="Pages of the student pack (1-20).")
-    ] = None,
-    niche_fitness_pages: Annotated[
-        int | None, typer.Option(help="Pages of the fitness pack (1-20).")
-    ] = None,
-    notes_pages: Annotated[
-        int | None, typer.Option(help="Back-matter Notes pages (0-50; 0 removes them).")
-    ] = None,
-    contacts_pages: Annotated[
-        int | None, typer.Option(help="Back-matter Contacts pages (0-50; 0 removes them).")
-    ] = None,
-    extra_padding: Annotated[
-        int | None, typer.Option(help="Minimum number of padding units (0-200).")
-    ] = None,
-    daily_holidays: Annotated[
-        bool | None,
-        typer.Option("--daily-holidays/--no-daily-holidays", help="Holiday name on day pages."),
-    ] = None,
-    daily_quotes: Annotated[
-        bool | None,
-        typer.Option("--daily-quotes/--no-daily-quotes", help="Rotating phrase on day pages."),
-    ] = None,
-    daily_quotes_file: Annotated[
-        Path | None, typer.Option(help="Text file with one phrase per line (default: built-in).")
-    ] = None,
-    daily_extra_file: Annotated[
-        Path | None, typer.Option(help="Dated lines (MM-DD text) shown on the matching day page.")
-    ] = None,
-    pages: Annotated[str | None, typer.Option(help="Comma list of catalog page ids.")] = None,
-    category: Annotated[
-        str | None, typer.Option(help="Comma list of categories: core,optional,value_added.")
-    ] = None,
-    preset: Annotated[str | None, typer.Option(help="essential, complete or premium.")] = None,
-    notes_pattern: Annotated[str | None, typer.Option(help="lined, dotted, grid or blank.")] = None,
-    page_numbers: Annotated[bool | None, typer.Option("--page-numbers/--no-page-numbers")] = None,
-    page_number_start: Annotated[
-        int | None, typer.Option(help="Number printed on the first numbered page (0-9999).")
-    ] = None,
-    page_number_first: Annotated[
-        int | None, typer.Option(help="Plan page (1-based) that gets the first number.")
-    ] = None,
-    page_number_position: Annotated[
-        str | None, typer.Option(help="outer, center or inner.")
-    ] = None,
-    page_number_placement: Annotated[
-        str | None, typer.Option(help="margin (below the page content) or footer.")
-    ] = None,
-    page_number_format: Annotated[
-        str | None, typer.Option(help="Label format with {n} and optionally {total}.")
-    ] = None,
-    qr_url: Annotated[
-        list[str] | None, typer.Option("--qr-url", help="Text or URL for the qr page (repeat).")
-    ] = None,
-    # Calendar / locale
-    year: Annotated[int | None, typer.Option(help="Calendar year.")] = None,
-    week_start: Annotated[str | None, typer.Option(help="monday or sunday.")] = None,
-    language: Annotated[str | None, typer.Option(help="es or en.")] = None,
-    holiday_country: Annotated[str | None, typer.Option(help="Country code, e.g. CR.")] = None,
-    holidays_file: Annotated[
-        Path | None, typer.Option(help="Extra holidays (MM-DD text), merged with the library.")
-    ] = None,
-    # Look & output
-    theme: Annotated[
-        str | None, typer.Option(help="Color theme: minimal, mono, ocean or forest.")
-    ] = None,
-    color_ink: Annotated[
-        str | None,
-        typer.Option("--color-ink", help="Override the theme's ink color (#rrggbb)."),
-    ] = None,
-    color_muted: Annotated[
-        str | None,
-        typer.Option("--color-muted", help="Override the theme's muted color (#rrggbb)."),
-    ] = None,
-    color_line: Annotated[
-        str | None,
-        typer.Option("--color-line", help="Override the theme's line color (#rrggbb)."),
-    ] = None,
-    color_accent: Annotated[
-        str | None,
-        typer.Option("--color-accent", help="Override the theme's accent color (#rrggbb)."),
-    ] = None,
-    color_tint: Annotated[
-        str | None,
-        typer.Option("--color-tint", help="Override the theme's tint color (#rrggbb)."),
-    ] = None,
-    color_weekend_fill: Annotated[
-        str | None,
-        typer.Option(
-            "--color-weekend-fill", help="Override the theme's weekend fill color (#rrggbb)."
+def _field_type(name: str) -> Any:
+    """CLI type of a Config field: the ``cli`` type override, else its annotation minus None."""
+    if cli_meta(name).get("type") == "str":
+        return str
+    annotation = Config.model_fields[name].annotation
+    args = [a for a in getattr(annotation, "__args__", ()) if a is not type(None)]
+    return args[0] if args else annotation
+
+
+def _generated_params() -> list[inspect.Parameter]:
+    """One keyword parameter per simple Config field, in field order (flags from ``cli`` meta)."""
+    params = []
+    for name in field_names():
+        meta = cli_meta(name)
+        if meta.get("skip"):
+            continue
+        kind = _field_type(name)
+        dashed = name.replace("_", "-")
+        flags = meta.get("flags") or [
+            f"--{dashed}/--no-{dashed}" if kind is bool else f"--{dashed}"
+        ]
+        option = typer.Option(*flags, help=short_help(name))
+        params.append(
+            inspect.Parameter(
+                name,
+                inspect.Parameter.KEYWORD_ONLY,
+                default=None,
+                annotation=Annotated[kind | None, option],
+            )
+        )
+    return params
+
+
+def _hand_params() -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
+    """Hand-written options: those before the generated ones, and those after."""
+
+    def param(name: str, annotation: Any, default: Any) -> inspect.Parameter:
+        return inspect.Parameter(
+            name, inspect.Parameter.KEYWORD_ONLY, default=default, annotation=annotation
+        )
+
+    first = [
+        param(
+            "version",
+            Annotated[
+                bool,
+                typer.Option("--version", callback=_version, is_eager=True, help="Show version."),
+            ],
+            False,
         ),
-    ] = None,
-    color_holiday_fill: Annotated[
-        str | None,
-        typer.Option(
-            "--color-holiday-fill", help="Override the theme's holiday fill color (#rrggbb)."
+        param(
+            "list_pages",
+            Annotated[
+                bool,
+                typer.Option(
+                    "--list", callback=_list, is_eager=True, help="List the page catalog."
+                ),
+            ],
+            False,
         ),
-    ] = None,
-    font_primary: Annotated[
-        str | None,
-        typer.Option(
-            "--font-primary", help="Font for headings and bold text: 'inter' or a .ttf/.otf file."
+        param(
+            "config",
+            Annotated[
+                Path | None, typer.Option("--config", help="YAML settings file; flags override it.")
+            ],
+            None,
         ),
-    ] = None,
-    font_secondary: Annotated[
-        str | None,
-        typer.Option(
-            "--font-secondary", help="Font for body text and numbers: 'inter' or a .ttf/.otf file."
+    ]
+    last = [
+        param("pages", Annotated[str | None, typer.Option(help=short_help("pages"))], None),
+        param(
+            "qr_url",
+            Annotated[list[str] | None, typer.Option("--qr-url", help=short_help("qr_urls"))],
+            None,
         ),
-    ] = None,
-    imposition: Annotated[bool | None, typer.Option("--imposition/--no-imposition")] = None,
-    crop_marks: Annotated[bool | None, typer.Option("--crop-marks/--no-crop-marks")] = None,
-    spreads: Annotated[bool | None, typer.Option("--spreads/--no-spreads")] = None,
-    sheet_size: Annotated[
-        str | None, typer.Option("--sheet-size", help="auto, letter or a4 (spreads/imposition).")
-    ] = None,
-    page_range: Annotated[
-        str | None,
-        typer.Option(
-            "--page-range", help='Export only these pages, e.g. "1-4,9" (single pages only).'
+        param(
+            "category",
+            Annotated[
+                str | None,
+                typer.Option(help="Comma list of categories: core,optional,value_added."),
+            ],
+            None,
         ),
-    ] = None,
-    output: Annotated[
-        Path | None, typer.Option("-o", "--output", help="Output PDF (default output/agenda.pdf).")
-    ] = None,
-    debug_grid: Annotated[
-        bool | None, typer.Option("--debug-grid", help="Overlay margins, columns and baseline.")
-    ] = None,
-    blank_pages: Annotated[
-        int | None, typer.Option(help="Write N blank pages instead of the agenda (temporary).")
-    ] = None,
-    dry_run: Annotated[
-        bool, typer.Option("--dry-run", help="Print the plan summary; render nothing.")
-    ] = False,
-) -> None:
-    """Build the config from the flags, validate it once and write the PDF."""
+        param(
+            "page_range",
+            Annotated[
+                str | None,
+                typer.Option(
+                    "--page-range",
+                    help='Export only these pages, e.g. "1-4,9" (single pages only).',
+                ),
+            ],
+            None,
+        ),
+        param(
+            "blank_pages",
+            Annotated[
+                int | None,
+                typer.Option(help="Write N blank pages instead of the agenda (temporary)."),
+            ],
+            None,
+        ),
+        param(
+            "dry_run",
+            Annotated[
+                bool, typer.Option("--dry-run", help="Print the plan summary; render nothing.")
+            ],
+            False,
+        ),
+    ]
+    return first, last
+
+
+_HAND_NAMES = {
+    "version",
+    "list_pages",
+    "config",
+    "pages",
+    "qr_url",
+    "category",
+    "page_range",
+    "blank_pages",
+    "dry_run",
+}
+
+
+def run(**opts: Any) -> None:
+    """Build the config from the flags, validate it once and write the PDF.
+
+    The signature (one option per Config field) is generated below from ``agenda.fields``.
+    """
+    config = opts["config"]
+    page_range = opts["page_range"]
+    blank_pages = opts["blank_pages"]
+    dry_run = opts["dry_run"]
     try:
         overrides = build_overrides(
-            pages=pages,
-            category=category,
-            planners=planners,
-            qr_url=qr_url,
-            num_booklets=num_booklets,
-            page_size=page_size,
-            orientation=orientation,
-            inner_margin=inner_margin,
-            outer_margin=outer_margin,
-            bleed=bleed,
-            booklet_size=booklet_size,
-            booklet_unit=booklet_unit,
-            booklet_folded=booklet_folded,
-            pad_with=pad_with,
-            separate_covers=separate_covers,
-            creep_mm=creep_mm,
-            daily_months=daily_months,
-            daily_hour_start=daily_hour_start,
-            daily_hour_end=daily_hour_end,
-            weekly_filler=weekly_filler,
-            daily_filler=daily_filler,
-            month_start_pages=month_start_pages,
-            month_end_pages=month_end_pages,
-            schedule_first_hour=schedule_first_hour,
-            schedule_last_hour=schedule_last_hour,
-            habits_max=habits_max,
-            niche_entrepreneur_pages=niche_entrepreneur_pages,
-            niche_student_pages=niche_student_pages,
-            niche_fitness_pages=niche_fitness_pages,
-            notes_pages=notes_pages,
-            contacts_pages=contacts_pages,
-            extra_padding=extra_padding,
-            daily_holidays=daily_holidays,
-            daily_quotes=daily_quotes,
-            daily_quotes_file=daily_quotes_file,
-            daily_extra_file=daily_extra_file,
-            preset=preset,
-            notes_pattern=notes_pattern,
-            page_numbers=page_numbers,
-            page_number_start=page_number_start,
-            page_number_first=page_number_first,
-            page_number_position=page_number_position,
-            page_number_placement=page_number_placement,
-            page_number_format=page_number_format,
-            year=year,
-            week_start=week_start,
-            language=language,
-            holiday_country=holiday_country,
-            holidays_file=holidays_file,
-            theme=theme,
-            color_ink=color_ink,
-            color_muted=color_muted,
-            color_line=color_line,
-            color_accent=color_accent,
-            color_tint=color_tint,
-            color_weekend_fill=color_weekend_fill,
-            color_holiday_fill=color_holiday_fill,
-            font_primary=font_primary,
-            font_secondary=font_secondary,
-            imposition=imposition,
-            crop_marks=crop_marks,
-            spreads=spreads,
-            sheet_size=sheet_size,
-            output=output,
-            debug_grid=debug_grid,
+            pages=opts["pages"],
+            category=opts["category"],
+            qr_url=opts["qr_url"],
+            **{k: v for k, v in opts.items() if k not in _HAND_NAMES},
         )
         merged = merge(load_yaml(config) if config is not None else {}, overrides)
         cfg = Config(**merged)
@@ -403,6 +268,13 @@ def run(
     except FontsMissingError as exc:
         raise _fail(str(exc), 1) from None
     typer.echo(f"wrote {out}")
+
+
+_first, _last = _hand_params()
+_params = [*_first, *_generated_params(), *_last]
+run.__signature__ = inspect.Signature(_params, return_annotation=None)  # type: ignore[attr-defined]
+run.__annotations__ = {p.name: p.annotation for p in _params} | {"return": None}
+app.command()(run)
 
 
 def main(argv: list[str] | None = None) -> int:

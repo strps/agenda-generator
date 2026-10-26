@@ -2,7 +2,7 @@
 
 import typer.main
 
-from agenda import cli
+from agenda import cli, fields
 from agenda.cli import main
 from agenda.config import Config
 
@@ -665,7 +665,34 @@ def test_cli_params_pinned():
 
 
 def test_param_order_pinned():
-    assert list(_actual()) == list(EXPECTED_PARAMS)
+    """Hand-written first, then generated options in Config field order, then the rest."""
+    skipped = {"pages", "qr_urls"}
+    generated = [p for f in Config.model_fields if f not in skipped for p in FIELD_TO_PARAMS[f]]
+    expected = [
+        "version",
+        "list_pages",
+        "config",
+        *generated,
+        "pages",
+        "qr_url",
+        "category",
+        "page_range",
+        "blank_pages",
+        "dry_run",
+    ]
+    assert list(_actual()) == expected
+
+
+def test_generated_help_is_field_short_help():
+    cmd = typer.main.get_command(cli.app)
+    helps = {p.name: p.help for p in cmd.params}
+    for field in Config.model_fields:
+        if field in {"pages", "qr_urls"}:
+            continue
+        for name in FIELD_TO_PARAMS[field]:
+            assert helps[name] == fields.short_help(field), name
+    assert helps["pages"] == fields.short_help("pages")
+    assert helps["qr_url"] == fields.short_help("qr_urls")
 
 
 def test_field_map_covers_config_exactly():
