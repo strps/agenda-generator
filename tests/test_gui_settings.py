@@ -69,6 +69,7 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
+@pytest.mark.gui
 def test_panel_defaults_roundtrip_to_default_config(qapp):
     from agenda.gui.settings_panel import SettingsPanel
 
@@ -78,6 +79,7 @@ def test_panel_defaults_roundtrip_to_default_config(qapp):
     assert set(panel.editors) == set(Config.model_fields)
 
 
+@pytest.mark.gui
 def test_panel_edit_emits_changed_and_updates_config(qapp):
     from agenda.gui.settings_panel import SettingsPanel
 
@@ -91,6 +93,7 @@ def test_panel_edit_emits_changed_and_updates_config(qapp):
     assert cfg.year == 2030 and cfg.language == "en"
 
 
+@pytest.mark.gui
 def test_panel_shows_config_error_without_own_rules(qapp):
     from agenda.gui.settings_panel import SettingsPanel
 
@@ -101,6 +104,7 @@ def test_panel_shows_config_error_without_own_rules(qapp):
     assert cfg is None and "imposition" in panel.error_label.text()
 
 
+@pytest.mark.gui
 def test_panel_pages_checklist_and_months_text(qapp):
     from agenda.gui.settings_panel import SettingsPanel
 
@@ -111,6 +115,7 @@ def test_panel_pages_checklist_and_months_text(qapp):
     assert msg == "" and cfg.pages == ["habits"] and cfg.daily_months == [1, 3, 5, 6]
 
 
+@pytest.mark.gui
 def test_window_open_save_yaml(qapp, tmp_path):
     from agenda.gui.app import MainWindow
 
@@ -131,6 +136,7 @@ def test_window_open_save_yaml(qapp, tmp_path):
     assert win.settings.config()[0] == cfg
 
 
+@pytest.mark.gui
 def test_window_open_errors_are_returned(qapp, tmp_path):
     from agenda.gui.app import MainWindow
 

@@ -2,13 +2,14 @@ import os
 
 import pytest
 
-pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QElapsedTimer  # noqa: E402
-from PySide6.QtWidgets import QApplication, QLineEdit  # noqa: E402
+from PySide6.QtCore import QElapsedTimer
+from PySide6.QtWidgets import QApplication, QLineEdit
 
-from agenda.gui.collapsible import ANIM_MS, CollapsibleSection  # noqa: E402
+from agenda.gui.collapsible import ANIM_MS, CollapsibleSection
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")

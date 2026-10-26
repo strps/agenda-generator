@@ -44,6 +44,7 @@ def test_summary_text_singular_padding_and_warnings():
     assert M.summary_text(s) == "4 pages · 1 sheet · 1 booklet"
 
 
+@pytest.mark.gui
 def test_widget_legend_summary_click_and_error():
     pytest.importorskip("PySide6")
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -88,6 +89,7 @@ def _legend_with(entries):
     return lg
 
 
+@pytest.mark.gui
 def test_legend_tooltips_explain_colors():
     from PySide6.QtWidgets import QLabel
 
@@ -105,6 +107,7 @@ def test_legend_tooltips_explain_colors():
     assert lg.findChild(QLabel, "legend_title") is not None
 
 
+@pytest.mark.gui
 def test_legend_padding_description():
     from agenda.gui.help_text import SECTION_DESCRIPTIONS
 
@@ -123,8 +126,11 @@ def _corner(widget):
     return {img.pixel(x, y) for x in range(2, 10) for y in range(2, 10)}
 
 
+@pytest.mark.gui
 def test_chips_fill_color_and_padding_is_hatched():
-    lg = _legend_with([M.LegendEntry("padding", "Padding", 2), M.LegendEntry("monthly", "Monthly", 3)])
+    lg = _legend_with(
+        [M.LegendEntry("padding", "Padding", 2), M.LegendEntry("monthly", "Monthly", 3)]
+    )
     lg.resize(600, 40)
     lg.show()
     assert len(_corner(lg.buttons["padding"])) >= 2

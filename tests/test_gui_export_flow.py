@@ -49,6 +49,7 @@ def _accept(monkeypatch, out, **edits):
     monkeypatch.setattr(ExportDialog, "exec", fake_exec)
 
 
+@pytest.mark.gui
 def test_accept_applies_values_and_exports_spreads(qapp, tmp_path, monkeypatch):
     win, prefs = _win(tmp_path, monkeypatch)
     out = tmp_path / "s.pdf"
@@ -63,6 +64,7 @@ def test_accept_applies_values_and_exports_spreads(qapp, tmp_path, monkeypatch):
     assert prefs.value("export/open_after", type=bool) is False
 
 
+@pytest.mark.gui
 def test_page_range_and_open_after(qapp, tmp_path, monkeypatch):
     win, prefs = _win(tmp_path, monkeypatch)
     opened = []
@@ -76,15 +78,17 @@ def test_page_range_and_open_after(qapp, tmp_path, monkeypatch):
     assert prefs.value("export/open_after", type=bool) is True
 
 
+@pytest.mark.gui
 def test_cancel_starts_no_export(qapp, tmp_path, monkeypatch):
     from agenda.gui.export_dialog import ExportDialog
 
-    win, prefs = _win(tmp_path, monkeypatch)
+    win, _prefs = _win(tmp_path, monkeypatch)
     monkeypatch.setattr(ExportDialog, "exec", lambda self: 0)
     win.export_dialog()
     assert not win.export_running
 
 
+@pytest.mark.gui
 def test_export_editors_hidden_but_round_trip(qapp, tmp_path, monkeypatch):
     win, _ = _win(tmp_path, monkeypatch)
     win.settings.set_values({**SMALL, "page_number_start": 5, "crop_marks": False})

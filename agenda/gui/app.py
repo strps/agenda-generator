@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSettings, QThreadPool, QTimer, QUrl
+from PySide6.QtCore import QSettings, Qt, QThreadPool, QTimer, QUrl
 from PySide6.QtGui import QAction, QColor, QDesktopServices, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QApplication,
@@ -24,21 +24,21 @@ from PySide6.QtWidgets import (
 
 from agenda.assembler import build_plan, summarize
 from agenda.configfile import ConfigFileError
-from agenda.pagerange import parse_page_range
 from agenda.gui import export_model as EM
 from agenda.gui import help_text as HT
 from agenda.gui import layout as L
 from agenda.gui import legend_model as LM
+from agenda.gui import style_model as SM
 from agenda.gui import template_model as TM
 from agenda.gui.export_dialog import ExportDialog
 from agenda.gui.export_job import ExportJob, ExportSignals
-from agenda.gui.prefs_dialog import GuiSettingsDialog
 from agenda.gui.legend import Legend
+from agenda.gui.prefs_dialog import GuiSettingsDialog
 from agenda.gui.preview import PreviewWidget
 from agenda.gui.render_cache import Debounce
 from agenda.gui.section_bar import SectionBar
-from agenda.gui import style_model as SM
 from agenda.gui.settings_panel import SettingsPanel
+from agenda.pagerange import parse_page_range
 from agenda.templates import GLOBAL, TEMPLATE_KEYS, is_enabled, section
 
 DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-renders

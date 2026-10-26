@@ -2,19 +2,20 @@ import os
 
 import pytest
 
-pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import Qt  # noqa: E402
-from PySide6.QtWidgets import QApplication, QCheckBox, QLabel  # noqa: E402
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QCheckBox, QLabel
 
-from agenda import templates as T  # noqa: E402
-from agenda.catalog import preset_pages  # noqa: E402
-from agenda.config import Config  # noqa: E402
-from agenda.gui import export_model as EM  # noqa: E402
-from agenda.gui import settings_model as M  # noqa: E402
-from agenda.gui.collapsible import CollapsibleSection  # noqa: E402
-from agenda.gui.settings_panel import SECTION_SWITCHED, SettingsPanel  # noqa: E402
+from agenda import templates as T
+from agenda.catalog import preset_pages
+from agenda.config import Config
+from agenda.gui import export_model as EM
+from agenda.gui import settings_model as M
+from agenda.gui.collapsible import CollapsibleSection
+from agenda.gui.settings_panel import SECTION_SWITCHED, SettingsPanel
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")

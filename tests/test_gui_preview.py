@@ -120,6 +120,7 @@ def _shown(w):
     return [w.grid.itemAt(i).widget() for i in range(w.grid.count())]
 
 
+@pytest.mark.gui
 def test_widget_modes_show_expected_page_counts(qapp):
     w = _widget()
     w.goto(10)
@@ -140,6 +141,7 @@ def test_widget_modes_show_expected_page_counts(qapp):
     assert w.index != 10
 
 
+@pytest.mark.gui
 def test_widget_zoom_changes_pixmap_size_and_error_message(qapp):
     w = _widget()
     w.set_mode(M.SINGLE)
@@ -154,6 +156,7 @@ def test_widget_zoom_changes_pixmap_size_and_error_message(qapp):
     assert w.message.text() == "bad year" and not _shown(w)
 
 
+@pytest.mark.gui
 def test_main_window_preview_follows_settings(qapp):
     from agenda.gui.app import MainWindow
 
@@ -217,6 +220,7 @@ def test_latest_gate_drops_outdated_results():
     assert not g.is_current(first) and g.is_current(second)
 
 
+@pytest.mark.gui
 def test_widget_caches_images_and_navigation_reuses_them(qapp):
     w = _widget()
     w.set_mode(M.SINGLE)
@@ -230,6 +234,7 @@ def test_widget_caches_images_and_navigation_reuses_them(qapp):
     assert not w.busy and len(w.cache) >= n
 
 
+@pytest.mark.gui
 def test_widget_drops_stale_result(qapp):
     w = _widget()
     w.set_mode(M.SINGLE)
@@ -242,6 +247,7 @@ def test_widget_drops_stale_result(qapp):
     assert len(_shown(w)) == 1
 
 
+@pytest.mark.gui
 def test_main_window_debounces_settings_changes(qapp):
     from agenda.gui.app import MainWindow
 

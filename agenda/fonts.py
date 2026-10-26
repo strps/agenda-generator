@@ -30,7 +30,9 @@ def resolve(spec: str) -> dict[str, Path]:
     path = Path(text).expanduser()
     if not text or not path.is_file():
         known = ", ".join(BUILTIN)
-        raise ValueError(f"unknown font {spec!r}: use a built-in name ({known}) or a .ttf/.otf file")
+        raise ValueError(
+            f"unknown font {spec!r}: use a built-in name ({known}) or a .ttf/.otf file"
+        )
     if path.suffix.lower() not in (".ttf", ".otf"):
         raise ValueError(f"font file {spec!r} must be a .ttf or .otf file")
     out = {"": path}

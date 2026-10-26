@@ -2,17 +2,18 @@ import os
 
 import pytest
 
-pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QEvent, QPoint, QPointF  # noqa: E402
-from PySide6.QtGui import QEnterEvent, QHelpEvent  # noqa: E402
-from PySide6.QtWidgets import QApplication, QLabel, QPlainTextEdit  # noqa: E402
+from PySide6.QtCore import QEvent, QPoint, QPointF
+from PySide6.QtGui import QEnterEvent, QHelpEvent
+from PySide6.QtWidgets import QApplication, QLabel, QPlainTextEdit
 
-from agenda.config import Config  # noqa: E402
-from agenda.gui.help_text import PARAM_SHORT, param_tooltip  # noqa: E402
-from agenda.gui.hover_tooltip import HOVER_EXPAND_MS  # noqa: E402
-from agenda.gui.settings_panel import SettingsPanel  # noqa: E402
+from agenda.config import Config
+from agenda.gui.help_text import PARAM_SHORT, param_tooltip
+from agenda.gui.hover_tooltip import HOVER_EXPAND_MS
+from agenda.gui.settings_panel import SettingsPanel
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")

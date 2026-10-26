@@ -1,12 +1,13 @@
 import pytest
 from PySide6.QtCore import QSettings
-from PySide6.QtWidgets import QApplication, QComboBox, QDialog, QLabel
+from PySide6.QtWidgets import QApplication, QComboBox, QDialog
 
 from agenda.gui import style_model as S
 from agenda.gui.app import MainWindow, apply_style
 from agenda.gui.prefs_dialog import GuiSettingsDialog
 from agenda.gui.section_colors import section_color
-from agenda.templates import STYLING
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")

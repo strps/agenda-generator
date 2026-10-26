@@ -2,16 +2,17 @@ import os
 
 import pytest
 
-pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect  # noqa: E402
+from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
 
-from agenda.gui import layout as L  # noqa: E402
-from agenda.gui import template_model as TM  # noqa: E402
-from agenda.gui.app import MainWindow  # noqa: E402
-from agenda.gui.preview import PreviewWidget  # noqa: E402
-from agenda.templates import GLOBAL, STYLING, TEMPLATE_KEYS  # noqa: E402
+from agenda.gui import layout as L
+from agenda.gui import template_model as TM
+from agenda.gui.app import MainWindow
+from agenda.gui.preview import PreviewWidget
+from agenda.templates import GLOBAL, STYLING, TEMPLATE_KEYS
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")

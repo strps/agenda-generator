@@ -34,6 +34,7 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
+@pytest.mark.gui
 def test_main_window_has_all_regions(qapp):
     from agenda.gui.app import MainWindow
 

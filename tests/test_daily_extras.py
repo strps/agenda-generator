@@ -4,9 +4,9 @@ from datetime import date
 from helpers import assert_in_safe_area
 from pypdf import PdfReader
 
+from agenda.config import Config
 from agenda.day_extras import JOIN, builtin_quotes, truncate
 from agenda.draw import HOLIDAY_STYLE, day_style_for, holiday_name_for
-from agenda.config import Config
 from agenda.exporter import add_page, new_document
 from agenda.pages.core import Daily
 

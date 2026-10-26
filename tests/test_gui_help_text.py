@@ -12,8 +12,17 @@ from agenda.gui.help_text import (
     section_tooltip,
 )
 
-IDS = ["open_config", "save_config", "export_pdf", "prev", "next",
-       "mode_single", "mode_spread", "mode_sheet", "zoom"]
+IDS = [
+    "open_config",
+    "save_config",
+    "export_pdf",
+    "prev",
+    "next",
+    "mode_single",
+    "mode_spread",
+    "mode_sheet",
+    "zoom",
+]
 
 
 @pytest.mark.parametrize("key", IDS)

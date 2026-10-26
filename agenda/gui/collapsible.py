@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from agenda.gui.style_model import SPACING
 
 BOX_KINDS = ("planner", "page", "count")
@@ -35,7 +36,11 @@ class _Clip(QWidget):
     def natural_height(self, width: int | None = None) -> int:
         width = self.width() if width is None else width
         h = self.inner.heightForWidth(width) if self.inner.hasHeightForWidth() else -1
-        return h if h >= 0 else max(self.inner.sizeHint().height(), self.inner.minimumSizeHint().height())
+        return (
+            h
+            if h >= 0
+            else max(self.inner.sizeHint().height(), self.inner.minimumSizeHint().height())
+        )
 
     def _height(self, width: int | None = None) -> int:
         return self.natural_height(width) if self.limit is None else self.limit
