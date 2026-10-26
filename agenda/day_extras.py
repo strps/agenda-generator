@@ -62,3 +62,17 @@ def quote_for(d: date, quotes: list[str]) -> str | None:
     if not quotes:
         return None
     return quotes[(d.timetuple().tm_yday - 1) % len(quotes)]
+
+
+def truncate(text: str, max_width: float, width_of) -> str:
+    """``text`` if ``width_of(text) <= max_width``, else the longest prefix + "…" that fits."""
+    if width_of(text) <= max_width:
+        return text
+    lo, hi = 0, len(text)
+    while lo < hi:  # longest prefix whose width with "…" fits
+        mid = (lo + hi + 1) // 2
+        if width_of(text[:mid].rstrip() + "…") <= max_width:
+            lo = mid
+        else:
+            hi = mid - 1
+    return text[:lo].rstrip() + "…"

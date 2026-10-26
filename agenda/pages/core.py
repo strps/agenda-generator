@@ -7,11 +7,20 @@ from datetime import date
 
 from fpdf import FPDF
 
-from agenda import tokens
+from agenda import day_extras, tokens
 from agenda.calendar import days_of_year, month_grid, weeks_by_month
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import DayStyle, day_style_for, draw_mini_month, draw_pattern, holiday_name_for
+from agenda.draw import (
+    DayStyle,
+    day_style_for,
+    dated_entries,
+    draw_mini_month,
+    draw_pattern,
+    holiday_name_for,
+    quotes_for,
+)
+from agenda.day_extras import JOIN, truncate
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -375,8 +384,21 @@ class Daily(BasePage):
         pdf.cell(h.w, h.h, title)
         pdf.set_text_color(*tokens.COLORS["muted"])
         pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
+        right = s("week.number", n=ctx["week"])
+        holiday = holiday_name_for(config)(d) if config.daily_holidays else None
+        if holiday:
+            pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
+            title_w = pdf.get_string_width(title)
+            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
+            room = h.w - title_w - 4 - pdf.get_string_width(f"{JOIN}{right}")
+            holiday = truncate(holiday, max(room, 0), pdf.get_string_width) if room > 0 else None
+            if holiday == "…":
+                holiday = None
+        if holiday:
+            right = f"{holiday}{JOIN}{right}"
         pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("week.number", n=ctx["week"]), align="R")
+        pdf.cell(h.w, h.h, right, align="R")
+        self._footer(pdf, g, d, config)
 
         gap = 1
         sched_cols = (g.columns + 1) // 2
@@ -406,6 +428,27 @@ class Daily(BasePage):
             for n in range(r0 + 2, r1 + 1):
                 y = g.row(n)
                 pdf.line(rx, y, rx + rw, y)
+
+    @staticmethod
+    def _footer(pdf: FPDF, g: Grid, d: date, config: Config) -> None:
+        """Phrase (left, italic) and that date's extra text (right) in the footer band."""
+        f = g.footer
+        quote = None
+        if config.daily_quotes:
+            quote = day_extras.quote_for(d, quotes_for(config))
+        extra = dated_entries(config.daily_extra_file, d.year).get(d)
+        if not quote and not extra:
+            return
+        width = f.w / 2 if quote and extra else f.w
+        pdf.set_text_color(*tokens.COLORS["muted"])
+        if quote:
+            pdf.set_font("Inter", "I", tokens.TYPE_SIZES_PT[0])
+            pdf.set_xy(f.x, f.y)
+            pdf.cell(width, f.h, truncate(quote, width, pdf.get_string_width))
+        if extra:
+            pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
+            pdf.set_xy(f.x2 - width, f.y)
+            pdf.cell(width, f.h, truncate(extra, width, pdf.get_string_width), align="R")
 
     @staticmethod
     def _label(pdf: FPDF, g: Grid, text: str, x: float, w: float, row: int) -> None:

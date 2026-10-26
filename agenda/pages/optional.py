@@ -7,10 +7,10 @@ from datetime import date
 from fpdf import FPDF
 
 from agenda import tokens
-from agenda.calendar import days_in_month, holidays_for, weekday_order
+from agenda.calendar import days_in_month, weekday_order
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import draw_checkbox, draw_circle, draw_label_rule
+from agenda.draw import draw_checkbox, draw_circle, draw_label_rule, merged_holidays
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx, month_ctxs
@@ -627,7 +627,7 @@ class Holidays(BasePage):
         g = grids[0]
         s = Strings(config.language)
         try:
-            found = list(holidays_for(config.year, config.holiday_country, config.language).items())
+            found = list(merged_holidays(config).items())
         except ValueError:
             found = []
         pdf.c_margin = 0

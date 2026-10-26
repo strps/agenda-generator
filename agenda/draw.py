@@ -5,11 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import date
 from functools import lru_cache
+from pathlib import Path
 from typing import NamedTuple
 
 from fpdf import FPDF
 
-from agenda import tokens
+from agenda import day_extras, tokens
 from agenda.calendar import holidays_for, month_grid
 from agenda.config import Config
 from agenda.grid import Grid, Rect
@@ -156,14 +157,68 @@ def _holidays(year: int, country: str, language: str) -> dict[date, str]:
     return holidays_for(year, country, language)
 
 
-def holiday_name_for(config: Config) -> Callable[[date], str | None]:
-    """Return ``f(date) -> holiday name or None`` for ``config.holiday_country``/``language``.
+def _mtime(path: Path) -> float:
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return 0.0
 
-    Holidays are cached per (year, country, language); unknown country raises ValueError.
+
+@lru_cache(maxsize=32)
+def _dated_file(path: str, mtime: float, year: int) -> dict[date, str]:
+    return day_extras.parse_dated(day_extras.read_lines(path), year)
+
+
+def dated_entries(path: Path | None, year: int) -> dict[date, str]:
+    """Entries of a dated file for ``year`` (read once per (path, mtime, year))."""
+    if path is None:
+        return {}
+    return _dated_file(str(path), _mtime(path), year)
+
+
+@lru_cache(maxsize=8)
+def _lines_file(path: str, mtime: float) -> list[str]:
+    return day_extras.read_lines(path)
+
+
+def quotes_for(config: Config) -> list[str]:
+    """Daily phrases: ``daily_quotes_file`` lines, else the built-in quotes."""
+    path = config.daily_quotes_file
+    if path is None:
+        return day_extras.builtin_quotes(config.language)
+    return _lines_file(str(path), _mtime(path))
+
+
+def merged_holidays(config: Config) -> dict[date, str]:
+    """Library holidays plus ``holidays_file`` entries, sorted by date.
+
+    A date in both joins the names with " · " (library first). An unsupported country raises
+    ValueError unless a file is set, in which case only the user entries are returned.
     """
+    user = dated_entries(config.holidays_file, config.year)
+    try:
+        lib = dict(_holidays(config.year, config.holiday_country, config.language))
+    except ValueError:
+        if config.holidays_file is None:
+            raise
+        lib = {}
+    for d, text in user.items():
+        lib[d] = f"{lib[d]}{day_extras.JOIN}{text}" if d in lib else text
+    return dict(sorted(lib.items()))
+
+
+def holiday_name_for(config: Config) -> Callable[[date], str | None]:
+    """Return ``f(date) -> holiday name or None`` from ``merged_holidays(config)``.
+
+    Unknown country raises ValueError (unless ``holidays_file`` is set). Dates outside
+    ``config.year`` use the library only (plus the file's entries for that year).
+    """
+    by_year: dict[int, dict[date, str]] = {}
 
     def name(d: date) -> str | None:
-        return _holidays(d.year, config.holiday_country, config.language).get(d)
+        if d.year not in by_year:
+            by_year[d.year] = merged_holidays(config.model_copy(update={"year": d.year}))
+        return by_year[d.year].get(d)
 
     name(date(config.year, 1, 1))  # fail early on a bad country
     return name
