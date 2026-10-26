@@ -9,16 +9,34 @@ from agenda.day_extras import parse_dated, read_lines
 
 ROOT = Path(__file__).resolve().parent.parent
 PAGES = [
-    "cover", "personal_info", "yearly", "monthly", "weekly", "habits", "health", "qr", "notes",
-    "contacts", "back_cover",
+    "cover",
+    "personal_info",
+    "yearly",
+    "monthly",
+    "weekly",
+    "habits",
+    "health",
+    "qr",
+    "notes",
+    "contacts",
+    "back_cover",
 ]
 
 
 def test_config_yaml_matches_flat_sample():
     expected = Config(
-        page_size="half_letter", year=2027, week_start="monday", language="es",
-        holiday_country="CR", booklet_size=5, booklet_unit="sheets", booklet_folded=True,
-        planners=["weekly", "daily"], notes_pattern="dotted", pad_with="notes", pages=PAGES,
+        page_size="half_letter",
+        year=2027,
+        week_start="monday",
+        language="es",
+        holiday_country="CR",
+        booklet_size=5,
+        booklet_unit="sheets",
+        booklet_folded=True,
+        planners=["weekly", "daily"],
+        notes_pattern="dotted",
+        pad_with="notes",
+        pages=PAGES,
     )
     assert Config(**load_yaml(ROOT / "config.yaml")) == expected
 

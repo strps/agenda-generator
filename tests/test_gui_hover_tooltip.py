@@ -5,17 +5,17 @@ import pytest
 pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QEvent, QPoint, QPointF  # noqa: E402
-from PySide6.QtGui import QEnterEvent, QHelpEvent  # noqa: E402
-from PySide6.QtWidgets import (  # noqa: E402
+from PySide6.QtCore import QEvent, QPoint, QPointF
+from PySide6.QtGui import QEnterEvent, QHelpEvent
+from PySide6.QtWidgets import (
     QApplication,
     QPlainTextEdit,
     QPushButton,
     QSpinBox,
 )
 
-from agenda.gui import hover_tooltip, section_bar  # noqa: E402
-from agenda.gui.hover_tooltip import ExpandingToolTip  # noqa: E402
+from agenda.gui import hover_tooltip, section_bar
+from agenda.gui.hover_tooltip import ExpandingToolTip
 
 SHORT = "short text"
 DETAIL = "detailed explanation"
@@ -46,7 +46,7 @@ def btn(qapp):
 
 
 def test_constant_shared_and_timer(btn):
-    b, tip = btn
+    _b, tip = btn
     assert section_bar.HOVER_EXPAND_MS is hover_tooltip.HOVER_EXPAND_MS
     assert tip.expand_timer.interval() == hover_tooltip.HOVER_EXPAND_MS
     assert tip.expand_timer.isSingleShot()

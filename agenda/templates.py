@@ -164,6 +164,7 @@ SECTIONS: tuple[SectionSpec, ...] = (
     ),
 )
 
+
 @dataclass(frozen=True)
 class GroupSpec:
     key: str

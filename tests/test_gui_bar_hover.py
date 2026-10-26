@@ -5,13 +5,13 @@ import pytest
 pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QEvent  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtCore import QEvent
+from PySide6.QtWidgets import QApplication
 
-from agenda.config import Config  # noqa: E402
-from agenda.gui import bar_model as B  # noqa: E402
-from agenda.gui import help_text, section_bar  # noqa: E402
-from agenda.assembler import build_plan  # noqa: E402
+from agenda.assembler import build_plan
+from agenda.config import Config
+from agenda.gui import bar_model as B
+from agenda.gui import help_text, section_bar
 
 
 @pytest.fixture(scope="module")

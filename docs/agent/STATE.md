@@ -1,5 +1,7 @@
-# STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 13   (plan: export dialog, then PDF style; earlier decisions below still hold)
+# STATE: agenda-generator        (rewritten each phase)
+Plan: 2026-10-26-structure-cleanup
+Last phase: 01
+ADRs: docs/adr/README.md (none yet; earlier-plan decisions kept below)
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -64,6 +66,7 @@ Last phase: 13   (plan: export dialog, then PDF style; earlier decisions below s
 - settings_model.config_to_yaml_data(cfg) grouped dict; config_to_data stays flat; tests/test_templates.py
 
 ## Open issues
+- Phase 01 decision: ruff unsafe-fix used only for tests (unused unpacked vars renamed _x); explicit check=False on subprocess.run (structure-cleanup/01)
 - footer placement can overlap the day-page quote/extra text in the footer band (not avoided)
 
 ## Blocked
@@ -72,4 +75,4 @@ Last phase: 13   (plan: export dialog, then PDF style; earlier decisions below s
 ## Changes this phase (only when phases are not committed)
 
 ## Suggested for CLAUDE.md
-- Run tests with `.venv/bin/python -m pytest` and QT_QPA_PLATFORM=offscreen
+- Ruff is clean (check + format); keep it so. Run tests with `.venv/bin/python -m pytest` and QT_QPA_PLATFORM=offscreen

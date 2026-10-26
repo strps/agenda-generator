@@ -43,7 +43,9 @@ def flatten(data: dict[str, Any]) -> dict[str, Any]:
     Config field names (``booklet_size``, ``daily_months``, ...)."""
     blocks = {
         "booklet": BOOKLET_KEYS,
-        **{s.block: {**s.fields, **LEGACY_BLOCK_KEYS.get(s.block, {})} for s in SECTIONS if s.block},
+        **{
+            s.block: {**s.fields, **LEGACY_BLOCK_KEYS.get(s.block, {})} for s in SECTIONS if s.block
+        },
     }
     out = {k: v for k, v in data.items() if k not in blocks}
     for name, keys in blocks.items():

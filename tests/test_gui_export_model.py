@@ -20,7 +20,7 @@ def base():
 
 def test_no_pyside_import():
     code = "import sys, agenda.gui.export_model; sys.exit('PySide6' in sys.modules)"
-    assert subprocess.run([sys.executable, "-c", code]).returncode == 0
+    assert subprocess.run([sys.executable, "-c", code], check=False).returncode == 0
 
 
 def test_fields_exist_and_documented():
@@ -101,7 +101,12 @@ def test_cli_args_match_export(tmp_path, layout, extra, rng):
     assert EM.validate(v, rng) == ""
     args = EM.cli_args(v, rng, default_values())
     base_args = [
-        "--year", "2026", "--planners", "weekly", "--daily-months", "",
+        "--year",
+        "2026",
+        "--planners",
+        "weekly",
+        "--daily-months",
+        "",
     ]
     out = tmp_path / "cli.pdf"
     assert main(base_args + args + ["--output", str(out)]) == 0

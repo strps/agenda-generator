@@ -48,7 +48,9 @@ def test_defaults_and_validation():
         Config(niche_student_pages=21)
 
 
-@pytest.mark.parametrize("cls", [Daily, Schedule, Habits, PackEntrepreneur, PackStudent, PackFitness])
+@pytest.mark.parametrize(
+    "cls", [Daily, Schedule, Habits, PackEntrepreneur, PackStudent, PackFitness]
+)
 def test_defaults_render_like_explicit_old_values(cls):
     explicit = Config(
         daily_hour_start=6,
@@ -67,7 +69,9 @@ def test_default_hour_labels():
 
 
 def test_daily_hour_range():
-    text = text_of(render_page(Daily, Config(daily_months=[1], daily_hour_start=8, daily_hour_end=12)))
+    text = text_of(
+        render_page(Daily, Config(daily_months=[1], daily_hour_start=8, daily_hour_end=12))
+    )
     for h in range(8, 13):
         assert f"{h:02d}:00" in text
     assert "07:00" not in text and "13:00" not in text

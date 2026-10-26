@@ -6,14 +6,14 @@ import pytest
 pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QWidget  # noqa: E402
+from PySide6.QtWidgets import QApplication, QWidget
 
-from agenda import fonts, themes  # noqa: E402
-from agenda import templates as T  # noqa: E402
-from agenda.config import Config  # noqa: E402
-from agenda.gui import settings_model as M  # noqa: E402
-from agenda.gui.hover_tooltip import ExpandingToolTip  # noqa: E402
-from agenda.gui.settings_panel import SettingsPanel  # noqa: E402
+from agenda import fonts, themes
+from agenda import templates as T
+from agenda.config import Config
+from agenda.gui import settings_model as M
+from agenda.gui.hover_tooltip import ExpandingToolTip
+from agenda.gui.settings_panel import SettingsPanel
 
 COLORS = [n for n in Config.model_fields if n.startswith("color_")]
 FONTS = ["font_primary", "font_secondary"]

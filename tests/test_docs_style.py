@@ -6,9 +6,16 @@ from agenda import themes
 
 ROOT = Path(__file__).resolve().parent.parent
 FLAGS = [
-    "--theme", "--color-ink", "--color-muted", "--color-line", "--color-accent",
-    "--color-tint", "--color-weekend-fill", "--color-holiday-fill",
-    "--font-primary", "--font-secondary",
+    "--theme",
+    "--color-ink",
+    "--color-muted",
+    "--color-line",
+    "--color-accent",
+    "--color-tint",
+    "--color-weekend-fill",
+    "--color-holiday-fill",
+    "--font-primary",
+    "--font-secondary",
 ]
 
 

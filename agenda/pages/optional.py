@@ -416,7 +416,9 @@ class Habits(BasePage):
                 pdf.rect(gx + d * cell_w, g.row(1), cell_w, (n + 1) * g.baseline, style="F")
 
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])  # regular: narrower digits
+        pdf.set_font(
+            font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0]
+        )  # regular: narrower digits
         pdf.set_xy(x, g.row(1))
         pdf.cell(name_w, g.baseline, s("habits.habit"))
         for d in range(days):

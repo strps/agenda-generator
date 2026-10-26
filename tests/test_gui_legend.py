@@ -124,7 +124,9 @@ def _corner(widget):
 
 
 def test_chips_fill_color_and_padding_is_hatched():
-    lg = _legend_with([M.LegendEntry("padding", "Padding", 2), M.LegendEntry("monthly", "Monthly", 3)])
+    lg = _legend_with(
+        [M.LegendEntry("padding", "Padding", 2), M.LegendEntry("monthly", "Monthly", 3)]
+    )
     lg.resize(600, 40)
     lg.show()
     assert len(_corner(lg.buttons["padding"])) >= 2

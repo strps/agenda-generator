@@ -192,6 +192,8 @@ def test_page_range_flag(tmp_path, capsys):
     out = tmp_path / "r.pdf"
     assert main([*base, "--page-range", "2-3", "--output", str(out)]) == 0
     assert len(PdfReader(str(out)).pages) == 2
-    assert main([*base, "--page-range", "2-3", "--imposition", "--folded", "--output", str(out)]) == 2
+    assert (
+        main([*base, "--page-range", "2-3", "--imposition", "--folded", "--output", str(out)]) == 2
+    )
     assert "page range" in capsys.readouterr().err
     assert main([*base, "--page-range", "999", "--output", str(out)]) == 2

@@ -440,13 +440,13 @@ PARAM_DETAILS: dict[str, str] = {
         "#). Empty = use the theme's color."
     ),
     "font_primary": (
-        "Font for headings, titles and every bold text: the bundled \"inter\" or the path of a "
+        'Font for headings, titles and every bold text: the bundled "inter" or the path of a '
         ".ttf/.otf file. Bold/italic variants are looked up next to the file (MyFont-Regular.ttf "
         "-> MyFont-Bold.ttf); missing styles use the regular file. The font must contain the "
         "characters of the agenda language."
     ),
     "font_secondary": (
-        "Font for body text, labels, numbers and italic text: the bundled \"inter\" or the path "
+        'Font for body text, labels, numbers and italic text: the bundled "inter" or the path '
         "of a .ttf/.otf file. Bold/italic variants are looked up next to the file (MyFont-Regular.ttf "
         "-> MyFont-Italic.ttf); missing styles use the regular file. The font must contain the "
         "characters of the agenda language."

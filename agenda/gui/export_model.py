@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import shlex
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from agenda.config import Config
 

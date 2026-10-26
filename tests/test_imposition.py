@@ -272,6 +272,7 @@ def test_binding_margin_lands_on_the_fold_side(tmp_path, booklet_size):
 
 # ---------------------------------------------------------------- spreads and sheet size
 
+
 def test_spread_sides():
     from agenda.imposition import spread_sides
 
@@ -332,8 +333,21 @@ def test_cli_spreads_sheet_size(tmp_path):
     from agenda.cli import main
 
     out = tmp_path / "c.pdf"
-    code = main(["--year", "2026", "--planners", "weekly", "--daily-months", "",
-                 "--spreads", "--sheet-size", "a4", "-o", str(out)])
+    code = main(
+        [
+            "--year",
+            "2026",
+            "--planners",
+            "weekly",
+            "--daily-months",
+            "",
+            "--spreads",
+            "--sheet-size",
+            "a4",
+            "-o",
+            str(out),
+        ]
+    )
     assert code == 0
-    w, h = _sheet_mm(PdfReader(str(out)).pages[0])
+    w, _h = _sheet_mm(PdfReader(str(out)).pages[0])
     assert abs(w - 297) < 0.5

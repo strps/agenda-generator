@@ -4,8 +4,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 FLAGS = [
-    "--page-number-start", "--page-number-first", "--page-number-position",
-    "--page-number-placement", "--page-number-format", "--spreads", "--sheet-size",
+    "--page-number-start",
+    "--page-number-first",
+    "--page-number-position",
+    "--page-number-placement",
+    "--page-number-format",
+    "--spreads",
+    "--sheet-size",
     "--page-range",
 ]
 

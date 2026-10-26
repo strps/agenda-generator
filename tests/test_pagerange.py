@@ -13,7 +13,9 @@ def test_all(text):
     assert parse_page_range(text, 10) is None
 
 
-@pytest.mark.parametrize("text,token", [("0", "0"), ("4-2", "4-2"), ("11", "11"), ("a", "a"), ("1,x-3", "x-3")])
+@pytest.mark.parametrize(
+    "text,token", [("0", "0"), ("4-2", "4-2"), ("11", "11"), ("a", "a"), ("1,x-3", "x-3")]
+)
 def test_bad(text, token):
     with pytest.raises(ValueError, match=token):
         parse_page_range(text, 10)

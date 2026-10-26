@@ -51,10 +51,18 @@ def test_daily_quote(tmp_path):
 def test_disabled_and_keys():
     assert len(sample_plan(Config(planners=["weekly"]), "daily")) == 1
     assert len(sample_plan(Config(contacts_pages=0), "contacts")) >= 1
-    for k in (
-        "notes daily weekly contacts schedule habits qr "
-        "niche_entrepreneur niche_student niche_fitness"
-    ).split():
+    for k in [
+        "notes",
+        "daily",
+        "weekly",
+        "contacts",
+        "schedule",
+        "habits",
+        "qr",
+        "niche_entrepreneur",
+        "niche_student",
+        "niche_fitness",
+    ]:
         assert k in TEMPLATE_KEYS
 
 

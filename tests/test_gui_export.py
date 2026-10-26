@@ -123,14 +123,15 @@ def test_gui_export_matches_cli_per_layout(qapp, tmp_path, layout):
 def test_gui_export_matches_cli_styled(qapp, tmp_path):
     import shutil
 
-    from agenda.gui.app import MainWindow
     from agenda.fonts import FONT_DIR, FONT_FILES
+    from agenda.gui.app import MainWindow
 
     font = tmp_path / "MyFont-Regular.ttf"
     shutil.copy(FONT_DIR / FONT_FILES[""], font)
     win = MainWindow()
-    win.settings.set_values({**SMALL, "theme": "ocean", "color_accent": "#0000ff",
-                             "font_primary": str(font)})
+    win.settings.set_values(
+        {**SMALL, "theme": "ocean", "color_accent": "#0000ff", "font_primary": str(font)}
+    )
     win.flush_preview()
     gui_pdf = tmp_path / "gui.pdf"
     assert win.start_export(str(gui_pdf))

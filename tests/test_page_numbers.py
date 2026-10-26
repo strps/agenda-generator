@@ -35,16 +35,31 @@ def test_off_has_no_label(tmp_path):
 
 def test_cli_start_and_format(tmp_path):
     out = tmp_path / "c.pdf"
-    code = main(["--year", "2026", "--planners", "weekly", "--daily-months", "",
-                 "--page-numbers", "--page-number-start", "10",
-                 "--page-number-format", "{n} / {total}", "--output", str(out)])
+    code = main(
+        [
+            "--year",
+            "2026",
+            "--planners",
+            "weekly",
+            "--daily-months",
+            "",
+            "--page-numbers",
+            "--page-number-start",
+            "10",
+            "--page-number-format",
+            "{n} / {total}",
+            "--output",
+            str(out),
+        ]
+    )
     assert code == 0
     assert "10 / " in texts(out)[0]
 
 
 def test_footer_placement(tmp_path):
-    cfg = Config(**SMALL, page_numbers=True, page_number_placement="footer",
-                 page_number_format="<{n}>")
+    cfg = Config(
+        **SMALL, page_numbers=True, page_number_placement="footer", page_number_format="<{n}>"
+    )
     assert "<5>" in texts(export_agenda(cfg, tmp_path / "f.pdf"))[4]
 
 
@@ -55,8 +70,12 @@ def test_bad_format_rejected(bad):
 
 
 def test_label_for():
-    cfg = Config(page_numbers=True, page_number_start=10, page_number_first=3,
-                 page_number_format="{n}/{total}")
+    cfg = Config(
+        page_numbers=True,
+        page_number_start=10,
+        page_number_first=3,
+        page_number_format="{n}/{total}",
+    )
     assert label_for(cfg, 2, 20) is None
     assert label_for(cfg, 3, 20) == "10/27"
     assert label_for(cfg, 4, 20) == "11/27"

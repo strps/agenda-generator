@@ -79,7 +79,7 @@ def test_page_range_and_open_after(qapp, tmp_path, monkeypatch):
 def test_cancel_starts_no_export(qapp, tmp_path, monkeypatch):
     from agenda.gui.export_dialog import ExportDialog
 
-    win, prefs = _win(tmp_path, monkeypatch)
+    win, _prefs = _win(tmp_path, monkeypatch)
     monkeypatch.setattr(ExportDialog, "exec", lambda self: 0)
     win.export_dialog()
     assert not win.export_running

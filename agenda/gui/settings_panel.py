@@ -307,9 +307,7 @@ class SettingsPanel(QFrame):
                 out[spec.name] = w.isChecked()  # type: ignore[attr-defined]
             elif k in (M.CHOICE, M.OPT_CHOICE, M.THEME, M.PAGE_CHOICE):
                 out[spec.name] = w.currentData()  # type: ignore[attr-defined]
-            elif k in (M.COLOR, M.FONT):
-                out[spec.name] = w.value()  # type: ignore[attr-defined]
-            elif k in (M.INT, M.FLOAT):
+            elif k in (M.COLOR, M.FONT) or k in (M.INT, M.FLOAT):
                 out[spec.name] = w.value()  # type: ignore[attr-defined]
             elif k == M.MULTI_CHOICE:
                 out[spec.name] = [

@@ -5,7 +5,7 @@ import pytest
 pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from agenda.gui import help_text as HT  # noqa: E402
+from agenda.gui import help_text as HT
 
 
 @pytest.fixture(scope="module")
@@ -53,7 +53,6 @@ def test_all_interactive_widgets_have_tooltips(qapp):
     from PySide6.QtWidgets import QComboBox, QPushButton
 
     from agenda.gui.app import MainWindow
-    from agenda.gui.preview import PreviewWidget
 
     win = MainWindow()
     toolbar = win.open_button.parentWidget()
