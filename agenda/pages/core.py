@@ -22,6 +22,7 @@ from agenda.draw import (
     font,
     holiday_name_for,
     quotes_for,
+    switch_page,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -254,7 +255,7 @@ class Weekly(BasePage):
         days: list[date] = ctx["days"]
         style_of, name_of = day_style_for(config, pdf), holiday_name_for(config)
         last = pdf.page
-        pdf.page = last - 1  # left page
+        switch_page(pdf, last - 1)  # left page
         self._page(
             pdf,
             grids[0],
@@ -264,7 +265,7 @@ class Weekly(BasePage):
             style_of,
             name_of,
         )
-        pdf.page = last
+        switch_page(pdf, last)
         months = []
         for d in days:
             name = s.month_name(d.month)

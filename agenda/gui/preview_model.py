@@ -32,8 +32,9 @@ def sheet_rows(index: int, booklet_of: Sequence[int | None]) -> list[list[int]]:
     """Rows [front side, back side] (left-to-right) of the folded sheet holding ``index``.
 
     ``booklet_of[i]`` is the booklet number of plan entry i (None = outside booklets, e.g. a
-    separate cover). Pages of a booklet are numbered 1..N in plan order; sheet s (1-based) has
-    front (N-2s+2, 2s-1) and back (2s, N-2s+1). A page outside any booklet is shown as a spread.
+    separate cover). Pages of a booklet are numbered 1..N in plan order, N rounded up to whole
+    sheets (positions past the last page are left out); sheet s (1-based) has front
+    (N-2s+2, 2s-1) and back (2s, N-2s+1). A page outside any booklet is shown as a spread.
     """
     total = len(booklet_of)
     _check(index, total)
@@ -42,10 +43,11 @@ def sheet_rows(index: int, booklet_of: Sequence[int | None]) -> list[list[int]]:
         return [spread_indices(index, total)]
     members = [i for i, x in enumerate(booklet_of) if x == b]
     n = len(members)
-    k = members.index(index) + 1
-    s = (k + 1) // 2 if k <= n // 2 else (n - k) // 2 + 1
-    front = (n - 2 * s + 2, 2 * s - 1)
-    back = (2 * s, n - 2 * s + 1)
+    s = sheet_number(index, booklet_of)
+    assert s is not None
+    full = _whole_sheets(n)
+    front = (full - 2 * s + 2, 2 * s - 1)
+    back = (2 * s, full - 2 * s + 1)
     return [[members[p - 1] for p in side if 1 <= p <= n] for side in (front, back)]
 
 
@@ -55,8 +57,13 @@ def sheet_number(index: int, booklet_of: Sequence[int | None]) -> int | None:
     if b is None:
         return None
     members = [i for i, x in enumerate(booklet_of) if x == b]
-    n, k = len(members), members.index(index) + 1
+    n, k = _whole_sheets(len(members)), members.index(index) + 1
     return (k + 1) // 2 if k <= n // 2 else (n - k) // 2 + 1
+
+
+def _whole_sheets(pages: int) -> int:
+    """``pages`` rounded up to a multiple of 4 (one folded sheet)."""
+    return -(-pages // 4) * 4
 
 
 def display_rows(

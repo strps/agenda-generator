@@ -5,6 +5,7 @@ import pytest
 from helpers import assert_in_safe_area, drawn_points
 from pypdf import PdfReader
 
+from agenda import tokens
 from agenda.calendar import iso_weeks_in_year
 from agenda.catalog import get_page, pages_by_category
 from agenda.config import Config
@@ -23,6 +24,17 @@ def render_spreads(cfg: Config) -> bytes:
         grids = [add_page(pdf, cfg) for _ in range(page.pages)]
         page.draw(pdf, ctx, cfg, grids)
     return bytes(pdf.output())
+
+
+def test_both_pages_get_the_hairline_stroke():
+    cfg = Config(year=2026)
+    reader = PdfReader(io.BytesIO(render_spreads(cfg)))
+    hairline = f"{tokens.STROKE_HAIRLINE * 72 / 25.4:.2f} w".encode()
+    rgb = " ".join(f"{c / 255:.4f}" for c in tokens.COLORS["line"])
+    for page in reader.pages[1:3]:
+        data = page.get_contents().get_data()
+        assert hairline in data
+        assert f"{rgb} RG".encode() in data
 
 
 def test_registered_as_core_weekly():

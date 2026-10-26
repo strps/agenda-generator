@@ -3,13 +3,13 @@
 import time
 
 from PySide6.QtCore import Qt, QThreadPool, Signal
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtGui import QColor, QImage, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
-    QGraphicsOpacityEffect,
     QButtonGroup,
     QComboBox,
     QFrame,
+    QGraphicsOpacityEffect,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -33,7 +33,7 @@ INACTIVE_OPACITY = 0.35
 
 
 class PreviewWidget(QFrame):
-    """Navigation bar (prev/next, label, mode, zoom) above a scroll area with the pages."""
+    """Navigation bar (mode, prev/label/next, zoom) above a scroll area with the pages."""
 
     page_changed = Signal(int)  # current 0-based plan index
 
@@ -62,8 +62,8 @@ class PreviewWidget(QFrame):
         self.prev_button.setToolTip(TOOLTIPS["prev"])
         self.next_button.setToolTip(TOOLTIPS["next"])
         self.label = QLabel("")
-        bar.addWidget(self.prev_button)
-        bar.addWidget(self.label, 1)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setMinimumWidth(170)  # keeps prev/next from jumping as the text changes
         self.mode_buttons: dict[str, QPushButton] = {}
         group = QButtonGroup(self)
         group.setExclusive(True)
@@ -76,7 +76,11 @@ class PreviewWidget(QFrame):
             bar.addWidget(b)
             self.mode_buttons[m] = b
             b.clicked.connect(lambda _=False, m=m: self.set_mode(m))
+        bar.addStretch(1)
+        bar.addWidget(self.prev_button)
+        bar.addWidget(self.label)
         bar.addWidget(self.next_button)
+        bar.addStretch(1)
         self.zoom_box = QComboBox()
         for z in M.ZOOM_CHOICES:
             self.zoom_box.addItem("fit" if z == M.FIT else f"{z}%", z)
@@ -213,10 +217,17 @@ class PreviewWidget(QFrame):
 
     def _show(self, rows: list[list[int]]) -> None:
         self._clear()
+        assert self.cfg is not None
+        joined = M.effective_mode(self.mode, self.cfg.booklet_folded) == M.SHEET
         for r, row in enumerate(rows):
-            for c, idx in enumerate(row):
+            imgs = [self.cache.get(cache_key(self._hash, idx, self._zkey)) for idx in row]
+            if joined:  # one picture per sheet side: the pages touch, fold line between them
+                if len(rows) == 2 and len(imgs) == 1:
+                    # Partial sheet: the missing page is the front's left / the back's right half.
+                    imgs = [None, *imgs] if r == 0 else [*imgs, None]
+                imgs = [_join_side(imgs)]
+            for c, img in enumerate(imgs):
                 pic = QLabel()
-                img = self.cache.get(cache_key(self._hash, idx, self._zkey))
                 pic.setPixmap(QPixmap.fromImage(img))
                 self.grid.addWidget(pic, r, c)
         self.page_changed.emit(self.index)
@@ -225,3 +236,25 @@ class PreviewWidget(QFrame):
         while (item := self.grid.takeAt(0)) is not None:
             if item.widget():
                 item.widget().deleteLater()
+
+
+def _join_side(images: list[QImage | None]) -> QImage:
+    """``images`` side by side with no gap and a dashed fold line at each seam; None leaves an
+    empty (transparent) slot the size of the other pages."""
+    real = [i for i in images if i is not None]
+    pw = real[0].width()
+    w = sum(pw if i is None else i.width() for i in images)
+    h = max(i.height() for i in real)
+    out = QImage(w, h, QImage.Format.Format_ARGB32_Premultiplied)
+    out.fill(Qt.GlobalColor.transparent)
+    p = QPainter(out)
+    x = 0
+    for n, img in enumerate(images):
+        if img is not None:
+            p.drawImage(x, 0, img)
+        if n:
+            p.setPen(QPen(QColor(150, 150, 150), 1, Qt.PenStyle.DashLine))
+            p.drawLine(x, 0, x, h)
+        x += pw if img is None else img.width()
+    p.end()
+    return out

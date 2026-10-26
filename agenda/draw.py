@@ -153,6 +153,19 @@ def color(pdf: FPDF, name: str) -> tuple[int, int, int]:
     return getattr(pdf, "agenda_palette", _DEFAULT)[name]
 
 
+def switch_page(pdf: FPDF, n: int) -> None:
+    """Make page ``n`` current and write the current stroke/fill state into its stream.
+
+    fpdf2 only writes a state change, and its cache is per document: without this, a page drawn
+    after switching back to it keeps the line width and colors it was added with.
+    """
+    pdf.page = n
+    assert pdf.draw_color is not None and pdf.fill_color is not None
+    pdf._out(f"{pdf.line_width * pdf.k:.2f} w")
+    pdf._out(pdf.draw_color.serialize().upper())
+    pdf._out(pdf.fill_color.serialize().lower())
+
+
 def font(pdf: FPDF, role: str) -> str:
     """Font family for ``role`` ("primary" = headings/bold, "secondary" = body) registered on ``pdf``."""
     return getattr(pdf, "agenda_fonts", {}).get(role, "Inter")

@@ -21,6 +21,13 @@ def test_sheet_rows_saddle_stitch():
     assert M.sheet_rows(8, booklet) == [[15, 8], [9, 14]]
 
 
+def test_sheet_rows_partial_sheet_leaves_missing_pages_out():
+    booklet = [1, 1, 1]  # e.g. a template sample: filler + two-page week
+    assert M.sheet_rows(0, booklet) == [[0], [1, 2]]
+    assert M.sheet_rows(2, booklet) == [[0], [1, 2]]
+    assert M.sheet_number(1, booklet) == 1
+
+
 def test_sheet_rows_cover_outside_booklets_is_a_spread():
     booklet = [None, None, 1, 1, 1, 1, None, None]
     assert M.sheet_rows(0, booklet) == [[0]]
@@ -125,7 +132,9 @@ def test_widget_modes_show_expected_page_counts(qapp):
     assert len(_shown(w)) == 1
     w.set_mode(M.SHEET)
     assert w.wait_idle()
-    assert len(_shown(w)) == 4
+    assert len(_shown(w)) == 2  # front and back, each side one picture
+    side = _shown(w)[0].pixmap()
+    assert side.width() > side.height()  # two portrait pages joined
     w.move(1)
     assert w.wait_idle()
     assert w.index != 10
