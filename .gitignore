@@ -6,3 +6,5 @@ __pycache__/
 build/
 dist/
 output/
+docs/agent/logs/*
+!docs/agent/logs/.gitkeep
