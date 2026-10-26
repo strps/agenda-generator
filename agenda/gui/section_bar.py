@@ -1,16 +1,16 @@
 """Section bar widget: paints the geometry from `bar_model` (no layout logic here)."""
 
-from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer, Signal
+from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QPainter, QPen
 from PySide6.QtWidgets import QToolTip, QWidget
 
 from agenda.gui import bar_model as B
 from agenda.gui import help_text
 from agenda.gui import section_colors as C
+from agenda.gui.hover_tooltip import HOVER_EXPAND_MS, make_expand_timer  # noqa: F401
 
 TICK_H = 6
 MARKER_W = 2
-HOVER_EXPAND_MS = 1500  # hover delay before the tooltip adds the section description
 
 
 KEYS = {
@@ -38,10 +38,7 @@ class SectionBar(QWidget):
         self._hover_text = ""
         self._expanded = False
         self._last_pos: QPoint | None = None
-        self.expand_timer = QTimer(self)
-        self.expand_timer.setSingleShot(True)
-        self.expand_timer.setInterval(HOVER_EXPAND_MS)
-        self.expand_timer.timeout.connect(self._expand)
+        self.expand_timer = make_expand_timer(self, self._expand)
 
     def set_plan(self, plan) -> None:
         self.plan = list(plan)
