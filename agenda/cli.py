@@ -123,6 +123,14 @@ def run(
     daily_hour_end: Annotated[
         int | None, typer.Option(help="Last hour (0-23) on day pages.")
     ] = None,
+    weekly_filler: Annotated[
+        str | None,
+        typer.Option(help="Filler before a week spread: blank, none or a page id."),
+    ] = None,
+    daily_filler: Annotated[
+        str | None,
+        typer.Option(help="Filler after a week's day pages: blank, none or a page id."),
+    ] = None,
     schedule_first_hour: Annotated[
         int | None, typer.Option(help="First hour (0-23) of the weekly schedule.")
     ] = None,
@@ -292,6 +300,8 @@ def run(
             daily_months=daily_months,
             daily_hour_start=daily_hour_start,
             daily_hour_end=daily_hour_end,
+            weekly_filler=weekly_filler,
+            daily_filler=daily_filler,
             schedule_first_hour=schedule_first_hour,
             schedule_last_hour=schedule_last_hour,
             habits_max=habits_max,

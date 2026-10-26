@@ -23,6 +23,7 @@ from agenda.sizes import SIZES, PageSize, parse_size, resolve_size
 
 QR_MAX_CHARS = 200
 QR_MAX_COUNT = 24
+FILLER_MODES = ("blank", "none")
 
 
 def _parse_months(value: object) -> object:
@@ -85,6 +86,11 @@ class Config(BaseModel):
     # Per-template page settings (defaults = the former hard-coded page constants).
     daily_hour_start: int = Field(6, ge=0, le=23)
     daily_hour_end: int = Field(21, ge=0, le=23)
+    # What fills the slot that keeps a week spread on a left page (see _check_filler): "blank",
+    # "none" (no filler; the spread may start on a right page) or a 1-page catalog id. The
+    # daily setting applies when the slot follows a day page, the weekly one otherwise.
+    weekly_filler: str = "blank"
+    daily_filler: str = "blank"
     schedule_first_hour: int = Field(7, ge=0, le=23)
     schedule_last_hour: int = Field(21, ge=0, le=23)
     habits_max: int = Field(20, ge=1, le=40)
@@ -222,6 +228,25 @@ class Config(BaseModel):
             get_page(v)
         except KeyError as exc:
             raise ValueError(exc.args[0]) from None
+        return v
+
+    @field_validator("weekly_filler", "daily_filler")
+    @classmethod
+    def _check_filler(cls, v: str, info: ValidationInfo) -> str:
+        """``blank``, ``none`` or a single-page catalog id with no side constraint."""
+        from agenda.catalog import get_page
+
+        v = v.strip().lower()
+        if v in FILLER_MODES:
+            return v
+        try:
+            page = get_page(v)
+        except KeyError:
+            raise ValueError(
+                f"{info.field_name} must be blank, none or a page id; unknown page {v!r}"
+            ) from None
+        if page.pages != 1 or page.starts_on != "any":
+            raise ValueError(f"{info.field_name}: page {v!r} must be a single page with no side")
         return v
 
     @field_validator("holiday_country")

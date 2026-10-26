@@ -96,13 +96,14 @@ The settings are grouped into sections, in the GUI and in the YAML file: **Globa
 year, language, booklets, page list, `holidays_file`), **Notes & padding**, one section per page
 template that has options (`daily`, `weekly`, `contacts`, `schedule`, `habits`, `qr`, and the niche
 packs `niche_entrepreneur`, `niche_student`, `niche_fitness`) and **PDF colors & fonts** (`style`).
-Each section can be written as a block (`notes:`, `daily:`, `contacts:`, `schedule:`, `habits:`,
+Each section can be written as a block (`notes:`, `daily:`, `weekly:`, `contacts:`, `schedule:`, `habits:`,
 `qr:`, `niche_*:`, `style:`) with short keys. Save writes the blocks; flat keys (`notes_pages`,
 `daily_hour_start`, ...) still load and give the same result.
 
 ```yaml
 notes:      {pattern: dotted, pages: 1, pad_with: notes, extra_padding: 0}
-daily:      {months: "1-12", hour_start: 6, hour_end: 21, holidays: true, quotes: false}
+daily:      {months: "1-12", hour_start: 6, hour_end: 21, holidays: true, quotes: false, filler: blank}
+weekly:     {filler: blank}
 contacts:   {pages: 1}
 schedule:   {first_hour: 7, last_hour: 21}
 habits:     {max: 20}
@@ -132,6 +133,22 @@ A padding unit is one copy of the `pad_with` page (a catalog id, default `notes`
 the back cover. `extra_padding` (default 0) is the minimum number of units; the count is rounded
 up so the last booklet is whole, so you may get more than asked. `notes_pages` are separate,
 regular back-matter pages and are not padding.
+
+### Fillers
+
+Week spreads start on a left page. When a spread would start on a right page, a filler page is
+put before it. `daily_filler` (`daily: {filler: ...}`) sets the filler that follows a week's day
+pages, and `weekly_filler` (`weekly: {filler: ...}`) sets every other one, for example after a
+monthly page or when there are no day pages. Each takes one of these values:
+
+| Value | Effect |
+|---|---|
+| `blank` (default) | An empty page |
+| `none` | No filler: the spread starts on a right page and is split across two leaves |
+| a page id, e.g. `notes`, `todo` | That single-page template is printed in the slot |
+
+CLI: `--weekly-filler`, `--daily-filler`. Fillers are not padding: padding only completes the
+last booklet (see above).
 
 ### Day extras
 

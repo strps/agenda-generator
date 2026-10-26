@@ -139,7 +139,7 @@ def _day(d) -> str:
 def _detail(entry) -> str:
     ctx = entry.ctx or {}
     if entry.kind == "filler":
-        return "Blank"
+        return "Blank" if entry.is_blank else f"{entry.page_class.name} (filler)"
     if "days" in ctx:
         days = ctx["days"]
         a, b = days[0], days[-1]

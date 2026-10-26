@@ -144,6 +144,8 @@ PARAM_SHORT: dict[str, str] = {
     "qr_urls": "Texts or URLs for the QR page, one per line.",
     "daily_hour_start": "First hour printed on day pages (0-23).",
     "daily_hour_end": "Last hour printed on day pages (0-23).",
+    "weekly_filler": "What fills the page before a week spread: blank, none or a page id.",
+    "daily_filler": "What fills the page after a week's day pages: blank, none or a page id.",
     "schedule_first_hour": "First hour of the weekly schedule (0-23).",
     "schedule_last_hour": "Last hour of the weekly schedule (0-23).",
     "habits_max": "Maximum habit rows per month (1-40).",
@@ -287,6 +289,18 @@ PARAM_DETAILS: dict[str, str] = {
     "daily_hour_end": (
         "Last hour of the hourly schedule on day pages, 0-23 (default 21, shown as 21:00). It "
         "must be greater than daily_hour_start. The page still shows fewer hours when they do not fit."
+    ),
+    "weekly_filler": (
+        "Week spreads start on a left page, so a filler page is added before a spread that "
+        "would start on a right page. blank (the default) leaves it empty; none adds no "
+        "filler, so such a spread starts on a right page and is split across two leaves; a "
+        "single-page catalog id (e.g. notes or todo) prints that page in the slot. Used when "
+        "the slot does not follow a day page."
+    ),
+    "daily_filler": (
+        "Same as weekly_filler, for the filler slot that follows the last day page of a week "
+        "(before the next week spread). blank (the default), none or a single-page catalog "
+        "id such as notes. With both planners on, most fillers are in this slot."
     ),
     "schedule_first_hour": (
         "Hour of the first row of the weekly schedule page, 0-23 (default 7). It must be less "

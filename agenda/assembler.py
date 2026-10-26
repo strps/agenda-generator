@@ -189,7 +189,9 @@ def build_plan(config: Any) -> PagePlan:
     blank inside-back filler precedes the back cover; those 4 pages have ``booklet_index`` None and
     padding/booklets are computed on the inner block (pages 3..N-2, which starts on a right page). A multi-page instance is
     ``cls.pages`` entries sharing one ctx. One blank filler (``kind="filler"``, section of the
-    page it precedes) is inserted before an instance whose ``starts_on`` side doesn't match.
+    page it precedes) is inserted before an instance whose ``starts_on`` side doesn't match. For a
+    week spread it follows ``config.daily_filler`` after a day page, else ``weekly_filler``:
+    "blank", "none" (no filler, the spread starts on a right page) or a page drawn in the slot.
     """
     from agenda.calendar import weeks_by_month
     from agenda.catalog import get_page
@@ -206,11 +208,31 @@ def build_plan(config: Any) -> PagePlan:
     )
 
     entries: list[PlanEntry] = []
+    filled = [0]  # filler pages drawn so far, to rotate the filler page's instances
+
+    def fill(cls: type[BasePage]) -> None:
+        """The filler before ``cls`` per ``config.daily_filler``/``weekly_filler``."""
+        if cls is not Weekly:
+            mode = "blank"
+        elif entries and entries[-1].page_class is Daily:
+            mode = config.daily_filler
+        else:
+            mode = config.weekly_filler
+        if mode == "none":
+            return
+        if mode == "blank":
+            entries.append(make_entry(None, {}, len(entries) + 1, cls.section, kind="filler"))
+            return
+        fill_cls = get_page(mode)
+        ctxs = fill_cls().instances(config) or [{}]
+        ctx = dict(ctxs[filled[0] % len(ctxs)])
+        filled[0] += 1
+        entries.append(make_entry(fill_cls, ctx, len(entries) + 1, cls.section, kind="filler"))
 
     def put(cls: type[BasePage], ctx: dict[str, Any], kind: Kind = "page") -> None:
         want = cls.starts_on
         if want != "any" and side_for_page(len(entries) + 1) != want:
-            entries.append(make_entry(None, {}, len(entries) + 1, cls.section, kind="filler"))
+            fill(cls)
         for k in range(cls.pages):
             entries.append(
                 make_entry(cls, ctx, len(entries) + 1, cls.section, page_in_instance=k, kind=kind)

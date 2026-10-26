@@ -148,7 +148,7 @@ def test_collapsible_iff_visible_fields(panel):
     with_fields = {T.group_of(s.name) for s in panel.specs if s.name not in hidden}
     for key, sec in panel.sections.items():
         assert sec.collapsible == (key in with_fields), key
-    assert not panel.sections["weekly"].collapsible and panel.sections["daily"].collapsible
+    assert not panel.sections["budget"].collapsible and panel.sections["weekly"].collapsible
 
 
 def test_groups(panel):
