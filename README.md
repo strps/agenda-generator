@@ -168,11 +168,37 @@ are padded to a multiple of 4 using the `pad_with` page. `--imposition` writes 2
 booklet order on landscape letter/A4, so you can print duplex, fold and stack. Add
 `--crop-marks` and `--bleed` when trimming.
 
+### Export
+
+In the GUI, **Export PDF** opens a dialog with these options (the same ones the CLI takes):
+
+| Option | CLI flag | Meaning |
+| --- | --- | --- |
+| Page numbers | `--page-numbers` / `--no-page-numbers` | Print a number on each page |
+| First number | `--page-number-start N` | Number printed on the first numbered page |
+| First numbered page | `--page-number-first N` | 1-based plan page that gets the first number (3 skips cover and inside cover) |
+| Position | `--page-number-position outer\|center\|inner` | Outer = away from the binding |
+| Placement | `--page-number-placement margin\|footer` | Bottom margin band, or inside the page footer band |
+| Format | `--page-number-format "{n} / {total}"` | Must contain `{n}`; `{total}` is the last printed number |
+| Layout: single pages | (default) | One PDF page per agenda page |
+| Layout: spreads | `--spreads` | 2-up reader spreads in reading order |
+| Layout: booklets | `--imposition --folded` | Saddle-stitch sheets, 2-up, in booklet order |
+| Sheet size | `--sheet-size auto\|letter\|a4` | Sheet for spreads and booklets |
+| Crop marks / bleed | `--crop-marks`, `--bleed MM` | Trim marks; need spreads or booklets |
+| Booklet size, unit, count, covers | `--booklet-size`, `--booklet-unit`, `--num-booklets`, `--separate-covers` | Booklet structure |
+| Page range | `--page-range "1-4,9"` | Export only these pages; single pages layout only (not with spreads or booklets) |
+| Output | `--output FILE` | Target file |
+
+Spreads and booklets are mutually exclusive. The page range is never saved to the config. The dialog
+shows the equivalent `agenda-gen` command and disables Export while the combination is invalid. It
+also has "open after export"; that choice and the last output folder are remembered between runs.
+
 ## GUI
 
 `agenda-gui` shows a settings panel generated from the config model, a live preview (single,
 spread or sheet view), a section bar showing where each section and booklet falls, and export
-with a progress bar. Settings can be opened from and saved to YAML. See
+with a progress bar (Export PDF opens the export dialog described under Printing; the export
+options no longer appear in the settings panel). Settings can be opened from and saved to YAML. See
 [docs/architecture/gui.md](docs/architecture/gui.md).
 
 The settings panel is a list of collapsible sections (Global starts open). Template sections have an

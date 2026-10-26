@@ -99,3 +99,22 @@ def test_export_disabled_when_config_invalid(qapp, tmp_path):
     assert win.settings.config()[0] is None
     assert not win.export_button.isEnabled()
     assert not win.start_export(str(tmp_path / "x.pdf"))
+
+
+@pytest.mark.parametrize("layout", ["pages", "spreads", "booklets"])
+def test_gui_export_matches_cli_per_layout(qapp, tmp_path, layout):
+    from agenda.gui.app import MainWindow
+
+    win = MainWindow()
+    values = M.with_layout({**SMALL, "page_numbers": True}, layout)
+    win.settings.set_values(values)
+    win.flush_preview()
+    gui_pdf = tmp_path / "gui.pdf"
+    assert win.start_export(str(gui_pdf))
+    assert win.wait_export()
+    assert win.export_result.startswith("Exported")
+    yaml_path = tmp_path / "c.yaml"
+    assert win.save_config(str(yaml_path)) == ""
+    cli_pdf = tmp_path / "cli.pdf"
+    assert main(["--config", str(yaml_path), "--output", str(cli_pdf)]) == 0
+    assert _sig(gui_pdf) == _sig(cli_pdf)

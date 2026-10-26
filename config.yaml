@@ -49,6 +49,13 @@ pages:
 # Other options (defaults shown, uncomment to change):
 # qr_urls: ["https://example.com"]   # URLs for the qr page
 # page_numbers: false
+# page_number_start: 1              # number printed on the first numbered page
+# page_number_first: 1              # plan page that gets it (3 skips the covers)
+# page_number_position: outer       # outer | center | inner
+# page_number_placement: margin     # margin | footer
+# page_number_format: "{n}"         # {n} and optionally {total}
+# spreads: false                    # 2-up reader spreads (not with imposition)
+# sheet_size: auto                  # auto | letter | a4 (spreads and imposition)
 # theme: minimal
 # imposition: false
 # crop_marks: false

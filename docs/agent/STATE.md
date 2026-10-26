@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 06   (plan: export dialog; earlier decisions below still hold)
+Last phase: 07   (plan: export dialog; earlier decisions below still hold)
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -29,6 +29,7 @@ Last phase: 06   (plan: export dialog; earlier decisions below still hold)
 - Export dialog model: layouts pages|spreads|booklets map to imposition/spreads (booklets force booklet_folded=True); `cli_args` emits only fields differing from defaults, debug_grid has no --no form, page range "all"/empty omitted; validate prefixes page-range errors "page range:" (phase 04)
 - Export dialog widget: ExportDialog holds a full values dict (defaults + passed values), re-reads editors on every edit, layout radios go through export_model.with_layout, every rule from export_model (field_enabled/validate/cli_command); no QSettings (phase 05)
 - Export wiring: "Export PDF" -> MainWindow.export_dialog opens ExportDialog (output default = last_dir + name); accept -> settings.set_values({**values, **result}), prefs `export/open_after` + `export/last_dir`, then start_export(out, interactive=True, page_range=...); `open_file(path)` called from _on_export_done only for interactive + open_after. Page range kept per window (`_last_page_range`), not saved. EXPORT_FIELDS editors are hidden (form.setRowVisible) in SettingsPanel but remain in values()/set_values (phase 06)
+- Docs/parity: README "### Export" table (option -> flag), gui.md "Export dialog" section, commented export options in config.yaml (flat keys), tests/test_docs_export.py greps docs for flags/names; parametrized GUI-vs-CLI layout parity in tests/test_gui_export.py (phase 07)
 
 ## Interfaces
 - agenda/gui/export_model.py (Qt-free): `EXPORT_FIELDS` ((group, fields)...), `export_field_names()`, `LAYOUTS`, `layout_of`, `with_layout`, `field_enabled(values,name)` (name may be "page_range"), `validate(values,page_range)->str`, `cli_args(values,page_range,defaults=None,config_path=None)`, `cli_command(...)`; plus default_path/ensure_pdf/progress_*; help_text EXPORT_HELP keys layout_{pages,spreads,booklets}[_detail], open_after, cli_preview, browse_output (each + _detail); tests/test_gui_export_model.py

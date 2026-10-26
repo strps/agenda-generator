@@ -92,6 +92,23 @@ agenda, Colors & styling keeps the last template, and a template gives its own s
 spacing, `stylesheet(dark)` and a contrast check. `app.apply_style` applies it; the choice is saved
 in QSettings.
 
+### Export dialog
+
+**Export PDF** opens `ExportDialog` (`agenda/gui/export_dialog.py`). All rules live in the Qt-free
+`agenda/gui/export_model.py`: `EXPORT_FIELDS` (the fields it edits, in groups), `layout_of` /
+`with_layout` (pages, spreads, booklets mapped onto `imposition`/`spreads`/`booklet_folded`),
+`field_enabled`, `validate` (Config errors plus the page range) and `cli_args`/`cli_command` (the
+equivalent `agenda-gen` line shown in the dialog). The dialog has no QSettings access.
+
+Data flow: dialog accepted -> `settings.set_values({**values, **dialog.result_values()})` (one
+`changed`, so the preview follows) -> `MainWindow.start_export(path, interactive=True, page_range=...)`
+-> `ExportJob(cfg, path, signals, pages=...)` -> `export_agenda(..., pages=...)`. The editors of
+`EXPORT_FIELDS` are hidden in the settings panel but stay in `values()`/`set_values()`.
+
+`MainWindow` stores two preferences in QSettings: `export/open_after` and `export/last_dir` (the
+default output folder). The page range is kept per window and never saved. With open-after on,
+`open_file(path)` runs after an interactive export.
+
 ## 3. Section bar
 
 ### What it shows
