@@ -85,7 +85,7 @@ expands a section and emits `section_activated`; focus changes do the same.
 The main window keeps a `preview_stack`: page 0 is the full-agenda preview, then one container per
 template (`template_page_<key>`, a notice plus a `PreviewWidget`). `show_preview_for(key)` switches
 to the page given by `template_model.preview_target(active, last_template)`: Global gives the full
-agenda, Colors & styling keeps the last template, and a template gives its own sample page
+agenda, PDF colors & fonts keeps the last template, and a template gives its own sample page
 (`sample_plan`), grayed out when disabled.
 
 `style_model.py` is the Qt-free source of the minimalist stylesheet: themes (dark default, light),
@@ -161,3 +161,20 @@ Colors come from the validated reference palette (dataviz skill). The assignment
 
 - Should the preview show a fake "paper" background and drop shadow, or the bare page?
 - Should page selection in the settings panel be drag-to-reorder, or keep the fixed logical order?
+
+### GUI Settings vs. PDF style
+
+The app's look (dark, light, system) lives in `GuiSettingsDialog` (`agenda/gui/prefs_dialog.py`),
+opened by Settings > Preferences... (`MainWindow.open_preferences()`). The dialog has no QSettings
+access; `MainWindow` stores the choice in QSettings key "appearance" and applies it with
+`_set_appearance`. It never touches the Config or the PDF; `configfile.load_yaml` drops legacy
+`appearance` keys with a warning.
+
+The settings panel section "PDF colors & fonts" (`style:` block) edits the PDF style with editors from
+`agenda/gui/style_editors.py`: `ColorEdit` (text, swatch opening `QColorDialog`, clear button; the
+swatch shows the theme color when the value is empty) and `FontEdit` (built-in names plus Browse for a
+.ttf/.otf). `settings_model` gives them the kinds THEME, COLOR and FONT.
+
+Data flow: panel editors -> `values()` -> Config (`theme`, `color_*`, `font_*`) -> `exporter.new_document`
+(palette via `themes.palette_for`, fonts via `register_document_fonts`, carried on the FPDF object) ->
+export and previews. Export and CLI use the same Config, so styled output matches.

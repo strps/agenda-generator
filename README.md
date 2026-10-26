@@ -95,7 +95,7 @@ Run `agenda-gen --help` for the full list.
 The settings are grouped into sections, in the GUI and in the YAML file: **Global** (page size,
 year, language, booklets, page list, `holidays_file`), **Notes & padding**, one section per page
 template that has options (`daily`, `weekly`, `contacts`, `schedule`, `habits`, `qr`, and the niche
-packs `niche_entrepreneur`, `niche_student`, `niche_fitness`) and **Colors & styling** (`style`).
+packs `niche_entrepreneur`, `niche_student`, `niche_fitness`) and **PDF colors & fonts** (`style`).
 Each section can be written as a block (`notes:`, `daily:`, `contacts:`, `schedule:`, `habits:`,
 `qr:`, `niche_*:`, `style:`) with short keys. Save writes the blocks; flat keys (`notes_pages`,
 `daily_hour_start`, ...) still load and give the same result.
@@ -108,7 +108,11 @@ schedule:   {first_hour: 7, last_hour: 21}
 habits:     {max: 20}
 qr:         {urls: ["https://example.com"]}
 niche_student: {pages: 1}
-style:      {theme: minimal}
+style:                     # all keys optional; omitted = theme / built-in defaults
+  theme: minimal           # minimal | mono | ocean | forest
+  accent: "#1e6fd9"        # ink, muted, line, accent, tint, weekend_fill, holiday_fill
+  primary_font: inter      # inter or a .ttf/.otf path (headings, bold text)
+  secondary_font: inter    # body text, labels, numbers
 holidays_file: examples/holidays.txt
 ```
 
@@ -193,6 +197,34 @@ Spreads and booklets are mutually exclusive. The page range is never saved to th
 shows the equivalent `agenda-gen` command and disables Export while the combination is invalid. It
 also has "open after export"; that choice and the last output folder are remembered between runs.
 
+### PDF style
+
+The generated PDF's colors and fonts come from a theme plus optional overrides, all in the `style:`
+block (flat Config names also load), with a CLI flag each. They apply to the export and the previews.
+
+| YAML key (`style:`) | Config field | CLI flag | Meaning |
+| --- | --- | --- | --- |
+| `theme` | `theme` | `--theme` | Palette: `minimal` (default look), `mono`, `ocean`, `forest`; unknown names render as minimal and the CLI warns |
+| `ink` | `color_ink` | `--color-ink` | Text and strong lines |
+| `muted` | `color_muted` | `--color-muted` | Secondary text |
+| `line` | `color_line` | `--color-line` | Rules and dots |
+| `accent` | `color_accent` | `--color-accent` | Month titles, highlights |
+| `tint` | `color_tint` | `--color-tint` | Light fills |
+| `weekend_fill` | `color_weekend_fill` | `--color-weekend-fill` | Weekend cells |
+| `holiday_fill` | `color_holiday_fill` | `--color-holiday-fill` | Holiday cells |
+| `primary_font` | `font_primary` | `--font-primary` | Headings, titles and bold text |
+| `secondary_font` | `font_secondary` | `--font-secondary` | Body text, labels, numbers |
+
+Colors are `#rgb` or `#rrggbb` (the `#` is optional); empty means the theme's color. A font is the
+built-in `inter` or a path to a `.ttf`/`.otf` file (relative paths resolve against the working
+directory). For a font such as `MyFont-Regular.ttf` the bold and italic styles are looked up as
+`MyFont-Bold.ttf`, `MyFont-Italic.ttf` and `MyFont-BoldItalic.ttf`; a missing style falls back to the
+regular file. The font must contain the glyphs of the agenda language. Make sure you are licensed to
+embed any user font in a PDF you share.
+
+In the GUI these are edited in the **PDF colors & fonts** section: a theme combo, color fields with a
+swatch (opens a color dialog) and a clear button, and font fields with a Browse button.
+
 ## GUI
 
 `agenda-gui` shows a settings panel generated from the config model, a live preview (single,
@@ -205,9 +237,12 @@ The settings panel is a list of collapsible sections (Global starts open). Templ
 enable checkbox in the header: for `daily` and `weekly` it adds or removes the planner, for
 `schedule`, `habits`, `qr` and the niche packs it adds or removes the page from `pages`, and for
 `contacts` it sets the page count (0 = off, on = 1). The main preview follows the focused or expanded
-section and shows that template's own sample page; Global shows the full agenda, and Colors & styling
-keeps the last template. A disabled template is previewed grayed out. The appearance (dark by
-default, or light) is set in Colors & styling and remembered between runs.
+section and shows that template's own sample page; Global shows the full agenda, and PDF colors & fonts
+keeps the last template. A disabled template is previewed grayed out.
+
+The look of the app itself (dark, light or system) is set in **Settings > Preferences...**
+(`GuiSettingsDialog`), is remembered between runs in the GUI's own settings and never affects the
+PDF. The panel section **PDF colors & fonts** edits the generated file's style instead (see PDF style).
 
 ## Development
 

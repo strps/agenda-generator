@@ -118,3 +118,26 @@ def test_gui_export_matches_cli_per_layout(qapp, tmp_path, layout):
     cli_pdf = tmp_path / "cli.pdf"
     assert main(["--config", str(yaml_path), "--output", str(cli_pdf)]) == 0
     assert _sig(gui_pdf) == _sig(cli_pdf)
+
+
+def test_gui_export_matches_cli_styled(qapp, tmp_path):
+    import shutil
+
+    from agenda.gui.app import MainWindow
+    from agenda.fonts import FONT_DIR, FONT_FILES
+
+    font = tmp_path / "MyFont-Regular.ttf"
+    shutil.copy(FONT_DIR / FONT_FILES[""], font)
+    win = MainWindow()
+    win.settings.set_values({**SMALL, "theme": "ocean", "color_accent": "#0000ff",
+                             "font_primary": str(font)})
+    win.flush_preview()
+    gui_pdf = tmp_path / "gui.pdf"
+    assert win.start_export(str(gui_pdf))
+    assert win.wait_export()
+    assert win.export_result.startswith("Exported")
+    yaml_path = tmp_path / "c.yaml"
+    assert win.save_config(str(yaml_path)) == ""
+    cli_pdf = tmp_path / "cli.pdf"
+    assert main(["--config", str(yaml_path), "--output", str(cli_pdf)]) == 0
+    assert _sig(gui_pdf) == _sig(cli_pdf)

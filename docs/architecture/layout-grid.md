@@ -36,7 +36,7 @@ The column count, gutter and baseline are configurable per theme. A 4 mm baselin
 
 ## 3. Design tokens
 
-Defined once in `tokens.py` (and overridable by `themes.py`):
+Defined once in `tokens.py`. Colors come from the `themes.py` palette (plus per-color overrides) carried on each document (`pdf.agenda_palette`, read with `draw.color`); `tokens.COLORS` is never mutated, so threaded previews stay independent:
 
 | Token | Example values |
 |---|---|
