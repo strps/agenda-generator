@@ -33,6 +33,7 @@ from agenda.gui import help_text
 from agenda.gui import settings_model as M
 from agenda.gui.collapsible import CollapsibleSection
 from agenda.gui.hover_tooltip import ExpandingToolTip
+from agenda.gui.style_model import APPEARANCES, DEFAULT_APPEARANCE, SPACING
 
 _BIG = 10**9
 
@@ -46,6 +47,7 @@ class SettingsPanel(QFrame):
 
     changed = Signal()
     section_activated = Signal(str)
+    appearance_changed = Signal(str)  # GUI-only; not a Config field
 
     def __init__(self) -> None:
         super().__init__()
@@ -66,6 +68,9 @@ class SettingsPanel(QFrame):
         outer.addWidget(scroll, 1)
         body = QWidget()
         col = QVBoxLayout(body)
+        col.setSpacing(SPACING["gap"])
+        gap = SPACING["gap"]
+        col.setContentsMargins(gap, gap, gap, gap)
         self.sections: dict[str, CollapsibleSection] = {}
         self.active_section = T.GLOBAL
         for sp in T.SECTIONS:
@@ -89,6 +94,17 @@ class SettingsPanel(QFrame):
                 label.setObjectName(f"label_{spec.name}")
                 self.label_tooltips[spec.name] = ExpandingToolTip(label, short, detail)
                 form.addRow(label, w)
+        self.appearance_box = QComboBox()
+        self.appearance_box.setObjectName("appearance")
+        self.appearance_box.addItems(list(APPEARANCES))
+        self.appearance_box.setCurrentText(DEFAULT_APPEARANCE)
+        ap_label = QLabel("appearance")
+        ap_label.setObjectName("label_appearance")
+        self.appearance_tooltip = ExpandingToolTip(
+            self.appearance_box, help_text.TOOLTIPS["appearance"], ""
+        )
+        self.sections[T.STYLING].form.addRow(ap_label, self.appearance_box)
+        self.appearance_box.currentTextChanged.connect(self.appearance_changed)
         col.addStretch(1)
         scroll.setWidget(body)
         self.error_label = QLabel("")

@@ -2,7 +2,8 @@
 
 import sys
 
-from PySide6.QtCore import Qt, QThreadPool, QTimer
+from PySide6.QtCore import Qt, QSettings, QThreadPool, QTimer
+from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -31,17 +32,49 @@ from agenda.gui.legend import Legend
 from agenda.gui.preview import PreviewWidget
 from agenda.gui.render_cache import Debounce
 from agenda.gui.section_bar import SectionBar
+from agenda.gui import style_model as SM
 from agenda.gui.settings_panel import SettingsPanel
 from agenda.templates import GLOBAL, TEMPLATE_KEYS, is_enabled, section
 
 DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-renders
 
 
+PREFS_ORG, PREFS_APP, PREFS_KEY = "agenda-gen", "agenda-gui", "appearance"
+
+
+def apply_style(app: QApplication, appearance: str = SM.DEFAULT_APPEARANCE) -> bool:
+    """Apply the stylesheet and a matching palette; returns True when the dark theme is used."""
+    lightness = app.palette().color(QPalette.ColorRole.Window).lightness()
+    dark = SM.resolve_dark(appearance, lightness)
+    t = SM.THEMES["dark" if dark else "light"]
+    pal = QPalette()
+    for role, key in (
+        (QPalette.ColorRole.Window, "window"),
+        (QPalette.ColorRole.WindowText, "text"),
+        (QPalette.ColorRole.Base, "input_bg"),
+        (QPalette.ColorRole.AlternateBase, "panel"),
+        (QPalette.ColorRole.Text, "text"),
+        (QPalette.ColorRole.Button, "input_bg"),
+        (QPalette.ColorRole.ButtonText, "text"),
+        (QPalette.ColorRole.Highlight, "accent"),
+        (QPalette.ColorRole.HighlightedText, "accent_text"),
+        (QPalette.ColorRole.ToolTipBase, "tooltip_bg"),
+        (QPalette.ColorRole.ToolTipText, "tooltip_text"),
+    ):
+        pal.setColor(role, QColor(t[key]))
+    app.setPalette(pal)
+    app.setStyleSheet(SM.stylesheet(dark))
+    return dark
+
+
 class MainWindow(QMainWindow):
     """Window shell. `regions` maps each name in `layout.REGIONS` to its container widget."""
 
-    def __init__(self) -> None:
+    def __init__(self, prefs: QSettings | None = None) -> None:
         super().__init__()
+        self.prefs = prefs if prefs is not None else QSettings(PREFS_ORG, PREFS_APP)
+        saved = str(self.prefs.value(PREFS_KEY, SM.DEFAULT_APPEARANCE))
+        self.appearance = saved if saved in SM.APPEARANCES else SM.DEFAULT_APPEARANCE
         spec = L.WindowLayout()
         self.setWindowTitle(spec.title)
         self.resize(spec.width, spec.height)
@@ -56,6 +89,9 @@ class MainWindow(QMainWindow):
         # Top toolbar: open/save on the left, export on the right.
         toolbar = self._region(L.TOOLBAR)
         row = QHBoxLayout(toolbar)
+        gap, margin = SM.SPACING["gap"], SM.SPACING["margin"]
+        row.setContentsMargins(margin, gap, margin, gap)
+        row.setSpacing(gap)
         self.open_button = QPushButton("Open config")
         self.save_button = QPushButton("Save config")
         self.open_button.setToolTip(HT.TOOLTIPS["open_config"])
@@ -66,7 +102,9 @@ class MainWindow(QMainWindow):
         export = self._region(L.EXPORT)
         erow = QHBoxLayout(export)
         erow.setContentsMargins(0, 0, 0, 0)
+        erow.setSpacing(gap)
         self.export_button = QPushButton("Export PDF")
+        self.export_button.setObjectName("export_button")
         self.export_progress = QProgressBar()
         self.export_progress.setRange(0, 100)
         self.export_progress.setFixedWidth(140)
@@ -146,10 +184,23 @@ class MainWindow(QMainWindow):
         self.legend.section_clicked.connect(self.section_bar.first_page_of)
         self.legend.section_clicked.connect(lambda _k: self.show_preview_for(GLOBAL))
         self.settings.section_activated.connect(self.show_preview_for)
+        self.settings.appearance_box.blockSignals(True)
+        self.settings.appearance_box.setCurrentText(self.appearance)
+        self.settings.appearance_box.blockSignals(False)
+        self.settings.appearance_changed.connect(self._set_appearance)
         self.update_preview()
         self.open_button.clicked.connect(self.open_config_dialog)
         self.save_button.clicked.connect(self.save_config_dialog)
         self.export_button.clicked.connect(self.export_dialog)
+
+    def _set_appearance(self, appearance: str) -> None:
+        """User picked an appearance: restyle the running app and remember the choice."""
+        self.appearance = appearance
+        app = QApplication.instance()
+        if app is not None:
+            apply_style(app, appearance)
+        self.prefs.setValue(PREFS_KEY, appearance)
+        self.prefs.sync()
 
     def _on_settings_changed(self) -> None:
         self.debounce.push()
@@ -331,6 +382,9 @@ class MainWindow(QMainWindow):
 def main(argv: list[str] | None = None) -> int:
     """Entry point for `agenda-gui` and `python -m agenda.gui`."""
     app = QApplication.instance() or QApplication(sys.argv if argv is None else argv)
-    win = MainWindow()
+    prefs = QSettings(PREFS_ORG, PREFS_APP)
+    saved = str(prefs.value(PREFS_KEY, SM.DEFAULT_APPEARANCE))
+    apply_style(app, saved if saved in SM.APPEARANCES else SM.DEFAULT_APPEARANCE)
+    win = MainWindow(prefs)
     win.show()
     return app.exec()

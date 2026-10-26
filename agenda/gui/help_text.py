@@ -36,6 +36,10 @@ TOOLTIPS: dict[str, str] = {
         "Sheet mode: show the imposed printer sheet, with the pages placed as they are "
         "printed. This only applies to folded booklets; otherwise there are no sheets."
     ),
+    "appearance": (
+        "Application look: dark, light, or system (follow the desktop theme). "
+        "The choice is saved between runs."
+    ),
     "zoom": (
         "Preview zoom. Choose fit to scale the pages to the available space, "
         "or a fixed percentage such as 100%."

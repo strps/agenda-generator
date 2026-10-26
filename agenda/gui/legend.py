@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 from agenda.gui import help_text
 from agenda.gui import legend_model as M
 from agenda.gui import section_colors as C
+from agenda.gui.style_model import SPACING
 
 
 class Legend(QWidget):
@@ -19,7 +20,8 @@ class Legend(QWidget):
         self.entries: list[M.LegendEntry] = []
         self.buttons: dict[str, QPushButton] = {}
         self._row = QHBoxLayout(self)
-        self._row.setContentsMargins(4, 2, 4, 2)
+        self._row.setContentsMargins(SPACING["margin"], 2, SPACING["margin"], 2)
+        self._row.setSpacing(SPACING["gap"])
         self.title = QLabel("Legend:")
         self.title.setObjectName("legend_title")
         self.title.setToolTip(

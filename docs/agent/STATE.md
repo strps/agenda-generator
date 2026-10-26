@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 17
+Last phase: 18
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -19,6 +19,7 @@ Last phase: 17
 - Template previews: `sample_plan` ignores planners/pages (disabled templates still preview); daily sample = first day in daily_months; qr uses placeholder URL when qr_urls empty; empty instances (contacts_pages=0) give a `{}` ctx; weekly gets a leading blank filler so it lands on a left/right pair (phase 15)
 - Settings panel is one CollapsibleSection per templates.SECTIONS entry (Global expanded, rest collapsed; not an accordion); header enable boxes are views synced from templates.is_enabled on every `changed`; toggling uses with_enabled and writes back only changed editors, emitting `changed` once; `activate(key)` expands (re-entrant via expanded_changed) and emits section_activated once; focus follows QApplication.focusChanged (phase 16)
 - Main preview: MainWindow.preview_stack (page 0 = full `preview`, then `template_page_<key>` containers with `template_notice_<key>` + PreviewWidget per TEMPLATE_KEYS). `show_preview_for(key)` (from settings.section_activated; section_bar.page_requested and legend.section_clicked call it with GLOBAL); STYLING keeps last template. Inactive/notice updated for all templates each update_preview; set_plan only on the visible template, others stale until shown; invalid config set_error on all (phase 17)
+- Styling: agenda/gui/style_model.py (Qt-free) holds THEMES dark/light, SPACING, stylesheet(dark), contrast_ratio, resolve_dark, APPEARANCES, DEFAULT_APPEARANCE=dark; <=10 hex colors, borders <=1px, no bare QLabel rule. `app.apply_style(app, appearance)` sets QSS + QPalette; main() applies saved appearance, MainWindow() itself does not restyle. Appearance is GUI-only: `settings.appearance_box` (objectName appearance, in STYLING form), signal `appearance_changed`, MainWindow._set_appearance saves to QSettings("agenda-gen","agenda-gui") key appearance only on user change; `MainWindow(prefs=None)` (phase 18)
 - Cross-field hour rules (start < end) live in Config._check_booklet_rules; each new field needs a CLI option + PARAM_SHORT/DETAILS (phase 11)
 - with_enabled on a "page" section with empty pages copies preset_pages(preset) first (phase 10)
 

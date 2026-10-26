@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from agenda.gui.style_model import SPACING
 
 BOX_KINDS = ("planner", "page", "count")
 
@@ -31,7 +32,7 @@ class CollapsibleSection(QFrame):
         lay.setSpacing(0)
         header = QWidget()
         hl = QHBoxLayout(header)
-        hl.setContentsMargins(4, 2, 4, 2)
+        hl.setContentsMargins(SPACING["gap"], 2, SPACING["gap"], 2)
         self.toggle_button = QToolButton()
         self.toggle_button.setObjectName("section_toggle")
         self.toggle_button.setCheckable(True)
@@ -50,6 +51,9 @@ class CollapsibleSection(QFrame):
         lay.addWidget(header)
         self.body = QWidget()
         self.form = QFormLayout(self.body)
+        self.form.setSpacing(SPACING["gap"])
+        gap, margin = SPACING["gap"], SPACING["margin"]
+        self.form.setContentsMargins(margin, gap, margin, margin)
         lay.addWidget(self.body)
         self.toggle_button.toggled.connect(self._toggled)
         self.set_expanded(False)
