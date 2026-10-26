@@ -141,6 +141,15 @@ def run(
     niche_fitness_pages: Annotated[
         int | None, typer.Option(help="Pages of the fitness pack (1-20).")
     ] = None,
+    notes_pages: Annotated[
+        int | None, typer.Option(help="Back-matter Notes pages (0-50; 0 removes them).")
+    ] = None,
+    contacts_pages: Annotated[
+        int | None, typer.Option(help="Back-matter Contacts pages (0-50; 0 removes them).")
+    ] = None,
+    extra_padding: Annotated[
+        int | None, typer.Option(help="Minimum number of padding units (0-200).")
+    ] = None,
     pages: Annotated[str | None, typer.Option(help="Comma list of catalog page ids.")] = None,
     category: Annotated[
         str | None, typer.Option(help="Comma list of categories: core,optional,value_added.")
@@ -201,6 +210,9 @@ def run(
             niche_entrepreneur_pages=niche_entrepreneur_pages,
             niche_student_pages=niche_student_pages,
             niche_fitness_pages=niche_fitness_pages,
+            notes_pages=notes_pages,
+            contacts_pages=contacts_pages,
+            extra_padding=extra_padding,
             preset=preset,
             notes_pattern=notes_pattern,
             page_numbers=page_numbers,

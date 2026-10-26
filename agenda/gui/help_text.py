@@ -100,6 +100,9 @@ PARAM_SHORT: dict[str, str] = {
     "niche_entrepreneur_pages": "Number of Entrepreneur pack pages (1-20).",
     "niche_student_pages": "Number of Student pack pages (1-20).",
     "niche_fitness_pages": "Number of Fitness pack pages (1-20).",
+    "notes_pages": "Number of back-matter Notes pages (0-50).",
+    "contacts_pages": "Number of back-matter Contacts pages (0-50).",
+    "extra_padding": "Minimum number of padding pages to add (0-200).",
     "year": "Calendar year of the agenda.",
     "week_start": "First day of the week.",
     "language": "Language of the printed texts.",
@@ -221,6 +224,19 @@ PARAM_DETAILS: dict[str, str] = {
     "niche_fitness_pages": (
         "How many copies of the Fitness pack page are printed, 1-20 (default 1). "
         "It only applies when niche_fitness is in pages."
+    ),
+    "notes_pages": (
+        "How many Notes pages are printed in the back matter, 0-50 (default 1). 0 removes "
+        "them. Padding made with pad_with=notes is separate and is set by extra_padding."
+    ),
+    "contacts_pages": (
+        "How many Contacts pages are printed in the back matter, 0-50 (default 1). 0 removes "
+        "them and the Contacts section is then off."
+    ),
+    "extra_padding": (
+        "Minimum number of padding units (copies of the pad_with page, or blank pages) put "
+        "before the back cover, 0-200 (default 0). The agenda may get more padding than "
+        "asked, to complete the last booklet, so booklets stay whole."
     ),
     "year": (
         "Year of the calendar (1900-2200). It sets all dates, weekdays and holidays "

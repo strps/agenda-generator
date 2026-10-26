@@ -23,6 +23,7 @@ def test_partition_and_page_ids():
             "notes",
             "daily",
             "weekly",
+            "contacts",
             "schedule",
             "habits",
             "qr",

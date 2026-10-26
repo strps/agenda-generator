@@ -79,6 +79,10 @@ class Config(BaseModel):
     niche_entrepreneur_pages: int = Field(1, ge=1, le=20)
     niche_student_pages: int = Field(1, ge=1, le=20)
     niche_fitness_pages: int = Field(1, ge=1, le=20)
+    # Back-matter page counts (0 removes them) and the minimum number of padding units.
+    notes_pages: int = Field(1, ge=0, le=50)
+    contacts_pages: int = Field(1, ge=0, le=50)
+    extra_padding: int = Field(0, ge=0, le=200)
 
     # Calendar / locale
     year: int = Field(default_factory=lambda: _dt.date.today().year, ge=1900, le=2200)

@@ -420,8 +420,8 @@ class Notes(BasePage):
     """Notes, 1 page: localized header and a pattern (``config.notes_pattern``) over the content.
 
     The pattern is anchored to the content box on the baseline pitch, so it lines up with the
-    baseline grid. ``Notes(count=N)`` makes ``instances()`` return N pages (default 1); Phase 4
-    padding uses this. ``blank`` draws only the header.
+    baseline grid. ``Notes(count=N)`` makes ``instances()`` return N pages (default
+    ``config.notes_pages``, 1). ``blank`` draws only the header.
     """
 
     id = "notes"
@@ -429,13 +429,14 @@ class Notes(BasePage):
     category = "core"
     section = "front_back"
 
-    def __init__(self, count: int = 1) -> None:
-        if count < 0:
+    def __init__(self, count: int | None = None) -> None:
+        if count is not None and count < 0:
             raise ValueError("count must be >= 0")
         self.count = count
 
     def instances(self, config: Config) -> list[Ctx]:
-        return [{} for _ in range(self.count)]
+        n = self.count if self.count is not None else config.notes_pages
+        return [{} for _ in range(n)]
 
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         g = grids[0]
@@ -454,7 +455,8 @@ class Contacts(BasePage):
     """Contact directory, 1 page: header and entries (name, phone, email write-in rows).
 
     Entries fill the content box top to bottom, in 2 columns when the page is wide enough.
-    ``Contacts(count=N)`` makes ``instances()`` return N pages (default 1), like ``Notes``.
+    ``Contacts(count=N)`` makes ``instances()`` return N pages (default
+    ``config.contacts_pages``, 1), like ``Notes``.
     """
 
     id = "contacts"
@@ -467,13 +469,14 @@ class Contacts(BasePage):
     WIDE_MM = 100.0  # safe width from which entries go in 2 columns
     LABEL_W = 14.0
 
-    def __init__(self, count: int = 1) -> None:
-        if count < 0:
+    def __init__(self, count: int | None = None) -> None:
+        if count is not None and count < 0:
             raise ValueError("count must be >= 0")
         self.count = count
 
     def instances(self, config: Config) -> list[Ctx]:
-        return [{} for _ in range(self.count)]
+        n = self.count if self.count is not None else config.contacts_pages
+        return [{} for _ in range(n)]
 
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         g = grids[0]

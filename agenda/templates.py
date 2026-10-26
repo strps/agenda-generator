@@ -13,7 +13,7 @@ from typing import Any
 GLOBAL = "global"
 STYLING = "styling"
 
-ENABLE_KINDS = ("planner", "page", "none")
+ENABLE_KINDS = ("planner", "page", "count", "none")
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,8 @@ class SectionSpec:
     block: str | None  # nested YAML block name; None = no block
     fields: dict[str, str] = field(default_factory=dict)  # YAML short key -> Config field
     page_id: str | None = None
-    enable: str = "none"  # "planner" | "page" | "none"
+    enable: str = "none"  # "planner" | "page" | "count" | "none"
+    count_field: str | None = None  # Config field for enable="count" (on = value > 0)
 
 
 SECTIONS: tuple[SectionSpec, ...] = (
@@ -32,7 +33,12 @@ SECTIONS: tuple[SectionSpec, ...] = (
         "notes",
         "Notes & padding",
         "notes",
-        {"pattern": "notes_pattern", "pad_with": "pad_with"},
+        {
+            "pattern": "notes_pattern",
+            "pages": "notes_pages",
+            "pad_with": "pad_with",
+            "extra_padding": "extra_padding",
+        },
         page_id="notes",
     ),
     SectionSpec(
@@ -44,6 +50,15 @@ SECTIONS: tuple[SectionSpec, ...] = (
         enable="planner",
     ),
     SectionSpec("weekly", "Week pages", None, {}, page_id="weekly", enable="planner"),
+    SectionSpec(
+        "contacts",
+        "Contacts",
+        "contacts",
+        {"pages": "contacts_pages"},
+        page_id="contacts",
+        enable="count",
+        count_field="contacts_pages",
+    ),
     SectionSpec(
         "schedule",
         "Weekly schedule",
@@ -114,6 +129,8 @@ def is_enabled(cfg: Any, key: str) -> bool:
         return s.key in cfg.planners
     if s.enable == "page":
         return s.page_id in (cfg.pages or [])
+    if s.enable == "count":
+        return getattr(cfg, s.count_field) > 0
     return True
 
 
@@ -133,6 +150,12 @@ def with_enabled(values: dict[str, Any], key: str, on: bool) -> dict[str, Any]:
             order = ("weekly", "daily")
             planners = [p for p in order if p in planners or p == s.key]
         out["planners"] = planners
+        return out
+    if s.enable == "count":
+        if not on:
+            out[s.count_field] = 0
+        elif not out.get(s.count_field, 1):
+            out[s.count_field] = 1
         return out
     pages = list(out.get("pages") or [])
     if not pages and out.get("preset"):

@@ -183,7 +183,8 @@ def build_plan(config: Any) -> PagePlan:
 
     Order: front matter (cover, personal info, yearly) -> per month: monthly, then per owned
     week its weekly spread and that week's dailies (dates inside ``config.year`` and in ``config.daily_months``) -> optional ->
-    value-added -> back matter (notes, contacts, padding, back cover). With
+    value-added -> back matter (notes and contacts, ``config.notes_pages``/``contacts_pages`` each; padding of at
+    least ``config.extra_padding`` units; back cover). With
     ``config.separate_covers`` the cover is page 1 followed by a blank inside-cover filler, and a
     blank inside-back filler precedes the back cover; those 4 pages have ``booklet_index`` None and
     padding/booklets are computed on the inner block (pages 3..N-2, which starts on a right page). A multi-page instance is
@@ -255,7 +256,8 @@ def build_plan(config: Any) -> PagePlan:
             for ctx in cls().instances(config):
                 put(cls, ctx)
     for cls in (Notes, Contacts):
-        put(cls, {})
+        for ctx in cls().instances(config):
+            put(cls, ctx)
     per = pages_per_booklet(config.booklet_size, config.booklet_unit, config.booklet_folded)
     base = list(entries)
     pad_cls = get_page(config.pad_with)
@@ -282,22 +284,23 @@ def build_plan(config: Any) -> PagePlan:
     # when the pad class is a multi-page spread or the back cover needs a starts_on filler.
     # If no whole number of pad units fits exactly, fall back to blank pages (page_class=None).
     nb = config.num_booklets
-    limit = 2 * per + 4 if nb == "auto" else int(nb) * per + 4
+    start = config.extra_padding  # minimum padding units; more are added to fill the booklet
+    limit = (2 * per + 4 if nb == "auto" else int(nb) * per + 4) + start
     done = False
     for blank in (False, True):
-        for units in range(limit):
+        for units in range(start, limit):
             total = try_padding(units, blank)
             lay = plan_booklets(total, per, nb)
             if lay.padding == 0 and lay.overflow == 0:
                 done = True
                 break
-            if units == 0 and lay.overflow > 0:
+            if units == start and lay.overflow > 0:
                 done = True  # too many pages for a fixed num_booklets: no padding (summary warns)
                 break
         if done:
             break
     if not done:
-        try_padding(0, False)
+        try_padding(start, False)
     inner_end = len(entries) - 2 if sep else len(entries)  # last inner page number
     if config.booklet_folded and plan_booklets(inner_end - lead, per, nb).overflow == 0:
         # Invariant (not user-facing): a folded booklet block is whole sheets of 4 pages.
