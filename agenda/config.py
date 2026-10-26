@@ -112,6 +112,8 @@ class Config(BaseModel):
     theme: str = "minimal"
     imposition: bool = False
     crop_marks: bool = False
+    spreads: bool = False
+    sheet_size: Literal["auto", "letter", "a4"] = "auto"
     output: Path = Path("agenda.pdf")
     debug_grid: bool = False
 
@@ -213,8 +215,10 @@ class Config(BaseModel):
             raise ValueError("daily_hour_start must be less than daily_hour_end")
         if self.schedule_first_hour >= self.schedule_last_hour:
             raise ValueError("schedule_first_hour must be less than schedule_last_hour")
-        if self.crop_marks and not self.imposition:
-            raise ValueError("crop_marks requires imposition=true")
+        if self.imposition and self.spreads:
+            raise ValueError("choose either imposition or spreads, not both")
+        if self.crop_marks and not (self.imposition or self.spreads):
+            raise ValueError("crop_marks requires imposition=true or spreads=true")
         if self.booklet_unit == "pages":
             # folded: 4 pages per sheet; flat: 2 pages per sheet (double-sided)
             step = 4 if self.booklet_folded else 2

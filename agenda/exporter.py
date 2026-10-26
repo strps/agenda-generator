@@ -202,21 +202,25 @@ def export_agenda(
 
     Optional ``progress(done_pages, total_pages)`` is called while drawing (not while writing).
     With ``cfg.imposition`` the finished PDF is re-laid 2-up in booklet print order
-    (``agenda.imposition.impose_booklets``, with crop marks if ``cfg.crop_marks``); otherwise the output is untouched.
+    (``agenda.imposition.impose_booklets``); with ``cfg.spreads`` as reader spreads (``impose_spreads``);
+    both with crop marks if ``cfg.crop_marks`` and the sheet from ``cfg.sheet_size``. Otherwise the output is untouched.
     """
     from agenda.assembler import build_plan
 
     plan = build_plan(cfg)
     pdf = _render_plan(cfg, plan, progress=progress)
-    if not cfg.imposition:
+    if not (cfg.imposition or cfg.spreads):
         return write_pdf(pdf, path)
-    from agenda.imposition import impose_booklets
+    from agenda.imposition import impose_booklets, impose_spreads, sheet_for
 
-    data = impose_booklets(
-        bytes(pdf.output()),
-        [e.booklet_index for e in plan],
-        bleed_mm=cfg.bleed if cfg.crop_marks else None,
-    )
+    bleed = cfg.bleed if cfg.crop_marks else None
+    sheet = sheet_for(cfg.sheet_size)
+    if cfg.spreads:
+        data = impose_spreads(bytes(pdf.output()), sheet_mm=sheet, bleed_mm=bleed)
+    else:
+        data = impose_booklets(
+            bytes(pdf.output()), [e.booklet_index for e in plan], bleed_mm=bleed, sheet_mm=sheet
+        )
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)

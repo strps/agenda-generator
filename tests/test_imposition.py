@@ -268,3 +268,72 @@ def test_binding_margin_lands_on_the_fold_side(tmp_path, booklet_size):
                 seen["right"] += 1
                 assert fold + inner - eps <= x <= sheet_w - outer + eps, x
     assert seen["left"] and seen["right"]
+
+
+# ---------------------------------------------------------------- spreads and sheet size
+
+def test_spread_sides():
+    from agenda.imposition import spread_sides
+
+    assert spread_sides(4) == [(None, 1), (2, 3), (4, None)]
+    assert spread_sides(5) == [(None, 1), (2, 3), (4, 5)]
+    assert spread_sides(0) == [(None, None)] or spread_sides(0) == []
+
+
+_SMALL = {"year": 2026, "planners": ["weekly"], "daily_months": []}
+
+
+def _sheet_mm(page):
+    from agenda.imposition import MM_PT
+
+    return float(page.mediabox.width) / MM_PT, float(page.mediabox.height) / MM_PT
+
+
+def test_spreads_export_and_sheet_sizes(tmp_path):
+    import math
+
+    from pypdf import PdfReader
+
+    from agenda.assembler import build_plan
+    from agenda.exporter import export_agenda
+
+    cfg = Config(**_SMALL, spreads=True, sheet_size="a4")
+    n = len(build_plan(cfg))
+    pages = PdfReader(str(export_agenda(cfg, tmp_path / "s.pdf"))).pages
+    assert len(pages) == math.ceil((n + 1) / 2)
+    w, h = _sheet_mm(pages[0])
+    assert w > h and abs(w - 297) < 0.5 and abs(h - 210) < 0.5
+    cfg = cfg.model_copy(update={"sheet_size": "letter"})
+    w, h = _sheet_mm(PdfReader(str(export_agenda(cfg, tmp_path / "l.pdf"))).pages[0])
+    assert abs(w - 279.4) < 0.5 and abs(h - 215.9) < 0.5
+
+
+def test_imposition_sheet_size(tmp_path):
+    from pypdf import PdfReader
+
+    from agenda.exporter import export_agenda
+
+    cfg = Config(year=2025, booklet_size=2, num_booklets=1, imposition=True, sheet_size="a4")
+    w, h = _sheet_mm(PdfReader(str(export_agenda(cfg, tmp_path / "i.pdf"))).pages[0])
+    assert abs(w - 297) < 0.5 and abs(h - 210) < 0.5
+
+
+def test_spreads_rules():
+    with pytest.raises(ValueError, match="imposition or spreads"):
+        Config(imposition=True, spreads=True, booklet_folded=True)
+    assert Config(spreads=True, crop_marks=True).crop_marks
+    with pytest.raises(ValueError, match="crop_marks requires"):
+        Config(crop_marks=True)
+
+
+def test_cli_spreads_sheet_size(tmp_path):
+    from pypdf import PdfReader
+
+    from agenda.cli import main
+
+    out = tmp_path / "c.pdf"
+    code = main(["--year", "2026", "--planners", "weekly", "--daily-months", "",
+                 "--spreads", "--sheet-size", "a4", "-o", str(out)])
+    assert code == 0
+    w, h = _sheet_mm(PdfReader(str(out)).pages[0])
+    assert abs(w - 297) < 0.5

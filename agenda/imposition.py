@@ -152,8 +152,41 @@ def _draw(writer: PdfWriter, sheet, content: str) -> None:
     sheet.merge_page(top)
 
 
+def sheet_for(name: str) -> tuple[float, float] | None:
+    """Sheet size (mm) for a ``sheet_size`` setting; ``auto`` gives None (chosen per document)."""
+    return None if name == "auto" else SHEETS[name]
+
+
+def spread_sides(n: int) -> list[tuple[int | None, int | None]]:
+    """Reader spreads of ``n`` pages in reading order: page 1 alone on the right, then pairs."""
+    pages: list[int | None] = [None, *range(1, n + 1)]
+    if len(pages) % 2:
+        pages.append(None)
+    return [(pages[i], pages[i + 1]) for i in range(0, len(pages), 2)]
+
+
+def impose_spreads(
+    pdf: bytes,
+    sheet_mm: tuple[float, float] | None = None,
+    bleed_mm: float | None = None,
+) -> bytes:
+    """Lay a finished PDF out as 2-up reader spreads (``spread_sides``), one landscape sheet each."""
+    from pypdf import PdfReader
+
+    reader = PdfReader(io.BytesIO(pdf))
+    writer = impose_pages(
+        reader, spread_sides(len(reader.pages)), sheet_mm=sheet_mm, bleed_mm=bleed_mm
+    )
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
 def impose_booklets(
-    pdf: bytes, booklet_of: Sequence[int | None], bleed_mm: float | None = None
+    pdf: bytes,
+    booklet_of: Sequence[int | None],
+    bleed_mm: float | None = None,
+    sheet_mm: tuple[float, float] | None = None,
 ) -> bytes:
     """Impose a finished PDF; ``booklet_of[i]`` is the booklet index of page ``i`` (None = not in one).
 
@@ -179,7 +212,7 @@ def impose_booklets(
     for _, pages in sorted(groups.items()):
         padded: list[int | None] = [*pages, *[None] * (-len(pages) % 4)]
         sides = [(padded[a - 1], padded[b - 1]) for a, b in imposition_order(len(padded))]
-        impose_pages(reader, sides, writer=out, bleed_mm=bleed_mm)
+        impose_pages(reader, sides, sheet_mm=sheet_mm, writer=out, bleed_mm=bleed_mm)
     for n in (n for n in plain if n > first):
         out.add_page(reader.pages[n - 1])
     buf = io.BytesIO()

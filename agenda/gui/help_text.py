@@ -123,7 +123,9 @@ PARAM_SHORT: dict[str, str] = {
     "holidays_file": "Extra holidays file, merged with the library.",
     "theme": "Color palette and typography.",
     "imposition": "Export in booklet print order.",
-    "crop_marks": "Draw crop marks on the imposed sheets.",
+    "crop_marks": "Draw crop marks on the imposed or spread sheets.",
+    "spreads": "Export as 2-up reader spreads.",
+    "sheet_size": "Sheet size for spreads and imposition.",
     "output": "Path of the exported PDF.",
     "debug_grid": "Overlay margins, columns and baseline.",
 }
@@ -147,7 +149,7 @@ PARAM_DETAILS: dict[str, str] = {
     ),
     "bleed": (
         "Gap, in mm, left between the page and each crop mark. It only has an effect when "
-        "crop_marks is on, which in turn needs imposition."
+        "crop_marks is on, which in turn needs imposition or spreads."
     ),
     "booklet_size": (
         "How big one booklet is. It is counted in sheets or in pages depending on "
@@ -320,11 +322,20 @@ PARAM_DETAILS: dict[str, str] = {
     ),
     "imposition": (
         "Export the pages in booklet print order, so the printed sheets can be folded into a "
-        "booklet. It requires booklet_folded to be on."
+        "booklet. It requires booklet_folded to be on and cannot be combined with spreads."
+    ),
+    "spreads": (
+        "Export the pages two per landscape sheet in reading order (page 1 alone on the right, "
+        "then left and right pages together), to read or print as spreads. It cannot be "
+        "combined with imposition. Crop marks and sheet_size apply to it."
+    ),
+    "sheet_size": (
+        "Landscape sheet used by spreads and imposition: auto picks letter or A4, whichever "
+        "scales the pages larger; letter or a4 forces it. Ignored for plain pages."
     ),
     "crop_marks": (
-        "Draw crop marks on the imposed sheets to show where to cut. It requires imposition "
-        "to be on, and the bleed setting controls the gap before each mark."
+        "Draw crop marks on the sheets to show where to cut. It requires imposition "
+        "or spreads to be on, and the bleed setting controls the gap before each mark."
     ),
     "output": (
         "File path of the exported PDF. The file is written there when you use Export "

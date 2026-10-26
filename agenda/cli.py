@@ -201,6 +201,10 @@ def run(
     theme: Annotated[str | None, typer.Option(help="Theme name.")] = None,
     imposition: Annotated[bool | None, typer.Option("--imposition/--no-imposition")] = None,
     crop_marks: Annotated[bool | None, typer.Option("--crop-marks/--no-crop-marks")] = None,
+    spreads: Annotated[bool | None, typer.Option("--spreads/--no-spreads")] = None,
+    sheet_size: Annotated[
+        str | None, typer.Option("--sheet-size", help="auto, letter or a4 (spreads/imposition).")
+    ] = None,
     output: Annotated[
         Path | None, typer.Option("-o", "--output", help="Output PDF (default output/agenda.pdf).")
     ] = None,
@@ -265,6 +269,8 @@ def run(
             theme=theme,
             imposition=imposition,
             crop_marks=crop_marks,
+            spreads=spreads,
+            sheet_size=sheet_size,
             output=output,
             debug_grid=debug_grid,
         )

@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 01   (plan: export dialog; earlier decisions below still hold)
+Last phase: 02   (plan: export dialog; earlier decisions below still hold)
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -24,8 +24,10 @@ Last phase: 01   (plan: export dialog; earlier decisions below still hold)
 - Cross-field hour rules (start < end) live in Config._check_booklet_rules; each new field needs a CLI option + PARAM_SHORT/DETAILS (phase 11)
 - with_enabled on a "page" section with empty pages copies preset_pages(preset) first (phase 10)
 - Page numbers: Config page_number_start/first/position/placement/format (flat YAML, validated by numbering.validate_format); label drawn in exporter._draw_number right after add_page (before page content), muted 7pt Inter; margin = centered in bottom margin band, footer = bottom of safe area; total = len(plan); n = page - first + start (phase 01)
+- Spreads/sheet: Config `spreads` (bool) and `sheet_size` auto|letter|a4 (flat YAML); imposition and spreads mutually exclusive; crop_marks needs imposition or spreads; sheet_size ignored for plain pages; export_agenda output byte-identical when both off (phase 02)
 
 ## Interfaces
+- imposition.py: `spread_sides(n)`, `impose_spreads(pdf, sheet_mm=None, bleed_mm=None)`, `sheet_for(name)` (auto->None), `impose_booklets(..., sheet_mm=None)`; CLI `--spreads/--no-spreads`, `--sheet-size`; tests in tests/test_imposition.py
 - agenda/numbering.py (Qt-free): `label_for(cfg,page,total)->str|None`, `align_for(side,position)->L|C|R`, `x_for(side,position,safe_x,safe_w,text_w)`, `validate_format(fmt)`; CLI `--page-number-start/-first/-position/-placement/-format`; tests/test_page_numbers.py
 - agenda/gui/help_text.py: `TOOLTIPS` (ids open_config, save_config, export_pdf, prev, next, mode_single, mode_spread, mode_sheet, zoom), `EXPORT_DISABLED_REASON`, `SECTION_DESCRIPTIONS`, `section_tooltip(key)`, `PARAM_SHORT`, `PARAM_DETAILS`, `param_tooltip(name, expanded=False)` (short, or short+"\n"+detail; unknown name returns name)
 - agenda/gui/hover_tooltip.py: `HOVER_EXPAND_MS=1500` (only definition; re-exported by section_bar), `make_expand_timer(parent, slot)`, `ExpandingToolTip(widget, short, detail)` (event filter on widget + scroll-area viewport; members expand_timer, expanded, hover(global_pos=None), current_text(), reset(), set_texts(short, detail)); Enter starts timer, ToolTip shows current text (consumed; fallback starts timer), Leave/Hide reset; tests/test_gui_hover_tooltip.py
