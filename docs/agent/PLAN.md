@@ -1,14 +1,18 @@
 # PLAN: GUI tooltips and section-bar color legend
 
 Goal: Every toolbar action in the GUI has a tooltip with a detailed explanation, and the section bar shows a color legend explaining what each section color means. Every config parameter widget in the settings panel gets the same two-stage tooltip as the section bar: a short text on hover, expanding after HOVER_EXPAND_MS to a detailed explanation.
-Goal (Phases 10-17): Group the config into a Global section, one section per page template that
-has configuration (daily, weekly, notes, qr; see context) and a "Colors & styling" section,
-keeping config.yaml backward compatible (flat keys and grouped blocks both load; Save writes the
-grouped form). Day pages gain extras: holiday names (on by default; the existing holiday library
-merged with an optional user `holidays_file`, treated the same on every page), a rotating inspirational phrase and a generic per-date extra-data line. The settings panel
-becomes a list of collapsible sections, each template section with an enable checkbox in its
-header. The main preview follows the focused or expanded section, shows that template's own
-preview, and grays it out when the template is disabled. The app gets a coherent stylesheet/theme.
+Goal (Phases 10-19): Group the config into a Global section, a "Notes & padding" section, one
+section per page template that has configuration (see context), and a "Colors & styling" section.
+config.yaml stays backward compatible: flat keys and grouped blocks both load, and Save writes the
+grouped form. The hard-coded per-page values become settings with today's values as defaults (daily
+hours, schedule hours, habits limit, page counts), and padding allows extra pages. Day pages gain
+extras: holiday names (on by default; the existing holiday library merged with an optional user
+`holidays_file`, treated the same on every page), a rotating inspirational phrase and a generic
+per-date extra-data line. The settings panel becomes a list of collapsible sections, each template
+section with an enable checkbox in its header. The main preview follows the focused or expanded
+section, shows that template's own preview, and grays it out when the template is disabled. The app
+gets a minimalist stylesheet (flat, few colors, generous spacing). Its appearance defaults to dark and
+is saved between runs.
 Stack: Python 3.11+, PySide6 GUI (agenda/gui/), fpdf2 + pypdf PDF generation, pytest
 Verify command: pytest
 Constraints: no new dependencies (`holidays` is already one); keep existing GUI models and public
@@ -16,8 +20,11 @@ API stable; every existing config.yaml (flat keys) must keep loading to the same
 logic lives in Qt-free modules and is tested without PySide6
 Commit per phase: yes
 Out of scope: imposition changes; renaming existing Config fields; restyling the PDF output.
-(Phases 01-09 also excluded PDF rendering changes. Phases 10-17 change only the Daily page drawing
-and the holiday lookup (merging the optional user `holidays_file` into it), and add GUI styling.)
+(Phases 01-09 also excluded PDF rendering changes. Phases 10-19 change the pages only where a
+hard-coded value becomes a setting (Daily, Schedule, Habits, Notes, Contacts, niche packs). They also
+change the padding count in `build_plan`, the Daily page drawing and the holiday lookup (merging the
+optional user `holidays_file` into it), and add GUI styling. With default settings the generated PDF
+is unchanged, except that holiday names now appear on day pages.)
 
 <!--
 Phases are written by the phase-planner agent, one block per phase:
@@ -353,7 +360,7 @@ explanation, texts in help_text.PARAM_SHORT/PARAM_DETAILS, mechanism in hover_to
 section bar Hover bullet so it says the constant now lives in hover_tooltip.py.
 Review: PASS
 
-## Context found while planning (Phases 10-17: per-template configs, day extras, previews, styling)
+## Context found while planning (Phases 10-19: per-template configs, padding, day extras, previews, styling)
 
 - `Config` (agenda/config.py) is one flat pydantic model with `extra="forbid"`, and every page reads
   `config.<field>` directly. Do NOT nest it or rename fields. The "global vs per-template" split is a
@@ -370,21 +377,52 @@ Review: PASS
   `notes_pattern`. `QRCodes` (id `qr`) uses `qr_urls`. Inclusion is also configuration:
   `build_plan` (assembler.py) adds `Weekly`/`Daily` only when "weekly"/"daily" is in `planners`, and
   adds optional/value-added pages only when their id is in `config.pages` (`_extras`). It ALWAYS adds
-  `Cover`, `PersonalInfo`, `Yearly`, `Monthly`, `Notes`, `Contacts` and `BackCover`. So the sections
-  with configuration are:
-  daily (fields + enable via `planners`), weekly (enable via `planners`; no other field), notes
-  (`notes_pattern`; always included, so its enable box is shown checked and locked), and qr
-  (`qr_urls`; enable via "qr" in `pages`). Monthly, cover, yearly, contacts and the other optional
-  or value-added pages have no template-specific config. They get no section and are still chosen
-  in the Global section's `pages` checklist. Hard-coded class constants that could become settings
-  later (not planned, see Open questions): `Daily.HOUR_START/HOUR_END` (06-21),
-  `Schedule.FIRST_HOUR`, `Habits.MAX_HABITS`, and the `count` constructor argument of
-  `Notes`/`Contacts`/niche packs (`_Counted`), which the assembler always leaves at 1.
+  `Cover`, `PersonalInfo`, `Yearly`, `Monthly`, `Notes`, `Contacts` and `BackCover`.
+- Hard-coded values that become settings (user decision; defaults = today's values, so output is
+  unchanged). Each goes in its template's section:
+  - `Daily.HOUR_START/HOUR_END` (6/21) -> `daily_hour_start`/`daily_hour_end`;
+  - `Schedule.FIRST_HOUR` (7) and the end implied by `MAX_HOURS` (15 hours, 7:00-21:00) ->
+    `schedule_first_hour`/`schedule_last_hour` (7/21);
+  - `Habits.MAX_HABITS` (20) -> `habits_max`;
+  - the `count` constructor argument of `Notes`/`Contacts` -> `notes_pages`/`contacts_pages` (1/1);
+  - the `count` of the niche packs (`_Counted` in value_added.py: ids `niche_entrepreneur`,
+    `niche_student`, `niche_fitness`) -> `niche_entrepreneur_pages`/`niche_student_pages`/
+    `niche_fitness_pages` (1).
+  The assembler always constructs these classes with no arguments, and it puts `Notes`/`Contacts`
+  directly with `put(cls, {})` instead of looping over `instances()`. That is why the counts need an
+  assembler change. Constants NOT converted, because they are layout fit rules or define the page itself
+  (decision, not a question): `Schedule.MIN_HOURS/BAND_ROWS`, `Challenge30.DAYS` (the page id is
+  `challenges30`, and its grid `COLS=(5, 6)` is built for 30), `Travel.MAX_DAYS` (an itinerary fit cap),
+  the rating scales (`MonthlyReview.RATING`, `Media.RATING`), the fixed label tuples (`HealthTracker.TRACKERS`,
+  `Meals.MEALS`, `Media.TYPES`, i18n-keyed), and every *_ROWS/*_RATIO/*_W geometry constant.
+- Padding (reading of the user's "padding"): `build_plan` (assembler.py, `try_padding`) appends
+  *padding units* before the back cover until the page total fills whole booklets
+  (`plan_booklets(...).padding == 0`). A unit is one instance of `get_page(config.pad_with)` (default
+  `notes`), with `kind="padding"`. If no whole number of units fits, it falls back to blank pages
+  (`page_class=None`, `kind="padding"`). The section bar shows padding hatched (`bar_model.PADDING`,
+  Phase 05). This is distinct from the `starts_on` *fillers* (`kind="filler"`). The fixed back-matter
+  `Notes` page (kind "page") is not padding. So "Notes counts as padding" = Notes is the default padding
+  material, and its settings belong with the padding settings. "Extra padding" = a new
+  `extra_padding: int = 0`: the minimum number of padding units. The search starts at that count and
+  adds more only to complete the last booklet, so booklets stay whole. Decision: one "Notes & padding"
+  section (key `notes`, block `notes:`) right after Global, because padding depends on the booklet
+  settings there. It holds `notes_pattern`, `notes_pages`, `pad_with` (moved out of Global) and
+  `extra_padding`. It has NO enable box: padding is always active, and `notes_pages: 0` removes the
+  back-matter notes. Its preview is the Notes sample.
+- Sections with configuration, in display order: global; notes ("Notes & padding"); daily (fields +
+  enable via `planners`); weekly (enable via `planners`; no other field); contacts (`contacts_pages`;
+  enable "count" = `contacts_pages > 0`); schedule, habits and qr (their fields; enable via the id in
+  `pages`); niche_entrepreneur, niche_student and niche_fitness (their `*_pages`; enable via `pages`);
+  styling. Monthly, cover, personal info, yearly, back cover and the other optional/value-added pages
+  have no template-specific config. They get no section and are still chosen in Global's `pages` checklist.
 - "Colors & styling" section: `theme` (Config field, free string, `agenda/themes.py` is an empty stub)
-  plus a GUI-only "App appearance" combo (system/light/dark) that is not a Config field. Global = every
-  other field, including `planners` and `pages`; the header boxes are views of those editors.
+  plus a GUI-only "Appearance" combo (dark/light/system, default dark), saved between runs with
+  QSettings and not a Config field. Global = every other field, including `planners` and `pages`; the
+  header boxes are views of those editors.
 - Templates and page ids: daily -> `Daily` (id `daily`, 1 page), weekly -> `Weekly` (id `weekly`,
-  2 pages, `starts_on="left"`), notes -> `Notes` (id `notes`), qr -> `QRCodes` (id `qr`).
+  2 pages, `starts_on="left"`), notes -> `Notes` (id `notes`), contacts -> `Contacts` (id `contacts`),
+  schedule -> `Schedule`, habits -> `Habits` (12 instances, one per month), qr -> `QRCodes` (id `qr`),
+  and the three niche packs.
 - `preset` pitfall: `Config._resolve_preset` fills an empty `pages` from `preset`. Enabling qr through its
   header box when `pages` is empty and a preset is set must first copy `preset_pages(preset)` into
   `pages`, otherwise the explicit list silently drops the preset's pages.
@@ -392,7 +430,8 @@ Review: PASS
   (already a dependency). `agenda/draw.py: holiday_name_for(config)` / `day_style_for(config)` wrap it
   (lru-cached `_holidays`). Yearly/Monthly mini-months and grids, Weekly (tint + name) and Daily (tint
   only; it does NOT print the name today) use them. The `holidays` page (optional.py `Holidays.draw`)
-  calls `holidays_for` directly, so Phase 12 adds `draw.merged_holidays` as the one source for all of them. The user `holidays_file` (Phase 11/12) is merged INTO this lookup, so its entries
+  calls `holidays_for` directly, so Phase 14 adds `draw.merged_holidays` as the one source for all of
+  them. The user `holidays_file` (Phases 13-14) is merged INTO this lookup, so its entries
   are ordinary holidays everywhere: same tint, same name display, and no separate styling, flag or
   code path. Monthly quotes already exist: i18n keys
   `quotes.1`..`quotes.12` in both languages (agenda/i18n.py) are used by the `quotes` page
@@ -430,23 +469,26 @@ Review: PASS
 Deliverable: New Qt-free module `agenda/templates.py` with `GLOBAL = "global"`, `STYLING = "styling"`,
 and a frozen dataclass `SectionSpec(key: str, label: str, block: str | None, fields: dict[str, str],
 page_id: str | None = None, enable: str = "none")`. `fields` maps YAML short key -> Config field
-name; `enable` is one of "planner", "page", "always" or "none". `SECTIONS: tuple[SectionSpec, ...]`
-lists them in display order:
+name; `enable` is one of "planner", "page" or "none" (Phase 12 adds "count"). `SECTIONS:
+tuple[SectionSpec, ...]` lists them in display order. This phase registers only fields that already
+exist; Phases 11-13 add their sections and fields:
 - global ("Global", block None, fields = every field not owned elsewhere, computed);
+- notes ("Notes & padding", block "notes", {"pattern": "notes_pattern", "pad_with": "pad_with"},
+  page_id "notes", enable "none");
 - daily ("Day pages", block "daily", {"months": "daily_months"}, page_id "daily", enable "planner");
 - weekly ("Week pages", block None, {}, page_id "weekly", enable "planner");
-- notes ("Notes pages", block "notes", {"pattern": "notes_pattern"}, page_id "notes", enable "always");
 - qr ("QR codes", block "qr", {"urls": "qr_urls"}, page_id "qr", enable "page");
-- styling ("Colors & styling", block "style", {"theme": "theme"}).
+- styling ("Colors & styling", block "style", {"theme": "theme"}), always last.
 `TEMPLATE_KEYS` = the keys that have a page_id. Functions:
 - `section(key)` (KeyError on unknown);
 - `group_of(field) -> str`;
 - `fields_of(key, all_fields) -> list[str]` (keeps the given order; GLOBAL gets the rest);
 - `is_enabled(cfg, key) -> bool` (planner: key in cfg.planners; page: page_id in (cfg.pages or []);
-  always: True);
+  none: True);
+- `has_enable_box(key) -> bool` (False for "none");
 - `with_enabled(values: dict, key, on: bool) -> dict` (returns a new raw-values dict with
   planners/pages updated. For "page" with empty pages and a set preset, it first copies
-  `catalog.preset_pages(preset)`. "always" raises ValueError).
+  `catalog.preset_pages(preset)`. "none" raises ValueError).
 agenda/configfile.py `flatten` also flattens every section block (`daily: {months: "1-6"}` ->
 `daily_months`) with the same errors as `booklet:`: a non-mapping block, an unknown key (the message
 lists the valid keys), and a block key plus its flat key both set. New
@@ -461,16 +503,18 @@ passes. The new tests assert that:
 (a) every field in every `SectionSpec.fields` is in `Config.model_fields`; no field is in two sections;
 every page_id resolves with `catalog.get_page`; and the `fields_of` lists over all SECTIONS partition
 `Config.model_fields` exactly;
-(b) `group_of("daily_months") == "daily"`, `group_of("theme") == STYLING`,
-`group_of("planners") == group_of("pages") == group_of("year") == GLOBAL`;
+(b) `group_of("daily_months") == "daily"`, `group_of("pad_with") == group_of("notes_pattern") ==
+"notes"`, `group_of("theme") == STYLING`, `group_of("planners") == group_of("pages") ==
+group_of("year") == GLOBAL`; `SECTIONS[0].key == GLOBAL`, `SECTIONS[1].key == "notes"`, and
+`SECTIONS[-1].key == STYLING`;
 (c) `is_enabled(Config(planners=["weekly"]), "daily")` is False and the weekly result is True;
-`is_enabled(Config(), "notes")` is True; `is_enabled(Config(pages=["qr"], qr_urls=["x"]), "qr")` is True;
+`has_enable_box("notes")` is False; `is_enabled(Config(pages=["qr"], qr_urls=["x"]), "qr")` is True;
 (d) `with_enabled(default_values(), "daily", False)["planners"] == ["weekly"]`; enabling qr on
 `{**default_values(), "preset": "essential"}` gives a pages list equal to
 `preset_pages("essential") + ["qr"]` (no duplicate if already present); `with_enabled(..., "notes", False)`
 raises ValueError;
-(e) `flatten({"daily": {"months": "1-3"}, "notes": {"pattern": "grid"}, "style": {"theme": "x"}})` gives
-the three flat keys, and the three error cases raise ConfigFileError;
+(e) `flatten({"daily": {"months": "1-3"}, "notes": {"pattern": "grid", "pad_with": "notes"}, "style":
+{"theme": "x"}})` gives the four flat keys, and the three error cases raise ConfigFileError;
 (f) `Config(**load_yaml("config.yaml"))` (the repo sample, unchanged) still validates, and flat-key and
 block YAML files with the same values build equal Configs;
 (g) `save_yaml` then `load_values` round-trips a Config with non-default daily_months, notes_pattern,
@@ -485,7 +529,90 @@ booklet fields flat). The "No rules live here" docstring of configfile.py stays 
 mapping only. Adding a future section must be a one-entry change to SECTIONS.
 Review: -
 
-## Phase 11 — Day-extra config fields and their Qt-free data layer   [status: pending]
+## Phase 11 — Hard-coded page values become per-template settings   [status: pending]
+Deliverable: New Config fields with today's values as defaults, so the output is unchanged:
+`daily_hour_start: int = 6`, `daily_hour_end: int = 21` (both 0-23, start < end);
+`schedule_first_hour: int = 7`, `schedule_last_hour: int = 21` (both 0-23, first < last);
+`habits_max: int = 20` (1-40); `niche_entrepreneur_pages`, `niche_student_pages`,
+`niche_fitness_pages: int = 1` (each 1-20). The pages read them instead of the class constants.
+`Daily.draw` uses `config.daily_hour_start` .. `config.daily_hour_end` (still fewer hours if rows run
+short). `Schedule.layout(rows, max_hours)` takes `max_hours = schedule_last_hour - schedule_first_hour +
+1` capped at today's fit rules, and `draw` labels from `schedule_first_hour`. `Habits.layout(rows,
+max_habits)` uses `config.habits_max`. `_Counted.instances(config)` returns
+`config.<id>_pages` pages unless an explicit `count` was passed to the constructor (constructor default
+becomes `None`; `count=N` keeps working, as do negative-count errors). The class constants stay as
+documented defaults, and `layout` keeps a default argument equal to the old constant, so existing
+`layout(rows)` calls and tests still work. templates.py adds the fields to the daily section
+({"hour_start": ..., "hour_end": ...}) and adds new sections after weekly: schedule ("Weekly
+schedule", block "schedule", {"first_hour", "last_hour"}, page_id "schedule", enable "page"), habits
+("Habit tracker", block "habits", {"max": "habits_max"}, page_id "habits", enable "page"), then after qr
+the three niche packs (block = page id, {"pages": "<id>_pages"}, enable "page"). Each new field gets a
+CLI option and PARAM_SHORT/PARAM_DETAILS.
+Files: agenda/config.py, agenda/pages/core.py, agenda/pages/optional.py, agenda/pages/value_added.py,
+agenda/templates.py, agenda/cli.py, agenda/gui/help_text.py, tests/test_page_settings.py,
+tests/test_templates.py
+Depends on: 10
+Done when: `pytest tests/test_page_settings.py tests/test_templates.py tests/test_daily.py tests/test_schedule.py tests/test_habits.py tests/test_niche_packs.py tests/test_config.py tests/test_cli.py tests/test_gui_param_help.py tests/test_gui_settings.py`
+(whichever exist) passes. The new tests assert that:
+(a) `Config()` has exactly the defaults above, and `Config(daily_hour_start=21, daily_hour_end=6)`,
+`Config(schedule_first_hour=25)` and `Config(habits_max=0)` raise ValidationError;
+(b) with defaults, the rendered text (pypdf) of a Daily, a Schedule, a Habits and each niche-pack page
+equals the text rendered with the old constants. Pin the hour labels: Daily shows "06:00" as the first
+and "21:00" as the last label when rows allow, and Schedule starts at 7;
+(c) `daily_hour_start=8, daily_hour_end=12` gives exactly the labels 08:00 .. 12:00 on a Daily page;
+`schedule_first_hour=9` makes the first Schedule label start with "9" or "09";
+(d) `Habits.layout(100, 5) == 5` and `Habits.layout(100) == 20`;
+(e) `build_plan(Config(pages=["niche_student"], niche_student_pages=3))` has 3 entries using that class,
+and `PackStudent(count=2).instances(Config())` still has 2;
+(f) `group_of` maps every new field to its section; `section("schedule").enable == "page"`; the
+SECTIONS partition test from Phase 10 still passes.
+Full `pytest` passes (test_cli.py:96 and the PARAM_* coverage tests included).
+Notes: Do not change the fit rules themselves. A config value only lowers or raises the cap that the
+constant used to set. PARAM_DETAILS must say that the page still shows fewer rows when they do not fit.
+Validators must name the field in the error message.
+Review: -
+
+## Phase 12 — Notes & padding: page counts and extra padding   [status: pending]
+Deliverable: New Config fields `notes_pages: int = 1` (0-50), `contacts_pages: int = 1` (0-50) and
+`extra_padding: int = 0` (0-200, in padding units). `Notes`/`Contacts` get the same "count=None ->
+config field" rule as `_Counted` in Phase 11. `build_plan` puts the back-matter Notes and Contacts
+once per `instances(config)`, so 0 removes them. The padding search starts at
+`units = config.extra_padding` instead of 0, and its `limit` grows by the same amount. The rule that
+skips padding when a fixed `num_booklets` overflows applies to the starting count (`units == start`),
+so extra padding is always present and booklets stay whole. The blank fallback is unchanged. templates.py:
+the notes section gains {"pages": "notes_pages", "extra_padding": "extra_padding"}. A new contacts section
+("Contacts", block "contacts", {"pages": "contacts_pages"}, page_id "contacts", enable "count") goes
+after weekly. A new enable kind "count" (`count_field` on SectionSpec) works like this:
+`is_enabled` = field > 0; `with_enabled(on=False)` sets 0; on=True sets 1 if the field is 0, otherwise
+leaves it. `summarize` / `PlanSummary` reports the number of padding pages, if it does not already. CLI
+options and help texts cover the new fields; PARAM_DETAILS of `extra_padding` explains that the agenda
+may get more padding than asked, to complete the last booklet.
+Files: agenda/config.py, agenda/assembler.py, agenda/pages/core.py, agenda/templates.py, agenda/cli.py,
+agenda/gui/help_text.py, tests/test_extra_padding.py, tests/test_templates.py
+Depends on: 10, 11
+Done when: `pytest tests/test_extra_padding.py tests/test_padding.py tests/test_build_plan.py tests/test_booklets.py tests/test_plan_cases.py tests/test_assembler.py tests/test_templates.py tests/test_cli.py tests/test_gui_param_help.py`
+passes. The new tests assert that:
+(a) with defaults, `build_plan(Config())` gives exactly the same entries (page class, kind, section,
+page number) as before this phase. Hard-code a fingerprint (page count plus the count of
+`kind == "padding"` entries) computed from HEAD before the change;
+(b) for `extra_padding` in (0, 1, 5, 13), the number of padding entries is >= that value, the total
+satisfies `plan_booklets(total, per, "auto").padding == 0`, and the padding count is minimal: one
+unit fewer than found would not complete the booklets, unless it is already at `extra_padding`;
+(c) `notes_pages=3` gives 3 back-matter Notes entries with kind "page", and `notes_pages=0,
+contacts_pages=0` gives none of either, with padding still completing the booklets;
+(d) with `pad_with="notes"` the extra padding entries use `Notes`, and with `pad_with` set to another
+page id they use that class;
+(e) with a fixed `num_booklets` too small for the pages, the plan still has >= `extra_padding` padding
+entries and the summary reports the overflow, as today;
+(f) `is_enabled(Config(contacts_pages=0), "contacts")` is False;
+`with_enabled(values, "contacts", True)["contacts_pages"] == 1`; `has_enable_box("notes")` is still False.
+Full `pytest` passes.
+Notes: Do not change `plan_booklets`, `PlanEntry` kinds or the folded multiple-of-4 invariant. Keep the
+padding position (before the back cover) and the `separate_covers` handling. The "Notes & padding"
+section has no enable box: padding is always active.
+Review: -
+
+## Phase 13 — Day-extra config fields and their Qt-free data layer   [status: pending]
 Deliverable: New Qt-free module `agenda/day_extras.py`: `read_lines(path) -> list[str]` (UTF-8,
 strips lines, skips blank lines and lines starting with "#"; raises ValueError naming the path when it
 cannot be read); `parse_dated(lines, year) -> dict[date, str]` (each line is `MM-DD text` or
@@ -530,7 +657,7 @@ parsing. PARAM_DETAILS must describe the file formats (`MM-DD text`, `YYYY-MM-DD
 and the rotation rule (one phrase per day of the year, cycling).
 Review: -
 
-## Phase 12 — Merge user holidays; draw the extras on Daily pages (holiday names on by default)   [status: pending]
+## Phase 14 — Merge user holidays; draw the extras on Daily pages (holiday names on by default)   [status: pending]
 Deliverable: New `draw.merged_holidays(config) -> dict[date, str]`, sorted by date, becomes the
 single holiday source. It returns the library holidays (`holidays_for`) plus the `holidays_file`
 entries (via `day_extras.parse_dated` for `config.year`). On a date that has both, the names are
@@ -553,7 +680,7 @@ with `functools.lru_cache`). With `daily_holidays=False` and the other extras of
 today's output. With defaults, holiday days now also show the holiday name.
 Files: agenda/draw.py, agenda/pages/core.py, agenda/pages/optional.py, agenda/day_extras.py,
 tests/test_daily_extras.py, tests/test_user_holidays.py, tests/test_daily.py
-Depends on: 11
+Depends on: 11, 13
 Done when: `pytest tests/test_daily_extras.py tests/test_user_holidays.py tests/test_daily.py tests/test_holidays.py tests/test_weekly.py tests/test_day_style.py tests/test_monthly.py`
 (whichever of these exist) passes. The new tests render single Daily instances (set up as in
 tests/helpers.py `render_page`, or by drawing one ctx) and extract text with pypdf. They assert that:
@@ -585,13 +712,14 @@ safe-area checks. Measure text with `pdf.get_string_width` after setting the fon
 goes in day_extras (Qt-free, unit-tested).
 Review: -
 
-## Phase 13 — Qt-free sample plans for template previews   [status: pending]
+## Phase 15 — Qt-free sample plans for template previews   [status: pending]
 Deliverable: New Qt-free module `agenda/gui/template_model.py` with
 `sample_plan(cfg: Config, key: str, instance: int = 0) -> PagePlan`. It builds a small valid PagePlan
 for template `key` (a key in `templates.TEMPLATE_KEYS`; GLOBAL, STYLING or unknown keys raise
 ValueError) holding one instance of the template's
 page class (`catalog.get_page(section(key).page_id)`), chosen as follows: daily uses the first day in
-`cfg.daily_months`, others use `instances(cfg)[instance]` clamped to range. Entries come from
+`cfg.daily_months`, others use `instances(cfg)[instance]` clamped to range (habits: January; a
+count of 0, such as `contacts_pages=0`, still gives one sample page built from a `{}` ctx). Entries come from
 `assembler.make_entry` with `booklet_index=1`. A leading blank filler entry is added when the class's
 `starts_on` side does not match page 1's side (so the weekly spread is a real left+right pair). The qr
 sample uses a placeholder URL list (`["https://example.com"]`) when `cfg.qr_urls` is empty, so it never
@@ -600,7 +728,7 @@ renders an empty page. Also `preview_mode(key) -> str` (`preview_model.SPREAD` f
 -> str`. That last one decides which preview the main window shows: a template key shows itself, GLOBAL
 shows GLOBAL (the full agenda), and STYLING shows `last_template` if set, else GLOBAL.
 Files: agenda/gui/template_model.py, tests/test_gui_template_model.py
-Depends on: 10 (12 for the extras check in (d))
+Depends on: 11, 12, 14 (14 only for the extras check in (d))
 Done when: `pytest tests/test_gui_template_model.py` passes. Tests (no PySide6) assert that, for every
 key in TEMPLATE_KEYS:
 (a) `sample_plan(Config(), key)` is a PagePlan whose non-blank entries all use the
@@ -610,7 +738,9 @@ template's page class, and `exporter.render_pages(cfg, plan, range(len(plan)))` 
 "right" for the drawn entries);
 (c) `Config(daily_months=[3])` makes the daily sample date March 1;
 (d) with `daily_quotes=True` and a quotes file, the daily sample PDF text contains the first matching phrase;
-(e) `sample_plan(Config(planners=["weekly"]), "daily")` still works: a disabled template still has a sample;
+(e) `sample_plan(Config(planners=["weekly"]), "daily")` and `sample_plan(Config(contacts_pages=0),
+"contacts")` still work: a disabled template still has a sample; `TEMPLATE_KEYS` contains notes,
+daily, weekly, contacts, schedule, habits, qr and the three niche packs;
 (f) `preview_mode("weekly") == "spread"` and `preview_mode("daily") == "single"`;
 (g) `preview_target("daily", None) == "daily"`, `preview_target(GLOBAL, "daily") == GLOBAL`,
 `preview_target(STYLING, "qr") == "qr"`, `preview_target(STYLING, None) == GLOBAL`; `sample_plan(cfg,
@@ -618,17 +748,17 @@ GLOBAL)` and `sample_plan(cfg, STYLING)` raise ValueError;
 (h) the module source contains no "PySide6".
 Full `pytest` passes.
 Notes: Do not change `PagePlan` invariants or `build_plan`. A disabled template must still preview
-(the sample does not depend on `planners`/`pages`; the GUI grays it out in Phase 15). Check `Grid` side
+(the sample does not depend on `planners`/`pages`; the GUI grays it out in Phase 17). Check `Grid` side
 conventions in agenda/grid.py (`side_for_page`) rather than assuming page 1 is right.
 Review: -
 
-## Phase 14 — Collapsible sections with enable checkboxes in the settings panel   [status: pending]
+## Phase 16 — Collapsible sections with enable checkboxes in the settings panel   [status: pending]
 Deliverable: New module agenda/gui/collapsible.py with `CollapsibleSection(QFrame)`, constructed as
 `CollapsibleSection(key: str, title: str, enable: str = "none")` (objectName `section_<key>`). Its
 header has a `toggle_button` (checkable QToolButton showing an arrow and the title, objectName
 `section_toggle`) and an `enable_box`. The box is a QCheckBox (objectName `section_enable`) when
-`enable` is "planner" or "page". For "always" it is a checked, disabled QCheckBox whose tooltip says
-the page is always included. For "none" it is None. Below the header is a `body` QWidget with a
+`enable` is "planner", "page" or "count", and None for "none" (Global, Notes & padding, Colors &
+styling). Below the header is a `body` QWidget with a
 QFormLayout `form`. API: `set_expanded(bool)`, `is_expanded()`, `set_enabled_state(bool)` (sets the
 box with signals blocked and calls `body.setEnabled`), `enabled_state() -> bool`. Signals:
 `expanded_changed(bool)` and `enable_toggled(bool)` (user toggles only). Unchecking the box disables
@@ -640,14 +770,15 @@ others collapsed. New members: `self.sections: dict[str, CollapsibleSection]`,
 `activate(key)` (expand, set active, emit), and `notify_focus(widget)`. `notify_focus` is connected to
 `QApplication.focusChanged` and activates the section that contains the newly focused widget.
 Expanding a section also activates it. Header boxes are views of the existing editors. A toggle
-computes `templates.with_enabled(self.values(), key, on)`, writes back only the `planners` and `pages`
-editors (via `_set`, with `_loading` set), and then emits `changed` once. After every change
+computes `templates.with_enabled(self.values(), key, on)`, writes back only the editors whose value
+changed (`planners`, `pages`, or the section's `count_field`), via `_set` with `_loading` set, and then
+emits `changed` once. After every change
 (`changed`), each box is re-synced from `templates.is_enabled` on the current values. `editors`,
 `page_boxes`, `tooltips`, `label_tooltips` (row labels keep `label_<name>`), `changed`, `values()`,
 `set_values()`, `config()`, `load_file`, `save_file` and `error_label` keep their behavior.
 Files: agenda/gui/collapsible.py, agenda/gui/settings_panel.py, tests/test_gui_collapsible.py,
 tests/test_gui_settings_sections.py
-Depends on: 10, 11
+Depends on: 11, 12, 13
 Done when: `QT_QPA_PLATFORM=offscreen pytest tests/test_gui_collapsible.py tests/test_gui_settings_sections.py tests/test_gui_settings.py tests/test_gui_settings_tooltips.py tests/test_gui_shell.py`
 passes, and tests/test_gui_settings.py and tests/test_gui_settings_tooltips.py are NOT modified
 (`git diff --quiet -- tests/test_gui_settings.py tests/test_gui_settings_tooltips.py` exits 0). The new
@@ -655,13 +786,16 @@ tests (qapp fixture + `importorskip("PySide6")`) assert that:
 (a) CollapsibleSection: `set_expanded(True)` shows the body (`body.isVisibleTo(section)`) and emits
 `expanded_changed(True)`; `enable_box.setChecked(False)` emits `enable_toggled(False)` and makes
 `body.isEnabled()` False; `set_enabled_state(True)` re-enables the body without emitting `enable_toggled`;
-"always" gives a checked, disabled box; "none" gives `enable_box is None`;
+"none" gives `enable_box is None`;
 (b) `list(panel.sections) == [s.key for s in SECTIONS]` and each toggle_button text equals the section label;
 (c) for every field name, the nearest CollapsibleSection ancestor of `panel.editors[name]` has key
 `group_of(name)`;
-(d) defaults: the daily and weekly boxes are checked, the notes box is checked and disabled, the qr box
-is unchecked, and `panel.editors["qr_urls"].isEnabled()` is False; the global and styling sections have
-no box;
+(d) defaults: the daily, weekly and contacts boxes are checked; the qr, schedule, habits and niche
+boxes are unchecked, and `panel.editors["qr_urls"].isEnabled()` and `editors["habits_max"].isEnabled()`
+are False; the global, notes and styling sections have no box, and `editors["extra_padding"]` and
+`editors["pad_with"]` sit in the notes section and are enabled;
+(d2) unchecking the contacts box sets `editors["contacts_pages"]` to 0 and disables it; checking it again
+sets it to 1;
 (e) unchecking the daily box gives `panel.config()[0].planners == ["weekly"]`, emits `changed`, disables
 `editors["daily_months"]`, and unchecks the "daily" checkbox inside `editors["planners"]`; checking that
 "daily" checkbox again re-checks the header box and re-enables the body;
@@ -681,7 +815,7 @@ and "active" is the last one expanded or focused. Do not duplicate `planners`/`p
 boxes always read it from the editors.
 Review: -
 
-## Phase 15 — Main preview follows the active section; disabled templates grayed out   [status: pending]
+## Phase 17 — Main preview follows the active section; disabled templates grayed out   [status: pending]
 Deliverable: The center of MainWindow becomes a `QStackedWidget` (`self.preview_stack`). Page 0 is the
 existing `self.preview` (full agenda, still `regions[L.PREVIEW]`). Then there is one page per key in
 `TEMPLATE_KEYS`: a container (objectName `template_page_<key>`) with a notice QLabel
@@ -701,7 +835,7 @@ when shown. On an invalid config every template preview gets `set_error(msg)`.
 `section_bar.page_requested` and `legend.section_clicked` call `show_preview_for(GLOBAL)`, so the
 clicked page is visible.
 Files: agenda/gui/app.py, agenda/gui/preview.py, tests/test_gui_template_preview.py
-Depends on: 13, 14
+Depends on: 15, 16
 Done when: `QT_QPA_PLATFORM=offscreen pytest tests/test_gui_template_preview.py tests/test_gui_shell.py tests/test_gui_preview.py tests/test_gui_export.py tests/test_gui_settings.py`
 passes. The new tests build `MainWindow()` and assert that:
 (a) `win.preview_stack.count() == 1 + len(TEMPLATE_KEYS)`, `win.preview_stack.widget(0) is win.preview`,
@@ -726,11 +860,13 @@ in tests and make sure window teardown does not hang. Keep the splitter: setting
 in the center. The section bar, legend and summary always describe the full agenda.
 Review: -
 
-## Phase 16 — Application stylesheet and theme   [status: pending]
+## Phase 18 — Minimalist application stylesheet, dark by default, saved appearance   [status: pending]
 Deliverable: New Qt-free module `agenda/gui/style_model.py` with `THEMES: dict[str, dict[str, str]]`
-holding a "light" and a "dark" token set. Required tokens: window, panel, text, muted, border, accent,
-accent_text, input_bg, selection, error, tooltip_bg, tooltip_text. The accent is derived from
-`agenda.tokens.COLORS["accent"]` (converted to hex) for light, and is a lighter variant for dark. Also
+holding a "dark" and a "light" token set. The look is minimalist: flat surfaces, a small palette (one
+accent, neutral grays), generous spacing, no gradients and no heavy borders. Required tokens: window,
+panel, text, muted, border, accent, accent_text, input_bg, selection, error, tooltip_bg, tooltip_text.
+The accent is derived from `agenda.tokens.COLORS["accent"]` (converted to hex) for light, and is a
+lighter variant for dark. Also `SPACING = {"gap": 8, "margin": 12, "pad": 6, "radius": 4}` (px) and
 `stylesheet(dark: bool) -> str`, which builds QSS from the tokens with rules for QMainWindow/QWidget
 base colors, QPushButton (normal/hover/pressed/disabled/checked), `QPushButton#export_button` (accent
 fill), QLineEdit/QSpinBox/QDoubleSpinBox/QComboBox/QPlainTextEdit (+ :disabled in the muted color),
@@ -738,18 +874,23 @@ QGroupBox (+ ::title), `QFrame[objectName^="section_"]` or an equivalent section
 `QToolButton#section_toggle` (bold header, hover), `QCheckBox#section_enable`, QScrollArea, QToolTip,
 QProgressBar (+ ::chunk), `QLabel#settings_error` (error color), `QLabel#legend_title` and the
 `template_notice_*` labels. Also `contrast_ratio(hex_a, hex_b) -> float` (WCAG formula),
-`APPEARANCES = ("system", "light", "dark")` and `resolve_dark(appearance, window_lightness) -> bool`
-("system" uses `section_colors.is_dark`). In app.py, `apply_style(app, appearance="system")` sets
-`app.setStyleSheet(stylesheet(resolve_dark(...)))`. `main()` calls it, and MainWindow re-applies on
-`QEvent.PaletteChange`. The "Colors & styling" section gets a GUI-only `settings.appearance_box`
-(QComboBox over APPEARANCES, objectName `appearance`, with an ExpandingToolTip from new
-`help_text.TOOLTIPS["appearance"]`). It is NOT a Config field, is not in `editors`, `values()` or the YAML,
-and changing it calls `apply_style` for the running app. `export_button` gets objectName
-`export_button`. Layout spacing/margins on the toolbar, settings sections and legend get consistent
-values (spacing 6, margins 8).
+`APPEARANCES = ("dark", "light", "system")`, `DEFAULT_APPEARANCE = "dark"` and
+`resolve_dark(appearance, window_lightness) -> bool` ("system" uses `section_colors.is_dark`; unknown
+values fall back to the default). In app.py, `apply_style(app, appearance=DEFAULT_APPEARANCE)` sets
+`app.setStyleSheet(stylesheet(resolve_dark(...)))` and also a matching `QPalette` (window/base/text/
+button/highlight from the tokens). The palette matters because the legend and section bar pick their
+dark or light section colors from the palette lightness. `main()` calls it with the saved appearance.
+Persistence: MainWindow takes an optional `prefs: QSettings | None = None`. The default is
+`QSettings("agenda-gen", "agenda-gui")`, key "appearance". The value is read at start (missing ->
+"dark") and written whenever the user changes it. The "Colors & styling" section gets a GUI-only
+`settings.appearance_box` (QComboBox over APPEARANCES, objectName `appearance`, with an ExpandingToolTip
+from new `help_text.TOOLTIPS["appearance"]`). It is NOT a Config field and is not in `editors`,
+`values()` or the YAML. Changing it calls `apply_style` for the running app and saves the choice.
+`export_button` gets objectName `export_button`. The toolbar, settings sections and legend use
+`SPACING["gap"]` for spacing and `SPACING["margin"]` for margins.
 Files: agenda/gui/style_model.py, agenda/gui/app.py, agenda/gui/settings_panel.py,
-agenda/gui/help_text.py, tests/test_gui_style_model.py, tests/test_gui_style.py
-Depends on: 15
+agenda/gui/collapsible.py, agenda/gui/help_text.py, tests/test_gui_style_model.py, tests/test_gui_style.py
+Depends on: 17
 Done when: `pytest tests/test_gui_style_model.py tests/test_gui_help_text.py` passes (no PySide6) and
 `QT_QPA_PLATFORM=offscreen pytest tests/test_gui_style.py tests/test_gui_legend.py tests/test_gui_shell.py tests/test_gui_settings.py`
 passes. The tests assert that:
@@ -761,30 +902,42 @@ stylesheets differ; `resolve_dark("light", 0) is False`, `resolve_dark("dark", 2
 `contrast_ratio(error, panel) >= 4.5` in both themes;
 (c) `stylesheet(False)` contains each selector listed above, and it contains no rule whose selector is
 exactly `QLabel` (regex `(^|[},\s])QLabel\s*\{` does not match);
-(d) after `apply_style(qapp)`, `qapp.styleSheet() == stylesheet(dark)` for the detected mode, and a
-`MainWindow()` still builds; `win.export_button.objectName() == "export_button"`;
-(e) `win.settings.appearance_box` is inside `sections[STYLING]`; selecting "dark" makes
-`qapp.styleSheet() == stylesheet(True)`, and "light" makes it `stylesheet(False)`; `values()` has no
-"appearance" key and `config()` is unchanged by it;
-(f) with the stylesheet applied, the legend swatch test from Phase 05 still holds: a monthly swatch
-grabbed with `grab().toImage()` is a single color equal to `section_color("monthly", dark)`.
-The test resets `qapp.setStyleSheet("")` at teardown so other tests are not affected. Full `pytest` passes.
+(c2) minimalism, in both themes: no "gradient" substring (case-insensitive); every `border*` width is <= 1px
+(regex over `(\d+)px` inside `border` declarations); no `outset|inset|ridge|groove|double`; no
+`box-shadow`; at most 10 distinct `#rrggbb` colors in each stylesheet; button and input `padding` >=
+`SPACING["pad"]`;
+(d) `DEFAULT_APPEARANCE == "dark"`; `apply_style(qapp)` gives `qapp.styleSheet() == stylesheet(True)`
+and a palette whose window lightness is < 128; a `MainWindow(prefs=<QSettings on tmp_path ini>)` with an
+empty prefs file starts dark, and `win.export_button.objectName() == "export_button"`;
+(e) `win.settings.appearance_box` is inside `sections[STYLING]` and shows "dark" by default. Selecting
+"light" makes `qapp.styleSheet() == stylesheet(False)` and writes "light" to prefs, and a new
+MainWindow on the same prefs file starts light. `values()` has no "appearance" key and `config()` is
+unchanged by it;
+(f) the settings sections' layouts use spacing >= 8 and margins >= 12;
+(g) with the dark style applied, the legend swatch test from Phase 05 still holds: a monthly swatch
+grabbed with `grab().toImage()` is a single color equal to `section_color("monthly", True)`.
+Tests always pass a tmp_path QSettings (IniFormat) and never touch the user's real settings. They reset
+`qapp.setStyleSheet("")` and the palette at teardown so other tests are not affected. Full `pytest` passes.
 Notes: Use plain QSS and no new dependency (no qt-material or similar). Do not restyle the section bar
 painting or the preview page images. Keep the tooltip readable: the ExpandingToolTip texts are multi-line
 plain text. Disabled section bodies must look clearly grayed (`:disabled` rules) but stay legible
-(`contrast_ratio(muted, panel) >= 3`, also asserted in (b)). The appearance choice is not persisted (see
-Open questions).
+(`contrast_ratio(muted, panel) >= 3`, also asserted in (b)). Separate surfaces with spacing and a
+slightly different panel tone, not with borders. Section headers are flat text buttons. Other GUI tests
+that build `MainWindow()` without `prefs` must not write settings: only a user change writes.
 Review: -
 
-## Phase 17 — Docs and sample config for templates and day extras   [status: pending]
-Deliverable: README.md "Configuration" section documents the grouping into Global, per-template and
-Colors & styling sections, the optional YAML blocks (`daily:`, `notes:`, `qr:`, `style:`), the fact that
-Save writes blocks while flat keys still load, the day extras (fields, file formats, rotation rule,
-holiday names on by default) and `holidays_file` (merged into the regular holidays on every page). It
-also notes the stale-cache caveat for edited files. The "GUI" section documents the collapsible
-sections, the enable checkboxes (what each one maps to: planners / pages / always on), the preview that
-follows the active section (Global = full agenda, Colors & styling = last template), grayed-out disabled
-templates, and the appearance setting.
+## Phase 19 — Docs and sample config for sections, padding and day extras   [status: pending]
+Deliverable: README.md "Configuration" section documents the grouping into Global, Notes & padding,
+per-template and Colors & styling sections, and every section block (`notes:`, `daily:`, `contacts:`,
+`schedule:`, `habits:`, `qr:`, the niche-pack blocks, `style:`). It states that Save writes blocks
+while flat keys still load. It documents the former hard-coded values and their defaults, padding
+(what a padding unit is, `pad_with`, `extra_padding` rounding up to whole booklets, `notes_pages`), the
+day extras (fields, file formats, rotation rule, holiday names on by default) and `holidays_file`
+(merged into the regular holidays on every page), plus the stale-cache caveat for edited files. The
+"GUI" section documents the collapsible sections, what each enable checkbox maps to (planners / pages
+/ page count), the preview that follows the active section (Global = full agenda, Colors & styling =
+last template), grayed-out disabled templates, and the appearance setting (dark by default, remembered
+between runs).
 config.yaml gets a commented-out `daily:` block example (the active content stays equivalent).
 New example files `examples/daily_quotes.txt` (at least 7 original phrases, no attribution, with a
 leading "#" comment) and `examples/daily_extra.txt` (a few `MM-DD text` lines and one `YYYY-MM-DD text`
@@ -792,14 +945,16 @@ line), and `examples/holidays.txt` (a few `MM-DD name` lines). docs/architecture
 collapsible.py, the section layout, the preview stack and `preview_target`, and style_model.py.
 Files: README.md, config.yaml, examples/daily_quotes.txt, examples/daily_extra.txt,
 examples/holidays.txt, docs/architecture/gui.md, tests/test_sample_files.py
-Depends on: 12, 16
+Depends on: 12, 14, 18
 Done when: `pytest tests/test_sample_files.py` passes. It asserts that `Config(**load_yaml("config.yaml"))`
 equals the Config built from the flat config.yaml at HEAD~ of this phase (hard-code the expected key
 values in the test: year 2027, booklet_size 5, the same pages list). It also asserts that the three
 example files parse with `read_lines`/`parse_dated` with no error, and that a Config with
 `daily_quotes_file`, `daily_extra_file` and `holidays_file` pointing at them validates.
 `grep -n "daily:" README.md config.yaml` finds both,
-`grep -n "holidays_file\|daily_quotes_file\|daily_extra_file" README.md` finds all three, and
+`grep -n "holidays_file\|daily_quotes_file\|daily_extra_file" README.md` finds all three,
+`grep -n "extra_padding\|notes_pages\|daily_hour_start\|schedule_first_hour\|habits_max" README.md` finds
+all five, and
 `grep -n "collapsible\|preview_target\|style_model" docs/architecture/gui.md` finds all three. Full
 `pytest` passes.
 Notes: Phrases must be original (same rule as the `quotes` page docstring in value_added.py). Do not
@@ -808,31 +963,34 @@ Review: -
 
 ## Open questions
 
-Open (Phases 10-17; the plan proceeds with the stated default unless the user answers otherwise):
-- New per-template settings: the code hard-codes values that could become sections later: daily
-  schedule hours (`Daily.HOUR_START/HOUR_END`, 06-21), the schedule page's `FIRST_HOUR`,
-  `Habits.MAX_HABITS`, and the page count of Notes/Contacts/niche packs (always 1). Should any of them
-  become config fields, each giving its template its own section? Default: no. The SECTIONS registry
-  makes each one a one-entry addition later.
-- Notes and other core pages (cover, yearly, monthly, contacts, back cover) are always in the agenda.
-  The notes section's enable box is shown checked and locked. Should core pages become switchable (a
-  new Config field)? Default: no.
-- App appearance (system/light/dark) is GUI-only and not persisted across runs. Should it be saved
-  (QSettings or the YAML)? Default: not persisted.
+Open (Phases 10-19; the plan proceeds with the stated default unless the user answers otherwise):
+- Padding: should the fixed back-matter Notes page(s) (today 1 page, kind "page", placed before
+  Contacts) be folded into padding? Then `notes_pages` would disappear, every Notes page would be
+  padding (hatched in the section bar), and the minimum would be `extra_padding`. Default (as planned in
+  Phase 12): keep them separate. `notes_pages` (default 1) are regular back-matter pages, and padding =
+  `pad_with` units (default notes) before the back cover, at least `extra_padding` of them, rounded up
+  to whole booklets.
 
 Resolved:
-- Holiday names on day pages default to ON (`daily_holidays=True`, Phases 11-12).
-- Sections, not tabs: one collapsible section per template that has configuration (daily, weekly,
-  notes, qr, from a code audit), each with an enable checkbox in its header. Unchecked = controls
-  disabled and the preview grayed out. The main preview follows the focused or expanded section
-  (Phases 14-15).
+- Holiday names on day pages default to ON (`daily_holidays=True`, Phases 13-14).
+- Sections, not tabs: one collapsible section per template that has configuration (from a code
+  audit, see context), each with an enable checkbox in its header. Unchecked = controls disabled and
+  the preview grayed out. The main preview follows the focused or expanded section (Phases 16-17).
 - `holidays_file` is kept. User holidays are merged into the regular holiday source
   (`draw.merged_holidays`) and treated exactly like library holidays on every page, day pages included,
-  with no separate styling (Phase 12).
+  with no separate styling (Phase 14).
 - Save writes the grouped block form, and flat and grouped files both load (Phase 10).
 - Global and "Colors & styling" are collapsible sections in the same panel. Global previews the full
   agenda. Colors & styling previews the last active template, or the full agenda if there is none
-  (Phase 15).
+  (Phase 17).
+- Hard-coded values become settings with today's values as defaults (Phase 11; Phase 12 for the
+  Notes/Contacts counts): daily hours 6-21, schedule hours 7-21, habits max 20, Notes/Contacts/niche-pack
+  page counts 1. Layout fit constants stay constants (list in context).
+- Notes is not a locked section. It is the "Notes & padding" section right after Global (notes_pattern,
+  notes_pages, pad_with, extra_padding), with no enable box because padding is always active (Phase 12).
+- Appearance defaults to dark and is saved between runs with QSettings. The style is minimalist: flat,
+  few colors, generous spacing, no gradients or heavy borders. These rules are enforced by tests
+  (Phase 18).
 - Expansion delay start (Phases 08-09): the expand timer starts when the pointer ENTERS the widget,
   so the expanded text is available about 1.5 s after entering, the same as SectionBar. The
   ToolTip event only shows the current text, and starts the timer only as a fallback.
