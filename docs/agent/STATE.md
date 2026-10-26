@@ -1,6 +1,6 @@
 # STATE: agenda-generator
 Plan: 2026-10-26-structure-cleanup
-Last phase: 02
+Last phase: 03
 ADRs: docs/adr/README.md (none yet)
 Earlier plans: last legacy STATE (export dialog plan) is `git show 93ed548:docs/agent/STATE.md`.
 ## Decisions (this plan)
@@ -16,7 +16,7 @@ Earlier plans: last legacy STATE (export dialog plan) is `git show 93ed548:docs/
 - `gui` marker: whole-Qt files set `pytestmark = pytest.mark.gui`; mixed files decorate individual tests. tests/conftest.py ignores files containing that pytestmark when PySide6 is missing (module importorskip removed, else it skips noisily under -m 'not gui'). New Qt test files must use the same pytestmark (structure-cleanup/02)
 ## Contracts (between this plan's phases)
 - PARAM_SHORT, PARAM_DETAILS, param_tooltip: agenda/gui/help_text.py (public names stay)
-- CLI flag surface pin: tests/test_cli_flags.py (phase 03, to be created)
+- CLI flag surface pin: tests/test_cli_flags.py (EXPECTED_PARAMS, FIELD_TO_PARAMS literals; everything but help text; phase 05 must keep it unchanged)
 ## Open issues
 - Footer placement can overlap the day-page quote/extra text in the footer band (not avoided)
 ## Blocked
