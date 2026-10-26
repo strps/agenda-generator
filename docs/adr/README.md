@@ -8,3 +8,4 @@ its area. A changed decision gets a NEW ADR; the old one is marked superseded.
 - [0002](0002-page-package-import-order.md) Page package import order is catalog registration order — Accepted — area: agenda/pages/value_added/, agenda/pages/optional/, agenda/catalog
 - [0003](0003-gui-test-marker.md) Qt tests carry the `gui` pytest marker — Accepted — area: tests/, tests/conftest.py, pyproject.toml
 - [0004](0004-flat-config-and-section-grouping.md) Config stays flat; section grouping lives only in agenda/templates.py — Accepted — area: agenda/config, agenda/configfile, agenda/templates.py
+- [0005](0005-ui-catalog.md) GUI and CLI text goes through a Qt-free catalog (agenda/uitext), separate from PDF strings — Accepted — area: agenda/uitext, agenda/fields.py, agenda/templates.py, agenda/gui, agenda/cli.py
