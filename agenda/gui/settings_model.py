@@ -14,6 +14,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
+from agenda import templates
 from agenda.config import Config
 from agenda.configfile import ConfigFileError, load_yaml
 
@@ -130,8 +131,21 @@ def config_to_data(cfg: Config) -> dict[str, Any]:
     return {k: v for k, v in data.items() if v is not None}
 
 
+def config_to_yaml_data(cfg: Config) -> dict[str, Any]:
+    """Grouped form: global fields flat, section fields under their block, empty blocks omitted."""
+    out: dict[str, Any] = {}
+    for name, value in config_to_data(cfg).items():
+        spec = templates.section(templates.group_of(name))
+        if spec.block is None:
+            out[name] = value
+            continue
+        short = next(k for k, f in spec.fields.items() if f == name)
+        out.setdefault(spec.block, {})[short] = value
+    return out
+
+
 def save_yaml(cfg: Config, path: Path | str) -> None:
-    text = yaml.safe_dump(config_to_data(cfg), sort_keys=False, allow_unicode=True)
+    text = yaml.safe_dump(config_to_yaml_data(cfg), sort_keys=False, allow_unicode=True)
     Path(path).write_text(text, encoding="utf-8")
 
 
@@ -146,6 +160,7 @@ __all__ = [
     "FieldSpec",
     "build_config",
     "config_to_data",
+    "config_to_yaml_data",
     "default_values",
     "field_specs",
     "load_values",

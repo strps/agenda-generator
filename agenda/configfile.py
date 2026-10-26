@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+from agenda.templates import SECTIONS
+
 # plan §8.3 nested block -> flat Config fields
 BOOKLET_KEYS = {"size": "booklet_size", "unit": "booklet_unit", "folded": "booklet_folded"}
 
@@ -17,23 +19,26 @@ class ConfigFileError(ValueError):
     """The file cannot be read or is not a mapping of config settings."""
 
 
-def flatten(data: dict[str, Any]) -> dict[str, Any]:
-    """Replace ``booklet: {size, unit, folded}`` by ``booklet_size`` / ``booklet_unit`` / ..."""
-    out = {k: v for k, v in data.items() if k != "booklet"}
-    block = data.get("booklet")
-    if block is None:
-        return out
+def _flatten_block(out: dict[str, Any], name: str, block: Any, keys: dict[str, str]) -> None:
     if not isinstance(block, dict):
-        raise ConfigFileError("'booklet' must be a mapping with size, unit and folded")
+        raise ConfigFileError(f"'{name}' must be a mapping with {', '.join(keys)}")
     for key, value in block.items():
-        field = BOOKLET_KEYS.get(key)
+        field = keys.get(key)
         if field is None:
-            raise ConfigFileError(
-                f"unknown key 'booklet.{key}' (expected: {', '.join(BOOKLET_KEYS)})"
-            )
+            raise ConfigFileError(f"unknown key '{name}.{key}' (expected: {', '.join(keys)})")
         if field in out:
-            raise ConfigFileError(f"'booklet.{key}' and '{field}' are both set")
+            raise ConfigFileError(f"'{name}.{key}' and '{field}' are both set")
         out[field] = value
+
+
+def flatten(data: dict[str, Any]) -> dict[str, Any]:
+    """Replace the nested ``booklet:`` and section blocks (``daily:``, ``notes:``, ...) by flat
+    Config field names (``booklet_size``, ``daily_months``, ...)."""
+    blocks = {"booklet": BOOKLET_KEYS, **{s.block: s.fields for s in SECTIONS if s.block}}
+    out = {k: v for k, v in data.items() if k not in blocks}
+    for name, keys in blocks.items():
+        if data.get(name) is not None:
+            _flatten_block(out, name, data[name], keys)
     return out
 
 

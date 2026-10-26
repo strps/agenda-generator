@@ -137,3 +137,9 @@ def test_cross_field_rule_sees_merged_values(captured, tmp_path):
     cfg_file = write(tmp_path, "booklet:\n  folded: false\n")
     res = runner.invoke(app, ["--config", str(cfg_file), "--imposition"])
     assert res.exit_code == 2 and "imposition" in res.output
+
+
+def test_flatten_section_block_errors():
+    assert flatten({"qr": {"urls": ["a"]}}) == {"qr_urls": ["a"]}
+    with pytest.raises(ConfigFileError):
+        flatten({"style": {"nope": 1}})
