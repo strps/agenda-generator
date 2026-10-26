@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, QThreadPool, Signal
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
+    QGraphicsOpacityEffect,
     QButtonGroup,
     QComboBox,
     QFrame,
@@ -26,6 +27,9 @@ from agenda.gui.render_cache import LatestGate, LruCache, cache_key, config_hash
 from agenda.gui.workers import RenderJob, RenderSignals, rasterise
 
 __all__ = ["PreviewWidget", "rasterise"]
+
+
+INACTIVE_OPACITY = 0.35
 
 
 class PreviewWidget(QFrame):
@@ -50,6 +54,7 @@ class PreviewWidget(QFrame):
         self._signals.done.connect(self._on_done)
         self._signals.failed.connect(self._on_failed)
         self.busy = False
+        self.inactive = False
 
         bar = QHBoxLayout()
         self.prev_button = QPushButton("◀")
@@ -117,6 +122,16 @@ class PreviewWidget(QFrame):
         self.message.setText(text)
         self._clear()
         self.label.setText("")
+
+    def set_inactive(self, on: bool) -> None:
+        """Gray the pages out (opacity effect on the scroll area) while ``on``."""
+        self.inactive = on
+        if on and self.scroll.graphicsEffect() is None:
+            effect = QGraphicsOpacityEffect(self.scroll)
+            effect.setOpacity(INACTIVE_OPACITY)
+            self.scroll.setGraphicsEffect(effect)
+        elif not on and self.scroll.graphicsEffect() is not None:
+            self.scroll.setGraphicsEffect(None)
 
     def set_mode(self, mode: str) -> None:
         self.mode = mode

@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 16
+Last phase: 17
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -18,6 +18,7 @@ Last phase: 16
 - Daily header shows "<holiday> · <week>" (truncated, dropped if no room); footer band: quote left (italic), extra text right, each half width when both. File reads cached by (path, mtime[, year]) in draw.py (phase 14)
 - Template previews: `sample_plan` ignores planners/pages (disabled templates still preview); daily sample = first day in daily_months; qr uses placeholder URL when qr_urls empty; empty instances (contacts_pages=0) give a `{}` ctx; weekly gets a leading blank filler so it lands on a left/right pair (phase 15)
 - Settings panel is one CollapsibleSection per templates.SECTIONS entry (Global expanded, rest collapsed; not an accordion); header enable boxes are views synced from templates.is_enabled on every `changed`; toggling uses with_enabled and writes back only changed editors, emitting `changed` once; `activate(key)` expands (re-entrant via expanded_changed) and emits section_activated once; focus follows QApplication.focusChanged (phase 16)
+- Main preview: MainWindow.preview_stack (page 0 = full `preview`, then `template_page_<key>` containers with `template_notice_<key>` + PreviewWidget per TEMPLATE_KEYS). `show_preview_for(key)` (from settings.section_activated; section_bar.page_requested and legend.section_clicked call it with GLOBAL); STYLING keeps last template. Inactive/notice updated for all templates each update_preview; set_plan only on the visible template, others stale until shown; invalid config set_error on all (phase 17)
 - Cross-field hour rules (start < end) live in Config._check_booklet_rules; each new field needs a CLI option + PARAM_SHORT/DETAILS (phase 11)
 - with_enabled on a "page" section with empty pages copies preset_pages(preset) first (phase 10)
 
@@ -34,6 +35,7 @@ Last phase: 16
 - draw.py: `merged_holidays`, `dated_entries(path, year)`, `quotes_for(config)`; day_extras: `JOIN`, `truncate(text, max_width, width_of)`; tests/test_daily_extras.py, tests/test_user_holidays.py
 - agenda/gui/template_model.py (Qt-free): `sample_plan(cfg, key, instance=0)->PagePlan` (ValueError for GLOBAL/STYLING/unknown), `preview_mode(key)` (spread if page.pages==2 else single), `preview_target(active, last_template)`, `PLACEHOLDER_URLS`; tests/test_gui_template_model.py
 - agenda/gui/collapsible.py: `CollapsibleSection(key,title,enable)` (toggle_button, enable_box|None checked by default, body, form; set_expanded/is_expanded/set_enabled_state/enabled_state; signals expanded_changed, enable_toggled user-only). SettingsPanel: `sections`, `active_section`, `section_activated(str)`, `activate`, `notify_focus`; `pages` box sits in the Global form; tests/test_gui_collapsible.py, test_gui_settings_sections.py
+- app.py: `preview_key`, `last_template`, `template_previews`, `template_notices`, `show_preview_for`; PreviewWidget.set_inactive(on)/`inactive` (QGraphicsOpacityEffect 0.35 on scroll; tests/test_gui_template_preview.py)
 - settings_model `OPT_PATH` kind (Path|None); SettingsPanel maps "" <-> None
 - settings_model.config_to_yaml_data(cfg) grouped dict; config_to_data stays flat; tests/test_templates.py
 
