@@ -11,12 +11,13 @@ from collections.abc import Mapping
 
 from agenda.uitext.en import MESSAGES as _EN
 from agenda.uitext.es import MESSAGES as _ES
+from agenda.uitext.es_fields import MESSAGES as _ES_FIELDS
 
 LANGUAGES = ("en", "es")
 DEFAULT = "en"
 ENV_VAR = "AGENDA_UI_LANG"
 _LOCALE_VARS = ("LC_ALL", "LC_MESSAGES", "LANG")
-_TABLES: dict[str, Mapping[str, str]] = {"en": _EN, "es": _ES}
+_TABLES: dict[str, Mapping[str, str]] = {"en": _EN, "es": {**_ES, **_ES_FIELDS}}
 
 _current: str | None = None
 
@@ -79,3 +80,12 @@ def tr(key: str, **fmt: object) -> str:
         except KeyError:
             raise KeyError(f"unknown UI text key: {key!r}") from None
     return text.format(**fmt) if fmt else text
+
+
+def lookup(key: str) -> str | None:
+    """Raw text of ``key`` in the current language (no formatting, no English fallback), or None.
+
+    For Config field/section texts whose English source lives elsewhere; they may contain
+    literal braces such as ``{n}``.
+    """
+    return _TABLES[get_language()].get(key)

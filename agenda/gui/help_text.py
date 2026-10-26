@@ -1,5 +1,8 @@
 """Qt-free help texts: toolbar tooltips and section descriptions (plain text, no HTML)."""
 
+from collections.abc import Callable, Iterator, Mapping
+
+from agenda.config import Config
 from agenda.fields import detail_help, field_names, short_help
 from agenda.gui.bar_model import SECTION_LABELS
 
@@ -137,8 +140,26 @@ def section_tooltip(key: str) -> str:
 
 
 # Short and detailed texts for every Config field live on the fields themselves (agenda.config).
-PARAM_SHORT: dict[str, str] = {n: short_help(n) for n in field_names()}
-PARAM_DETAILS: dict[str, str] = {n: detail_help(n) for n in field_names()}
+class _FieldTexts(Mapping[str, str]):
+    """Read-only mapping field name -> text, resolved in the current UI language on access."""
+
+    def __init__(self, getter: Callable[[str], str]) -> None:
+        self._getter = getter
+
+    def __getitem__(self, name: str) -> str:
+        if name not in Config.model_fields:
+            raise KeyError(name)
+        return self._getter(name)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(field_names())
+
+    def __len__(self) -> int:
+        return len(Config.model_fields)
+
+
+PARAM_SHORT: Mapping[str, str] = _FieldTexts(short_help)
+PARAM_DETAILS: Mapping[str, str] = _FieldTexts(detail_help)
 
 
 def param_tooltip(name: str, expanded: bool = False) -> str:

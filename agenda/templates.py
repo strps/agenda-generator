@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from agenda import uitext
+
 GLOBAL = "global"
 PADDING = "padding"
 MONTH_START = "month_start"
@@ -199,6 +201,19 @@ def section(key: str) -> SectionSpec:
         return _BY_KEY[key]
     except KeyError:
         raise KeyError(f"unknown section {key!r}; valid: {', '.join(_BY_KEY)}") from None
+
+
+def section_label(key: str) -> str:
+    """Display label of a section in the current UI language (English from the spec)."""
+    return uitext.lookup(f"section.{key}") or section(key).label
+
+
+def group_label(key: str) -> str:
+    """Display label of a settings-panel group in the current UI language."""
+    for g in GROUPS:
+        if g.key == key:
+            return uitext.lookup(f"group.{key}") or g.label
+    raise KeyError(f"unknown group {key!r}")
 
 
 def group_of(field_name: str) -> str:

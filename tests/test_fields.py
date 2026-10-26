@@ -53,3 +53,41 @@ def test_fields_is_qt_free():
     code = "import sys, agenda.fields; assert not any(m.startswith('PySide6') for m in sys.modules)"
     r = subprocess.run([sys.executable, "-c", code], cwd=ROOT, check=False)
     assert r.returncode == 0
+
+
+def test_es_catalog_covers_every_field_section_and_group():
+    from agenda import templates, uitext
+    from agenda.uitext import es_fields
+
+    es = {**es_fields.MESSAGES}
+    for n in fields.field_names():
+        assert es[f"field.{n}.short"], n
+        assert es[f"field.{n}.label"], n
+        if fields.detail_help(n):  # English source is read under the autouse "en" language
+            assert es[f"field.{n}.detail"], n
+    for s in templates.SECTIONS:
+        assert es[f"section.{s.key}"], s.key
+    for g in templates.GROUPS:
+        assert es[f"group.{g.key}"], g.key
+    assert not (set(es) - {k for k in es if k.split(".")[0] in ("field", "section", "group")})
+    assert uitext.get_language() == "en"
+
+
+def test_localized_accessors():
+    from agenda import templates, uitext
+
+    english = Config.model_fields["year"].description
+    assert fields.short_help("year") == english
+    assert fields.field_label("page_size") == "page size"
+    assert templates.section_label("daily") == "Day pages"
+    assert templates.group_label("planner") == "Planner pages"
+    uitext.set_language("es")
+    assert fields.short_help("year") != english
+    assert fields.short_help("year") == uitext.lookup("field.year.short")
+    assert fields.detail_help("year") == uitext.lookup("field.year.detail")
+    assert fields.field_label("page_size") == "tamaño de página"
+    assert templates.section_label("daily") == "Páginas diarias"
+    assert templates.group_label("planner") == "Páginas de planificador"
+    assert help_text.PARAM_SHORT["year"] == fields.short_help("year")
+    assert list(help_text.PARAM_SHORT) == fields.field_names()
+    assert fields.short_help("page_number_format").count("{n}") == 1
