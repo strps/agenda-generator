@@ -12,9 +12,9 @@ TOOLTIPS: dict[str, str] = {
         "The saved file can be loaded again later with Open."
     ),
     "export_pdf": (
-        "Export the full agenda as a PDF file. The pages are rendered in a background "
-        "thread while a progress bar is shown, so the window stays responsive. "
-        "Folded booklets are imposed into printer sheets."
+        "Open the export dialog to choose page numbers, layout, booklets and page range, "
+        "then write the PDF. The pages are rendered in a background thread while a "
+        "progress bar is shown, so the window stays responsive."
     ),
     "prev": (
         "Go to the previous page, spread or sheet. The step size depends on the current "
@@ -54,6 +54,29 @@ EXPORT_HELP: dict[str, str] = {
         "Page numbers printed on the pages keep their full-agenda values. "
         "It is not saved in the settings file. CLI: --page-range."
     ),
+    "layout_pages": "One agenda page per PDF page, in order.",
+    "layout_pages_detail": (
+        "The default layout. Required for a page range. Flat booklets keep their page order."
+    ),
+    "layout_spreads": "Two pages side by side per sheet, in reading order (no folding).",
+    "layout_spreads_detail": (
+        "Sets spreads on and imposition off. Page 1 is a right page. Sheet size and crop marks "
+        "apply. CLI: --spreads."
+    ),
+    "layout_booklets": "Folded booklets imposed for printing and stapling.",
+    "layout_booklets_detail": (
+        "Sets imposition and folded booklets on and spreads off. Pages are reordered so the "
+        "printed sheets fold into booklets. CLI: --imposition --folded."
+    ),
+    "open_after": "Open the PDF with the default viewer once it is written.",
+    "open_after_detail": "Only remembered in the GUI; the command line never opens the file.",
+    "cli_preview": "The agenda-gen command that produces the same PDF as these choices.",
+    "cli_preview_detail": (
+        "Only options that differ from the defaults are listed. Settings outside this dialog "
+        "come from the configuration file (--config)."
+    ),
+    "browse_output": "Choose where the PDF is written.",
+    "browse_output_detail": "Opens a save dialog; a .pdf suffix is added when missing.",
 }
 
 EXPORT_DISABLED_REASON = (

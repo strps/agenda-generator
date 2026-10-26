@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 03   (plan: export dialog; earlier decisions below still hold)
+Last phase: 04   (plan: export dialog; earlier decisions below still hold)
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -26,8 +26,10 @@ Last phase: 03   (plan: export dialog; earlier decisions below still hold)
 - Page numbers: Config page_number_start/first/position/placement/format (flat YAML, validated by numbering.validate_format); label drawn in exporter._draw_number right after add_page (before page content), muted 7pt Inter; margin = centered in bottom margin band, footer = bottom of safe area; total = len(plan); n = page - first + start (phase 01)
 - Spreads/sheet: Config `spreads` (bool) and `sheet_size` auto|letter|a4 (flat YAML); imposition and spreads mutually exclusive; crop_marks needs imposition or spreads; sheet_size ignored for plain pages; export_agenda output byte-identical when both off (phase 02)
 - Page range: not a Config field, never saved; `export_agenda(..., pages=[1-based])` writes render_pages output (single pages only, ValueError with imposition/spreads, progress called once at the end); CLI `--page-range` parsed after Config validation, errors exit 2 prefixed "page range:"; cli passes `pages=` only when given (phase 03)
+- Export dialog model: layouts pages|spreads|booklets map to imposition/spreads (booklets force booklet_folded=True); `cli_args` emits only fields differing from defaults, debug_grid has no --no form, page range "all"/empty omitted; validate prefixes page-range errors "page range:" (phase 04)
 
 ## Interfaces
+- agenda/gui/export_model.py (Qt-free): `EXPORT_FIELDS` ((group, fields)...), `export_field_names()`, `LAYOUTS`, `layout_of`, `with_layout`, `field_enabled(values,name)` (name may be "page_range"), `validate(values,page_range)->str`, `cli_args(values,page_range,defaults=None,config_path=None)`, `cli_command(...)`; plus default_path/ensure_pdf/progress_*; help_text EXPORT_HELP keys layout_{pages,spreads,booklets}[_detail], open_after, cli_preview, browse_output (each + _detail); tests/test_gui_export_model.py
 - imposition.py: `spread_sides(n)`, `impose_spreads(pdf, sheet_mm=None, bleed_mm=None)`, `sheet_for(name)` (auto->None), `impose_booklets(..., sheet_mm=None)`; CLI `--spreads/--no-spreads`, `--sheet-size`; tests in tests/test_imposition.py
 - agenda/pagerange.py (Qt-free): `parse_page_range(text,total)->list[int]|None` (ValueError names bad token), `format_page_range(pages)->str`; help_text `EXPORT_HELP` keys page_range, page_range_detail (later phases add GUI-only keys); tests/test_pagerange.py
 - agenda/numbering.py (Qt-free): `label_for(cfg,page,total)->str|None`, `align_for(side,position)->L|C|R`, `x_for(side,position,safe_x,safe_w,text_w)`, `validate_format(fmt)`; CLI `--page-number-start/-first/-position/-placement/-format`; tests/test_page_numbers.py
