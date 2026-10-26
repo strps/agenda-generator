@@ -1,11 +1,11 @@
 # STATE: agenda-generator
 Plan: 2026-10-26-structure-cleanup
-Last phase: 06
+Last phase: 07
 ADRs: docs/adr/README.md (none yet)
 Earlier plans: last legacy STATE (export dialog plan) is `git show 93ed548:docs/agent/STATE.md`.
 ## Decisions (this plan)
 - Ruff unsafe fixes used only in tests (unused unpacked vars renamed `_x`); `subprocess.run(..., check=False)` made explicit: keeps ruff clean without changing behavior (structure-cleanup/01)
-- Ruff I001 is enabled: package __init__ with order-significant imports carries `# noqa: I001` on its first import (structure-cleanup/06)
+- Ruff I001 is enabled: package __init__ with order-significant imports carries `# noqa: I001` on its first import (structure-cleanup/06, 07)
 - Baseline: 1787 tests collected; tests/data/default_style_fingerprint.json must stay unchanged (structure-cleanup/01)
 - Rules carried from earlier plans that later phases rely on (structure-cleanup/01):
   - Run tests with `.venv/bin/python -m pytest` and QT_QPA_PLATFORM=offscreen.
@@ -18,7 +18,7 @@ Earlier plans: last legacy STATE (export dialog plan) is `git show 93ed548:docs/
 ## Contracts (between this plan's phases)
 - PARAM_SHORT, PARAM_DETAILS, param_tooltip: agenda/gui/help_text.py (public names stay, built from agenda.fields)
 - agenda/fields.py: short_help, detail_help, cli_meta, field_names; cli keys flags/type/csv/skip set on every Config field; agenda/cli.py generates options from them (skip only on pages, qr_urls, hand-written)
-- agenda/pages/value_added/__init__.py: import order = catalog registration order (pinned by tests/test_catalog_order.py, must stay unchanged; phase 07 relies on it); shared helpers in _common.py
+- agenda/pages/value_added/ and agenda/pages/optional/ __init__.py: import order = catalog registration order (pinned by tests/test_catalog_order.py, must stay unchanged); shared helpers in _common.py
 - tests/data/param_help.json pins old PARAM_SHORT/DETAILS (tests/test_fields.py); never delete
 - CLI flag surface pin: tests/test_cli_flags.py (EXPECTED_PARAMS, FIELD_TO_PARAMS literals; everything but help text; param order = hand first, fields in Config order, then pages/qr_url/category/page_range/blank_pages/dry_run, changed deliberately in 05)
 ## Open issues
