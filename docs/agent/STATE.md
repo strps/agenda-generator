@@ -1,78 +1,25 @@
-# STATE: agenda-generator        (rewritten each phase)
+# STATE: agenda-generator
 Plan: 2026-10-26-structure-cleanup
 Last phase: 01
-ADRs: docs/adr/README.md (none yet; earlier-plan decisions kept below)
-## Decisions in force
-- ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
-- help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
-- Tests run via `.venv/bin/python -m pytest` (bare `pytest`/`python` not on PATH); set QT_QPA_PLATFORM=offscreen (phase 01)
-- Main toolbar tooltips set once in MainWindow.__init__; `_sync_export_button` sets export tooltip to TOOLTIPS["export_pdf"], plus "\n\n"+EXPORT_DISABLED_REASON when invalid (phase 02)
-- Preview nav tooltips set in PreviewWidget.__init__ from TOOLTIPS; mode uses TOOLTIPS[f"mode_{m}"] (KeyError if missing) (phase 03)
-- Legend: persistent `Legend.title` QLabel (objectName legend_title) is re-added after each set_entries rebuild, never deleted; button and swatch share tooltip `section_tooltip(key)\nClick to go to the first <Label> page.` (phase 04)
-- Padding swatch is a QLabel with a 12x12 QPixmap (gray + BDiagPattern in window color); other swatches use stylesheet background; `recolor()` handles both and runs on PaletteChange (phase 05)
-- SectionBar hover: `hover_at(x, global_pos=None)` tracks section key (padding -> B.PADDING); single-shot `expand_timer` (made by hover_tooltip.make_expand_timer) starts only when the section changes; `_expand` appends `help_text.section_tooltip`; `reset_hover()` on leave, press/drag, set_plan, empty space (phase 06)
-- Param texts: PARAM_SHORT/PARAM_DETAILS keyed by Config field name, cover every field, details name cross-field rules and list Literal choices; test derives names from Config.model_fields (phase 07)
-- SettingsPanel: `tooltips[name]` ExpandingToolTip on every editor (incl. `pages` group box); non-pages rows use explicit QLabel `label_<name>` with `label_tooltips[name]`; attached in __init__ after _make (phase 09)
-- Config stays flat; agenda/templates.py groups fields into sections (key mapping only, imports no Config/pydantic). YAML blocks flattened in configfile.flatten; save_yaml writes grouped form, booklet fields stay flat (phase 10)
-- Page settings are Config fields (daily_hour_start/end 6/21, schedule_first/last_hour 7/21, habits_max 20, niche_*_pages 1); class constants stay as defaults, `Schedule.layout(rows, max_hours=MAX_HOURS)` and `Habits.layout(rows, max_habits=MAX_HABITS)`; `_Counted(count=None)` falls back to `config.<id>_pages` (phase 11)
-- Back matter: `Notes`/`Contacts(count=None)` use config.notes_pages/contacts_pages (default 1, 0 removes); build_plan puts them per instances(config). Padding search starts at `units=config.extra_padding` (limit grows by it); fixed-num_booklets overflow rule applies at units==start; blank fallback unchanged (phase 12)
-- Day extras: Config daily_holidays(True)/daily_quotes(False)/daily_quotes_file/daily_extra_file and global holidays_file (all files `Path|None`, validated at config time; relative paths resolve against cwd) (phase 13). `draw.merged_holidays(config)` is the single holiday source (library + holidays_file joined " · "; unsupported country raises ValueError unless file set); holiday_name_for/day_style_for/Holidays page use it; user holidays have no separate style (phase 14)
-- Daily header shows "<holiday> · <week>" (truncated, dropped if no room); footer band: quote left (italic), extra text right, each half width when both. File reads cached by (path, mtime[, year]) in draw.py (phase 14)
-- Template previews: `sample_plan` ignores planners/pages (disabled templates still preview); daily sample = first day in daily_months; qr uses placeholder URL when qr_urls empty; empty instances (contacts_pages=0) give a `{}` ctx; weekly gets a leading blank filler so it lands on a left/right pair (phase 15)
-- Settings panel is one CollapsibleSection per templates.SECTIONS entry (Global expanded, rest collapsed; not an accordion); header enable boxes are views synced from templates.is_enabled on every `changed`; toggling uses with_enabled and writes back only changed editors, emitting `changed` once; `activate(key)` expands (re-entrant via expanded_changed) and emits section_activated once; focus follows QApplication.focusChanged (phase 16)
-- Main preview: MainWindow.preview_stack (page 0 = full `preview`, then `template_page_<key>` containers with `template_notice_<key>` + PreviewWidget per TEMPLATE_KEYS). `show_preview_for(key)` (from settings.section_activated; section_bar.page_requested and legend.section_clicked call it with GLOBAL); STYLING keeps last template. Inactive/notice updated for all templates each update_preview; set_plan only on the visible template, others stale until shown; invalid config set_error on all (phase 17)
-- Styling: agenda/gui/style_model.py (Qt-free) holds THEMES dark/light, SPACING, stylesheet(dark), contrast_ratio, resolve_dark, APPEARANCES, DEFAULT_APPEARANCE=dark; <=10 hex colors, borders <=1px, no bare QLabel rule. `app.apply_style(app, appearance)` sets QSS + QPalette; main() applies saved appearance, MainWindow() itself does not restyle (phase 18)
-- GUI appearance is GUI-only (QSettings("agenda-gen","agenda-gui") key `appearance`, written only on accepted change): menu Settings > Preferences... (`preferences_action`, objectName action_preferences) -> `MainWindow.open_preferences()` -> `prefs_dialog.GuiSettingsDialog(appearance, parent)` (`appearance_box` objectName appearance, `appearance()`; no QSettings inside) -> `_set_appearance`. SettingsPanel has no appearance control. configfile.load_yaml drops `LEGACY_GUI_KEYS=("appearance",)` top-level and in `style:` with a UserWarning mentioning GUI Settings (phase 08)
-- Docs: README "Configuration" (Sections/Padding/Day extras) and "GUI", docs/architecture/gui.md, examples/{daily_quotes,daily_extra,holidays}.txt, commented `daily:` block in config.yaml; tests/test_sample_files.py pins config.yaml to the flat sample (booklet_folded field name) (phase 19)
-- Cross-field hour rules (start < end) live in Config._check_booklet_rules; each new field needs a CLI option + PARAM_SHORT/DETAILS (phase 11)
-- with_enabled on a "page" section with empty pages copies preset_pages(preset) first (phase 10)
-- Page numbers: Config page_number_start/first/position/placement/format (flat YAML, validated by numbering.validate_format); label drawn in exporter._draw_number right after add_page (before page content), muted 7pt Inter; margin = centered in bottom margin band, footer = bottom of safe area; total = len(plan); n = page - first + start (phase 01)
-- Spreads/sheet: Config `spreads` (bool) and `sheet_size` auto|letter|a4 (flat YAML); imposition and spreads mutually exclusive; crop_marks needs imposition or spreads; sheet_size ignored for plain pages; export_agenda output byte-identical when both off (phase 02)
-- Page range: not a Config field, never saved; `export_agenda(..., pages=[1-based])` writes render_pages output (single pages only, ValueError with imposition/spreads, progress called once at the end); CLI `--page-range` parsed after Config validation, errors exit 2 prefixed "page range:"; cli passes `pages=` only when given (phase 03)
-- Export dialog model: layouts pages|spreads|booklets map to imposition/spreads (booklets force booklet_folded=True); `cli_args` emits only fields differing from defaults, debug_grid has no --no form, page range "all"/empty omitted; validate prefixes page-range errors "page range:" (phase 04)
-- Export dialog widget: ExportDialog holds a full values dict (defaults + passed values), re-reads editors on every edit, layout radios go through export_model.with_layout, every rule from export_model (field_enabled/validate/cli_command); no QSettings (phase 05)
-- Export wiring: "Export PDF" -> MainWindow.export_dialog opens ExportDialog (output default = last_dir + name); accept -> settings.set_values({**values, **result}), prefs `export/open_after` + `export/last_dir`, then start_export(out, interactive=True, page_range=...); `open_file(path)` called from _on_export_done only for interactive + open_after. Page range kept per window (`_last_page_range`), not saved. EXPORT_FIELDS editors are hidden (form.setRowVisible) in SettingsPanel but remain in values()/set_values (phase 06)
-- Docs/parity: README "### Export" table (option -> flag), gui.md "Export dialog" section, commented export options in config.yaml (flat keys), tests/test_docs_export.py greps docs for flags/names; parametrized GUI-vs-CLI layout parity in tests/test_gui_export.py (phase 07)
-
-- Output palettes: agenda/themes.py (`THEMES` minimal|mono|ocean|forest, `palette_for(theme, overrides=None)` unknown->minimal, `is_known`). `new_document` sets `pdf.agenda_palette`; draw/pages read colors via `draw.color(pdf, name)` (no tokens.COLORS[...] in draw.py/pages; tokens.COLORS never mutated: previews are threaded). `day_style_for(config, pdf=None)`; `weekend_style(pdf)`/`holiday_style(pdf)`; WEEKEND_STYLE/HOLIDAY_STYLE kept as minimal defaults. Debug-grid colors untouched. CLI warns "unknown theme" on stderr and renders minimal. tests/data/default_style_fingerprint.json pins default SMALL content streams (phase 09)
-- minimal muted gray (120) has contrast 4.42 on white (<4.5); kept to leave default output unchanged, test allows 4.4 for minimal only (phase 09)
-- Color overrides: Config `color_ink|muted|line|accent|tint|weekend_fill|holiday_fill` (`str|None`, validator normalises to "#rrggbb" via themes.normalize_hex; error "<field> must be a hex color like #c85028"); YAML `style:` keys ink/muted/line/accent/tint/weekend_fill/holiday_fill; exporter.COLOR_FIELDS -> overrides in new_document; CLI `--color-<name>`; settings_model kind OPT_TEXT (`str|None`, panel maps ""<->None); themes has hex_to_rgb/rgb_to_hex/normalize_hex (phase 10)
-- Fonts: agenda/fonts.py (Qt-free; `FONT_DIR`, `FONT_FILES`, `BUILTIN={"inter"}`, `STYLES`, `resolve(spec)->{style:Path}` ValueError for unknown/missing/non-.ttf/.otf; siblings by Regular->Bold/Italic/BoldItalic, else "<stem>-Bold", missing -> regular). Config `font_primary`/`font_secondary` (default "inter", built-in lowercased, path kept as given, relative = cwd; error "font_primary: ..."); YAML `style:` keys primary_font/secondary_font; CLI `--font-primary/--font-secondary`. `exporter.register_document_fonts` registers distinct font sets once: Inter as family "Inter", user fonts "AgendaPrimary"/"AgendaSecondary", sets `pdf.agenda_fonts`; `draw.font(pdf, role)` (default "Inter"); style containing B -> primary, else secondary; page numbers/debug ruler use secondary. PDF /BaseFont is the font file's internal name, not the file name (phase 11)
-
-- PDF style editors: settings_model kinds THEME (choices = tuple(themes.THEMES)), COLOR (all color_*), FONT (font_primary/secondary). `agenda/gui/style_editors.py`: `ColorEdit` (line, swatch, clear_button; value()->str|None, set_value, set_fallback(rgb), swatch_color(), `edited`; `_pick_color(initial)` patchable) and `FontEdit` (combo, browse_button; value()/set_value; `_pick_file()` patchable). SettingsPanel refreshes swatch fallbacks (theme palette) on every `changed`; unknown theme names are added as extra combo items; section label "PDF colors & fonts" (YAML block `style:` unchanged); section header tooltip TOOLTIPS["styling_section"] (mentions Settings > Preferences); TOOLTIPS color_swatch/color_clear/font_browse (phase 12)
-- Style docs/parity: README "### PDF style" table (YAML key -> field -> flag), gui.md "GUI Settings vs. PDF style", layout-grid.md palette note, commented `style:` block in config.yaml; tests/test_docs_style.py greps docs; styled GUI-vs-CLI parity in tests/test_gui_export.py (phase 13)
-
-## Interfaces
-- agenda/gui/export_model.py (Qt-free): `EXPORT_FIELDS` ((group, fields)...), `export_field_names()`, `LAYOUTS`, `layout_of`, `with_layout`, `field_enabled(values,name)` (name may be "page_range"), `validate(values,page_range)->str`, `cli_args(values,page_range,defaults=None,config_path=None)`, `cli_command(...)`; plus default_path/ensure_pdf/progress_*; help_text EXPORT_HELP keys layout_{pages,spreads,booklets}[_detail], open_after, cli_preview, browse_output (each + _detail); tests/test_gui_export_model.py
-- app.py: `MainWindow.export_dialog()`, `start_export(path, interactive=False, page_range='')`, `open_file(path)`, `_default_output(cfg)`; ExportJob(cfg,path,signals,pages=None); tests/test_gui_export_flow.py
-- agenda/gui/export_dialog.py: `ExportDialog(values, total_pages=0, open_after=False, page_range='', parent=None)`; `controls` (name->widget incl. layout_<x>, page_range, output, browse_output, open_after, cli_line), `layout_buttons`, `page_range_edit`, `output_edit`, `ok_button`, `error_label`, `cli_line`; `result_values()` (full dict, output as str), `page_range()`, `open_after()`; tests/test_gui_export_dialog.py
-- imposition.py: `spread_sides(n)`, `impose_spreads(pdf, sheet_mm=None, bleed_mm=None)`, `sheet_for(name)` (auto->None), `impose_booklets(..., sheet_mm=None)`; CLI `--spreads/--no-spreads`, `--sheet-size`; tests in tests/test_imposition.py
-- agenda/pagerange.py (Qt-free): `parse_page_range(text,total)->list[int]|None` (ValueError names bad token), `format_page_range(pages)->str`; help_text `EXPORT_HELP` keys page_range, page_range_detail (later phases add GUI-only keys); tests/test_pagerange.py
-- agenda/numbering.py (Qt-free): `label_for(cfg,page,total)->str|None`, `align_for(side,position)->L|C|R`, `x_for(side,position,safe_x,safe_w,text_w)`, `validate_format(fmt)`; CLI `--page-number-start/-first/-position/-placement/-format`; tests/test_page_numbers.py
-- agenda/gui/help_text.py: `TOOLTIPS` (ids appearance, preferences, open_config, save_config, export_pdf, prev, next, mode_single, mode_spread, mode_sheet, zoom), `EXPORT_DISABLED_REASON`, `SECTION_DESCRIPTIONS`, `section_tooltip(key)`, `PARAM_SHORT`, `PARAM_DETAILS`, `param_tooltip(name, expanded=False)` (short, or short+"\n"+detail; unknown name returns name)
-- agenda/gui/hover_tooltip.py: `HOVER_EXPAND_MS=1500` (only definition; re-exported by section_bar), `make_expand_timer(parent, slot)`, `ExpandingToolTip(widget, short, detail)` (event filter on widget + scroll-area viewport; members expand_timer, expanded, hover(global_pos=None), current_text(), reset(), set_texts(short, detail)); Enter starts timer, ToolTip shows current text (consumed; fallback starts timer), Leave/Hide reset; tests/test_gui_hover_tooltip.py
-- section_bar.py: `HOVER_EXPAND_MS` (imported), `SectionBar.expand_timer`, `hover_at`, `current_tooltip`, `reset_hover`; tests in tests/test_gui_bar_hover.py
-- tests/test_gui_tooltips.py: has module-scoped `qapp` fixture; main toolbar + preview nav tests; toolbar-region check covers win.preview and the toolbar parent of open_button (legend/settings excluded)
-- tests/test_gui_settings_tooltips.py: settings editor/label tooltip tests
-- tests/test_gui_param_help.py: Qt-free tests for param texts (derive names from Config.model_fields)
-
-- agenda/templates.py: `GLOBAL`, `STYLING`, `SectionSpec(key,label,block,fields,page_id,enable)`, `SECTIONS`, `TEMPLATE_KEYS`, `section`, `group_of`, `fields_of(key, all_fields)`, `is_enabled(cfg,key)`, `has_enable_box`, `with_enabled(values,key,on)`; enable in planner|page|count|none; SectionSpec.count_field for "count" (is_enabled = field>0; with_enabled off=0, on=1 only if 0); contacts section sits after weekly
-- agenda/day_extras.py (Qt-free, no Config import): `read_lines(path)`, `parse_dated(lines, year)->dict[date,str]` (entries joined " · "; Feb 29 MM-DD skipped in non-leap years), `builtin_quotes(lang)`, `quote_for(d, quotes)`; tests/test_day_extras.py
-- draw.py: `merged_holidays`, `dated_entries(path, year)`, `quotes_for(config)`; day_extras: `JOIN`, `truncate(text, max_width, width_of)`; tests/test_daily_extras.py, tests/test_user_holidays.py
-- agenda/gui/template_model.py (Qt-free): `sample_plan(cfg, key, instance=0)->PagePlan` (ValueError for GLOBAL/STYLING/unknown), `preview_mode(key)` (spread if page.pages==2 else single), `preview_target(active, last_template)`, `PLACEHOLDER_URLS`; tests/test_gui_template_model.py
-- agenda/gui/collapsible.py: `CollapsibleSection(key,title,enable)` (toggle_button, enable_box|None checked by default, body, form; set_expanded/is_expanded/set_enabled_state/enabled_state; signals expanded_changed, enable_toggled user-only). SettingsPanel: `sections`, `active_section`, `section_activated(str)`, `activate`, `notify_focus`; `pages` box sits in the Global form; tests/test_gui_collapsible.py, test_gui_settings_sections.py
-- app.py: `preview_key`, `last_template`, `template_previews`, `template_notices`, `show_preview_for`; PreviewWidget.set_inactive(on)/`inactive` (QGraphicsOpacityEffect 0.35 on scroll; tests/test_gui_template_preview.py)
-- settings_model `OPT_PATH` kind (Path|None); SettingsPanel maps "" <-> None
-- settings_model.config_to_yaml_data(cfg) grouped dict; config_to_data stays flat; tests/test_templates.py
-
+ADRs: docs/adr/README.md (none yet)
+Earlier plans: last legacy STATE (export dialog plan) is `git show 93ed548:docs/agent/STATE.md`.
+## Decisions (this plan)
+- Ruff unsafe fixes used only in tests (unused unpacked vars renamed `_x`); `subprocess.run(..., check=False)` made explicit: keeps ruff clean without changing behavior (structure-cleanup/01)
+- Baseline: 1787 tests collected; tests/data/default_style_fingerprint.json must stay unchanged (structure-cleanup/01)
+- Rules carried from earlier plans that later phases rely on (structure-cleanup/01):
+  - Run tests with `.venv/bin/python -m pytest` and QT_QPA_PLATFORM=offscreen.
+  - help_text.py is Qt-free, plain text; phase 04 relaxes its "no Config import" rule (may import agenda.fields) but never PySide6.
+  - agenda/templates.py imports no Config/pydantic and is the only source of section grouping.
+  - Config stays flat; YAML blocks flattened in configfile.flatten, save_yaml writes grouped form.
+  - Each new field needs CLI option + PARAM_SHORT/DETAILS (phase 05 rewrites this rule).
+  - tests/test_sample_files.py pins config.yaml to the flat sample.
+## Contracts (between this plan's phases)
+- PARAM_SHORT, PARAM_DETAILS, param_tooltip: agenda/gui/help_text.py (public names stay)
+- CLI flag surface pin: tests/test_cli_flags.py (phase 03, to be created)
 ## Open issues
-- Phase 01 decision: ruff unsafe-fix used only for tests (unused unpacked vars renamed _x); explicit check=False on subprocess.run (structure-cleanup/01)
-- footer placement can overlap the day-page quote/extra text in the footer band (not avoided)
-
+- Footer placement can overlap the day-page quote/extra text in the footer band (not avoided)
 ## Blocked
 - none
-
 ## Changes this phase (only when phases are not committed)
-
 ## Suggested for CLAUDE.md
 - Ruff is clean (check + format); keep it so. Run tests with `.venv/bin/python -m pytest` and QT_QPA_PLATFORM=offscreen
