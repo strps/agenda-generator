@@ -198,7 +198,9 @@ def run(
         Path | None, typer.Option(help="Extra holidays (MM-DD text), merged with the library.")
     ] = None,
     # Look & output
-    theme: Annotated[str | None, typer.Option(help="Theme name.")] = None,
+    theme: Annotated[
+        str | None, typer.Option(help="Color theme: minimal, mono, ocean or forest.")
+    ] = None,
     imposition: Annotated[bool | None, typer.Option("--imposition/--no-imposition")] = None,
     crop_marks: Annotated[bool | None, typer.Option("--crop-marks/--no-crop-marks")] = None,
     spreads: Annotated[bool | None, typer.Option("--spreads/--no-spreads")] = None,
@@ -207,7 +209,9 @@ def run(
     ] = None,
     page_range: Annotated[
         str | None,
-        typer.Option("--page-range", help='Export only these pages, e.g. "1-4,9" (single pages only).'),
+        typer.Option(
+            "--page-range", help='Export only these pages, e.g. "1-4,9" (single pages only).'
+        ),
     ] = None,
     output: Annotated[
         Path | None, typer.Option("-o", "--output", help="Output PDF (default output/agenda.pdf).")
@@ -282,6 +286,13 @@ def run(
         cfg = Config(**merged)
     except ValueError as exc:
         raise _fail(str(exc), 2) from None
+    from agenda import themes
+
+    if not themes.is_known(cfg.theme):
+        typer.echo(
+            f"warning: unknown theme {cfg.theme!r}; using minimal (known: {', '.join(themes.THEMES)})",
+            err=True,
+        )
     if dry_run:
         from agenda.assembler import build_plan, summarize
 
@@ -301,7 +312,11 @@ def run(
             raise _fail(f"page range: {exc}", 2) from None
     try:
         if blank_pages is None:
-            out = export_agenda(cfg, target) if pages is None else export_agenda(cfg, target, pages=pages)
+            out = (
+                export_agenda(cfg, target)
+                if pages is None
+                else export_agenda(cfg, target, pages=pages)
+            )
         else:
             out = export_blank(cfg, blank_pages, target)
     except FontsMissingError as exc:

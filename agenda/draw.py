@@ -119,11 +119,11 @@ def draw_mini_month(
     line_h = rect.h / 8
     col_w = rect.w / 7
     pdf.c_margin = 0
-    pdf.set_text_color(*tokens.COLORS["accent"])
+    pdf.set_text_color(*color(pdf, "accent"))
     pdf.set_font("Inter", "B", title_pt)
     pdf.set_xy(rect.x, rect.y)
     pdf.cell(rect.w, line_h, s.month_name(month))
-    pdf.set_text_color(*tokens.COLORS["muted"])
+    pdf.set_text_color(*color(pdf, "muted"))
     pdf.set_font("Inter", "", body_pt)
     for i, name in enumerate(s.weekday_names(week_start, "letter")):
         pdf.set_xy(rect.x + i * col_w, rect.y + line_h)
@@ -138,7 +138,7 @@ def draw_mini_month(
             if style and style.fill:
                 pdf.set_fill_color(*style.fill)
                 pdf.rect(x, y, col_w, line_h, style="F")
-            pdf.set_text_color(*((style and style.color) or tokens.COLORS["ink"]))
+            pdf.set_text_color(*((style and style.color) or color(pdf, "ink")))
             pdf.set_xy(x, y)
             pdf.cell(col_w, line_h, str(d.day), align="C")
 
@@ -148,8 +148,24 @@ class DayStyle(NamedTuple):
     fill: tuple[int, int, int] | None = None
 
 
-WEEKEND_STYLE = DayStyle(color=tokens.COLORS["muted"], fill=tokens.COLORS["weekend_fill"])
-HOLIDAY_STYLE = DayStyle(color=tokens.COLORS["accent"], fill=tokens.COLORS["holiday_fill"])
+def color(pdf: FPDF, name: str) -> tuple[int, int, int]:
+    """Output color ``name`` from the palette carried by ``pdf`` (default: ``tokens.COLORS``)."""
+    return getattr(pdf, "agenda_palette", _DEFAULT)[name]
+
+
+_DEFAULT = tokens.COLORS  # default (minimal) palette for documents without ``agenda_palette``
+WEEKEND_STYLE = DayStyle(color=_DEFAULT["muted"], fill=_DEFAULT["weekend_fill"])
+HOLIDAY_STYLE = DayStyle(color=_DEFAULT["accent"], fill=_DEFAULT["holiday_fill"])
+
+
+def weekend_style(pdf: FPDF | None = None) -> DayStyle:
+    p = getattr(pdf, "agenda_palette", None)
+    return WEEKEND_STYLE if p is None else DayStyle(color=p["muted"], fill=p["weekend_fill"])
+
+
+def holiday_style(pdf: FPDF | None = None) -> DayStyle:
+    p = getattr(pdf, "agenda_palette", None)
+    return HOLIDAY_STYLE if p is None else DayStyle(color=p["accent"], fill=p["holiday_fill"])
 
 
 @lru_cache(maxsize=32)
@@ -224,19 +240,20 @@ def holiday_name_for(config: Config) -> Callable[[date], str | None]:
     return name
 
 
-def day_style_for(config: Config) -> Callable[[date], DayStyle | None]:
+def day_style_for(config: Config, pdf: FPDF | None = None) -> Callable[[date], DayStyle | None]:
     """Return ``f(date) -> DayStyle | None`` marking holidays (strong) and Sat/Sun (light).
 
     Weekends are Saturday and Sunday regardless of ``config.week_start``; a holiday on a
     weekend gets the holiday style.
     """
     holiday = holiday_name_for(config)
+    hol, wk = holiday_style(pdf), weekend_style(pdf)
 
     def style(d: date) -> DayStyle | None:
         if holiday(d):
-            return HOLIDAY_STYLE
+            return hol
         if d.weekday() >= 5:
-            return WEEKEND_STYLE
+            return wk
         return None
 
     return style
@@ -252,7 +269,7 @@ def draw_pattern(pdf: FPDF, rect: Rect, pattern: str, pitch: float) -> None:
         return
     cols = int(rect.w / pitch + 1e-6)
     rows = int(rect.h / pitch + 1e-6)
-    pdf.set_draw_color(*tokens.COLORS["line"])
+    pdf.set_draw_color(*color(pdf, "line"))
     pdf.set_line_width(tokens.STROKE_HAIRLINE)
     if pattern in ("lined", "grid"):
         for r in range(1 if pattern == "lined" else 0, rows + 1):
@@ -272,7 +289,7 @@ def draw_pattern(pdf: FPDF, rect: Rect, pattern: str, pitch: float) -> None:
 
 def draw_checkbox(pdf: FPDF, x: float, y: float, size: float) -> None:
     """Empty square checkbox with top-left corner ``(x, y)`` and side ``size`` mm."""
-    pdf.set_draw_color(*tokens.COLORS["muted"])
+    pdf.set_draw_color(*color(pdf, "muted"))
     pdf.set_line_width(tokens.STROKE_LIGHT)
     pdf.rect(x, y, size, size)
 
@@ -282,17 +299,17 @@ def draw_label_rule(pdf: FPDF, x: float, w: float, y: float, label: str, label_w
 
     The label cell sits one row above ``y`` (row height = text box); uses the current font.
     """
-    pdf.set_text_color(*tokens.COLORS["muted"])
+    pdf.set_text_color(*color(pdf, "muted"))
     pdf.set_xy(x, y - tokens.BASELINE)
     pdf.cell(label_w, tokens.BASELINE, label)
-    pdf.set_draw_color(*tokens.COLORS["line"])
+    pdf.set_draw_color(*color(pdf, "line"))
     pdf.set_line_width(tokens.STROKE_HAIRLINE)
     pdf.line(x + label_w, y, x + w, y)
 
 
 def draw_circle(pdf: FPDF, cx: float, cy: float, d: float) -> None:
     """Empty circle centred on ``(cx, cy)`` with diameter ``d`` mm (light stroke, muted)."""
-    pdf.set_draw_color(*tokens.COLORS["muted"])
+    pdf.set_draw_color(*color(pdf, "muted"))
     pdf.set_line_width(tokens.STROKE_LIGHT)
     pdf.ellipse(cx - d / 2, cy - d / 2, d, d, style="D")
 
@@ -310,7 +327,7 @@ def draw_mood(pdf: FPDF, cx: float, cy: float, d: float, level: int) -> None:
     """
     if level not in _MOOD_CURVE:
         raise ValueError(f"mood level must be 1..5, got {level}")
-    ink = tokens.COLORS["muted"]
+    ink = color(pdf, "muted")
     pdf.set_draw_color(*ink)
     pdf.set_fill_color(*ink)
     pdf.set_line_width(tokens.STROKE_LIGHT)

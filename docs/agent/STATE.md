@@ -1,5 +1,5 @@
 # STATE: agenda-generator        (rewritten each phase, max 80 lines)
-Last phase: 08   (plan: export dialog, then PDF style; earlier decisions below still hold)
+Last phase: 09   (plan: export dialog, then PDF style; earlier decisions below still hold)
 ## Decisions in force
 - ExpandingToolTip filters only the top widget (+ viewport); no descendant filters, since Leave fires between children (phase 08)
 - help_text.py is Qt-free and plain text (no HTML); it imports only bar_model.SECTION_LABELS, never Config/pydantic (phase 01, 07)
@@ -31,6 +31,9 @@ Last phase: 08   (plan: export dialog, then PDF style; earlier decisions below s
 - Export dialog widget: ExportDialog holds a full values dict (defaults + passed values), re-reads editors on every edit, layout radios go through export_model.with_layout, every rule from export_model (field_enabled/validate/cli_command); no QSettings (phase 05)
 - Export wiring: "Export PDF" -> MainWindow.export_dialog opens ExportDialog (output default = last_dir + name); accept -> settings.set_values({**values, **result}), prefs `export/open_after` + `export/last_dir`, then start_export(out, interactive=True, page_range=...); `open_file(path)` called from _on_export_done only for interactive + open_after. Page range kept per window (`_last_page_range`), not saved. EXPORT_FIELDS editors are hidden (form.setRowVisible) in SettingsPanel but remain in values()/set_values (phase 06)
 - Docs/parity: README "### Export" table (option -> flag), gui.md "Export dialog" section, commented export options in config.yaml (flat keys), tests/test_docs_export.py greps docs for flags/names; parametrized GUI-vs-CLI layout parity in tests/test_gui_export.py (phase 07)
+
+- Output palettes: agenda/themes.py (`THEMES` minimal|mono|ocean|forest, `palette_for(theme, overrides=None)` unknown->minimal, `is_known`). `new_document` sets `pdf.agenda_palette`; draw/pages read colors via `draw.color(pdf, name)` (no tokens.COLORS[...] in draw.py/pages; tokens.COLORS never mutated: previews are threaded). `day_style_for(config, pdf=None)`; `weekend_style(pdf)`/`holiday_style(pdf)`; WEEKEND_STYLE/HOLIDAY_STYLE kept as minimal defaults. Debug-grid colors untouched. CLI warns "unknown theme" on stderr and renders minimal. tests/data/default_style_fingerprint.json pins default SMALL content streams (phase 09)
+- minimal muted gray (120) has contrast 4.42 on white (<4.5); kept to leave default output unchanged, test allows 4.4 for minimal only (phase 09)
 
 ## Interfaces
 - agenda/gui/export_model.py (Qt-free): `EXPORT_FIELDS` ((group, fields)...), `export_field_names()`, `LAYOUTS`, `layout_of`, `with_layout`, `field_enabled(values,name)` (name may be "page_range"), `validate(values,page_range)->str`, `cli_args(values,page_range,defaults=None,config_path=None)`, `cli_command(...)`; plus default_path/ensure_pdf/progress_*; help_text EXPORT_HELP keys layout_{pages,spreads,booklets}[_detail], open_after, cli_preview, browse_output (each + _detail); tests/test_gui_export_model.py

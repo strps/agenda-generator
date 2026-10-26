@@ -10,12 +10,10 @@ from agenda import tokens
 from agenda.calendar import days_in_month, weekday_order
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import draw_checkbox, draw_circle, draw_label_rule, merged_holidays
+from agenda.draw import color, draw_checkbox, draw_circle, draw_label_rule, merged_holidays
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx, month_ctxs
-
-_ACCENT = tokens.COLORS["accent"]
 
 
 def _draw_task_list(
@@ -29,13 +27,13 @@ def _draw_task_list(
     dx, dw = g.col(g.columns - due_cols, due_cols)
     task_w = dx - g.gutter - x
     box = min(box, g.baseline - 1.0)
-    pdf.set_text_color(*tokens.COLORS["muted"])
+    pdf.set_text_color(*color(pdf, "muted"))
     pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
     pdf.set_xy(x, g.row(row))
     pdf.cell(task_w, g.baseline, labels[0])
     pdf.set_xy(dx, g.row(row))
     pdf.cell(dw, g.baseline, labels[1])
-    pdf.set_draw_color(*tokens.COLORS["line"])
+    pdf.set_draw_color(*color(pdf, "line"))
     pdf.set_line_width(tokens.STROKE_HAIRLINE)
     for k in range(n):
         top, y = g.row(row + 1 + k), g.row(row + 2 + k)
@@ -78,7 +76,7 @@ class Goals(BasePage):
         g = grids[0]
         s = Strings(config.language)
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -96,7 +94,7 @@ class Goals(BasePage):
             for k in range(steps):
                 top, y = g.row(r + 1 + k), g.row(r + 2 + k)
                 draw_checkbox(pdf, x, top + (g.baseline - box) / 2, box)
-                pdf.set_draw_color(*tokens.COLORS["line"])
+                pdf.set_draw_color(*color(pdf, "line"))
                 pdf.set_line_width(tokens.STROKE_HAIRLINE)
                 pdf.line(x + box + 2, y, x + w, y)
             draw_label_rule(pdf, x, w, g.row(r + 2 + steps), s("goals.deadline"), self.LABEL_W)
@@ -131,7 +129,7 @@ class ImportantDates(BasePage):
         g = grids[0]
         s = Strings(config.language)
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -144,11 +142,11 @@ class ImportantDates(BasePage):
             r, c = divmod(m - 1, self.BLOCK_COLS)
             x, w = g.col(c * span, span)
             top = r * per
-            pdf.set_text_color(*_ACCENT)
+            pdf.set_text_color(*color(pdf, "accent"))
             pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
             pdf.set_xy(x, g.row(top))
             pdf.cell(w, g.baseline, s.month_name(m))
-            pdf.set_draw_color(*tokens.COLORS["line"])
+            pdf.set_draw_color(*color(pdf, "line"))
             pdf.set_line_width(tokens.STROKE_HAIRLINE)
             for k in range(entries):
                 y = g.row(top + 2 + k)
@@ -192,7 +190,7 @@ class Todo(BasePage):
         g = grids[0]
         s = Strings(config.language)
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -245,7 +243,7 @@ class Projects(BasePage):
         g = grids[0]
         s = Strings(config.language)
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -267,11 +265,11 @@ class Projects(BasePage):
         _draw_task_list(pdf, g, tr, tasks, labels, self.BOX, self.DUE_COLS)
 
         nr = tr + tasks + 2
-        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_text_color(*color(pdf, "muted"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(x, g.row(nr))
         pdf.cell(w, g.baseline, s("projects.notes"))
-        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         for k in range(notes):
             y = g.row(nr + 2 + k)
@@ -322,7 +320,7 @@ class Budget(BasePage):
         g = grids[0]
         s = Strings(config.language)
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -331,17 +329,17 @@ class Budget(BasePage):
         x = g.safe.x
         ax, aw = g.col(g.columns - self.AMOUNT_COLS, self.AMOUNT_COLS)
         desc_w = ax - g.gutter - x
-        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
 
         r = 0
         keys = ("income", "fixed", "variable", "savings")
         for key, n in zip(keys, self.layout(g.rows), strict=True):
-            pdf.set_text_color(*_ACCENT)
+            pdf.set_text_color(*color(pdf, "accent"))
             pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
             pdf.set_xy(x, g.row(r))
             pdf.cell(desc_w, g.baseline, s(f"budget.{key}"))
-            pdf.set_text_color(*tokens.COLORS["muted"])
+            pdf.set_text_color(*color(pdf, "muted"))
             pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(ax, g.row(r))
             pdf.cell(aw, g.baseline, s("budget.amount"))
@@ -353,7 +351,7 @@ class Budget(BasePage):
 
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
         for k, key in enumerate(("total_income", "total_expenses", "balance")):
-            pdf.set_text_color(*_ACCENT)
+            pdf.set_text_color(*color(pdf, "accent"))
             pdf.set_xy(x, g.row(r + k))
             pdf.cell(desc_w, g.baseline, s(f"budget.{key}"), align="R")
             pdf.line(ax, g.row(r + k + 1), ax + aw, g.row(r + k + 1))
@@ -396,7 +394,7 @@ class Habits(BasePage):
         s = Strings(config.language)
         month, year = ctx["month"], ctx["year"]
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -410,12 +408,12 @@ class Habits(BasePage):
         cell_w = (g.safe.x2 - gx) / days
         diam = min(cell_w, g.baseline) * self.CIRCLE_RATIO
 
-        pdf.set_fill_color(*tokens.COLORS["weekend_fill"])
+        pdf.set_fill_color(*color(pdf, "weekend_fill"))
         for d in range(days):
             if date(year, month, d + 1).weekday() >= 5:
                 pdf.rect(gx + d * cell_w, g.row(1), cell_w, (n + 1) * g.baseline, style="F")
 
-        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_text_color(*color(pdf, "muted"))
         pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])  # regular: narrower digits
         pdf.set_xy(x, g.row(1))
         pdf.cell(name_w, g.baseline, s("habits.habit"))
@@ -423,7 +421,7 @@ class Habits(BasePage):
             pdf.set_xy(gx + d * cell_w, g.row(1))
             pdf.cell(cell_w, g.baseline, str(d + 1), align="C")
 
-        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         for k in range(n):
             top = g.row(2 + k)
@@ -472,7 +470,7 @@ class MonthlyReview(BasePage):
         g = grids[0]
         s = Strings(config.language)
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -480,11 +478,11 @@ class MonthlyReview(BasePage):
 
         x, w = g.safe.x, g.safe.w
         box = g.baseline * self.BOX_RATIO
-        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         r = 0
         for key, n in zip(self.SECTIONS, self.layout(g.rows), strict=True):
-            pdf.set_text_color(*_ACCENT)
+            pdf.set_text_color(*color(pdf, "accent"))
             pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
             pdf.set_xy(x, g.row(r))
             pdf.cell(w, g.baseline, s(f"review.{key}"))
@@ -497,7 +495,7 @@ class MonthlyReview(BasePage):
                     pdf.line(x, y, x + w, y)
             r += n + 2
 
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(x, g.row(r))
         pdf.cell(w, g.baseline, s("review.rating"))
@@ -546,7 +544,7 @@ class Schedule(BasePage):
         g = grids[0]
         s = Strings(config.language)
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -561,12 +559,12 @@ class Schedule(BasePage):
         names = s.weekday_names(config.week_start, "short")
         order = weekday_order(config.week_start)
 
-        pdf.set_fill_color(*tokens.COLORS["weekend_fill"])
+        pdf.set_fill_color(*color(pdf, "weekend_fill"))
         for i, wd in enumerate(order):
             if wd >= 5:
                 pdf.rect(gx + i * day_w, g.row(1), day_w, bottom - g.row(1), style="F")
 
-        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_text_color(*color(pdf, "muted"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
         for i, name in enumerate(names):
             pdf.set_xy(gx + i * day_w, g.row(0))
@@ -574,9 +572,11 @@ class Schedule(BasePage):
         pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[0])
         for k in range(hours):
             pdf.set_xy(x, g.row(1 + k * rh))
-            pdf.cell(gx - x - g.gutter / 2, g.baseline, f"{config.schedule_first_hour + k}:00", align="R")
+            pdf.cell(
+                gx - x - g.gutter / 2, g.baseline, f"{config.schedule_first_hour + k}:00", align="R"
+            )
 
-        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         for k in range(hours + 1):
             y = g.row(1 + k * rh)
@@ -631,7 +631,7 @@ class Holidays(BasePage):
         except ValueError:
             found = []
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -641,7 +641,7 @@ class Holidays(BasePage):
         rh = self.ROW_BASELINES
         col_w = (g.safe.w - (cols - 1) * g.gutter * 2) / cols if cols > 1 else g.safe.w
         date_w = g.col_width
-        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         for i in range(max(shown, per_col)):
             c, k = divmod(i, per_col)
@@ -651,13 +651,13 @@ class Holidays(BasePage):
             if i >= shown:
                 continue
             d, name = found[i]
-            pdf.set_text_color(*tokens.COLORS["muted"])
+            pdf.set_text_color(*color(pdf, "muted"))
             pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[1])
             mon = s.month_name(d.month, short=True)
             when = f"{d.day} {mon.lower()}" if config.language == "es" else f"{mon} {d.day}"
             pdf.set_xy(x, top + (rh - 1) * g.baseline)
             pdf.cell(date_w, g.baseline, when)
-            pdf.set_text_color(*tokens.COLORS["ink"])
+            pdf.set_text_color(*color(pdf, "ink"))
             pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
             nw = col_w - date_w - g.gutter
             pdf.set_xy(x + date_w + g.gutter, top + (rh - 1) * g.baseline)
@@ -703,7 +703,7 @@ class Passwords(BasePage):
         g = grids[0]
         s = Strings(config.language)
         pdf.c_margin = 0
-        pdf.set_text_color(*_ACCENT)
+        pdf.set_text_color(*color(pdf, "accent"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
@@ -712,7 +712,7 @@ class Passwords(BasePage):
         # Warning box: rows 0..WARN_ROWS, border, triangle icon, wrapped text.
         x, w = g.safe.x, g.safe.w
         top, bottom = g.row(0), g.row(self.WARN_ROWS)
-        pdf.set_draw_color(*_ACCENT)
+        pdf.set_draw_color(*color(pdf, "accent"))
         pdf.set_line_width(tokens.STROKE_REGULAR)
         pdf.rect(x, top, w, bottom - top)
         icon = min(2 * g.baseline, bottom - top - 2 * g.gutter)
@@ -722,7 +722,7 @@ class Passwords(BasePage):
         pdf.line(ix + icon / 2, iy + icon * 0.35, ix + icon / 2, iy + icon * 0.65)
         pdf.line(ix + icon / 2, iy + icon * 0.78, ix + icon / 2, iy + icon * 0.85)
         tx = ix + icon + g.gutter
-        pdf.set_text_color(*tokens.COLORS["ink"])
+        pdf.set_text_color(*color(pdf, "ink"))
         pdf.set_font("Inter", "", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(tx, top + g.baseline / 2)
         pdf.multi_cell(
@@ -738,11 +738,11 @@ class Passwords(BasePage):
         label_row = self.WARN_ROWS + 1
         labels = (s("passwords.site"), s("passwords.user"), s("passwords.password"))
         pdf.set_font("Inter", "B", tokens.TYPE_SIZES_PT[0])
-        pdf.set_text_color(*tokens.COLORS["muted"])
+        pdf.set_text_color(*color(pdf, "muted"))
         for c, label in enumerate(labels):
             pdf.set_xy(x + c * (col_w + g.gutter), g.row(label_row))
             pdf.cell(col_w, g.baseline, label)
-        pdf.set_draw_color(*tokens.COLORS["line"])
+        pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         for k in range(self.layout(g.rows)):
             y = g.row(label_row + (k + 1) * self.ROW_BASELINES)

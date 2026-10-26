@@ -155,7 +155,7 @@ PARAM_SHORT: dict[str, str] = {
     "language": "Language of the printed texts.",
     "holiday_country": "Country code used for holidays, e.g. CR.",
     "holidays_file": "Extra holidays file, merged with the library.",
-    "theme": "Color palette and typography.",
+    "theme": "Color palette of the PDF.",
     "imposition": "Export in booklet print order.",
     "crop_marks": "Draw crop marks on the imposed or spread sheets.",
     "spreads": "Export as 2-up reader spreads.",
@@ -351,8 +351,8 @@ PARAM_DETAILS: dict[str, str] = {
         "merged with the country holidays and shown the same way on every page."
     ),
     "theme": (
-        "Name of the theme that sets the color palette and typography of the PDF. "
-        "The default is minimal."
+        "Name of the color palette of the PDF: minimal (default), mono, ocean or forest. "
+        "An unknown name renders as minimal (the command line warns)."
     ),
     "imposition": (
         "Export the pages in booklet print order, so the printed sheets can be folded into a "

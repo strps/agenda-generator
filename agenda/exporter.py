@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 
 from fpdf import FPDF
 
-from agenda import __version__
+from agenda import __version__, themes
 from agenda.config import Config
-from agenda.draw import draw_debug_grid
+from agenda.draw import color, draw_debug_grid
 from agenda.grid import Grid
 
 if TYPE_CHECKING:
@@ -60,6 +60,7 @@ def new_document(cfg: Config, font_dir: str | Path = FONT_DIR) -> FPDF:
     pdf.set_creator(f"agenda-gen {__version__}")
     pdf.set_author("agenda-gen")
     register_fonts(pdf, font_dir)
+    pdf.agenda_palette = themes.palette_for(cfg.theme)
     return pdf
 
 
@@ -102,7 +103,6 @@ def export_blank(cfg: Config, pages: int = 1, path: str | Path = DEFAULT_OUTPUT)
 
 def _draw_number(pdf: FPDF, cfg: Config, grid: Grid, entry_number: int, total: int) -> None:
     """Print the page-number label on the current page (no-op when numbering is off)."""
-    from agenda import tokens
     from agenda.numbering import align_for, label_for
 
     text = label_for(cfg, entry_number, total)
@@ -115,7 +115,7 @@ def _draw_number(pdf: FPDF, cfg: Config, grid: Grid, entry_number: int, total: i
     else:
         y = safe.y2 + (grid.page_h - safe.y2 - h) / 2
     pdf.set_font(FONT_FAMILY, "", 7)
-    pdf.set_text_color(*tokens.COLORS["muted"])
+    pdf.set_text_color(*color(pdf, "muted"))
     pdf.set_xy(safe.x, y)
     pdf.cell(safe.w, h, text, align=align_for(grid.side, cfg.page_number_position))
     pdf.set_text_color(0, 0, 0)
