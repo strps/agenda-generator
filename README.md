@@ -275,7 +275,8 @@ PDF. The panel section **PDF colors & fonts** edits the generated file's style i
 ## Development
 
 ```sh
-pytest
+pytest                # everything
+pytest -m "not gui"   # Qt-free core only (tests needing PySide6 are marked `gui`)
 ruff check .
 ```
 

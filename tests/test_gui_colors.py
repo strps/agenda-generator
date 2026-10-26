@@ -49,6 +49,7 @@ def test_is_dark():
     assert C.is_dark(30) and not C.is_dark(240)
 
 
+@pytest.mark.gui
 def test_bar_uses_palette():
     pytest.importorskip("PySide6")
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

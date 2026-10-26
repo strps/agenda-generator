@@ -7,6 +7,8 @@ from agenda.gui.app import MainWindow, apply_style
 from agenda.gui.prefs_dialog import GuiSettingsDialog
 from agenda.gui.section_colors import section_color
 
+pytestmark = pytest.mark.gui
+
 
 @pytest.fixture(scope="module")
 def qapp():

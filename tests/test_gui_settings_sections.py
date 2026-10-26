@@ -2,7 +2,6 @@ import os
 
 import pytest
 
-pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import Qt
@@ -15,6 +14,8 @@ from agenda.gui import export_model as EM
 from agenda.gui import settings_model as M
 from agenda.gui.collapsible import CollapsibleSection
 from agenda.gui.settings_panel import SECTION_SWITCHED, SettingsPanel
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")

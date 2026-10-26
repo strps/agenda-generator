@@ -84,6 +84,7 @@ def test_real_plan_covers_width():
     assert len(g.ticks()) == len({e.booklet_index for e in pl} - {None})
 
 
+@pytest.mark.gui
 def test_widget_follows_plan_and_marker(monkeypatch):
     pytest.importorskip("PySide6")
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -194,6 +195,7 @@ def _window():
     return win
 
 
+@pytest.mark.gui
 def test_widget_click_drag_keys_and_legend():
     pytest.importorskip("PySide6")
     from PySide6.QtCore import QPoint, Qt

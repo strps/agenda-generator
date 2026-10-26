@@ -54,6 +54,7 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
+@pytest.mark.gui
 def test_gui_export_matches_cli(qapp, tmp_path):
     from agenda.gui.app import MainWindow
 
@@ -76,6 +77,7 @@ def test_gui_export_matches_cli(qapp, tmp_path):
     assert _sig(gui_pdf) == _sig(cli_pdf)
 
 
+@pytest.mark.gui
 def test_gui_export_error_and_invalid_config(qapp, tmp_path):
     from agenda.gui.app import MainWindow
 
@@ -90,6 +92,7 @@ def test_gui_export_error_and_invalid_config(qapp, tmp_path):
     assert win.export_button.isEnabled()
 
 
+@pytest.mark.gui
 def test_export_disabled_when_config_invalid(qapp, tmp_path):
     from agenda.gui.app import MainWindow
 
@@ -102,6 +105,7 @@ def test_export_disabled_when_config_invalid(qapp, tmp_path):
 
 
 @pytest.mark.parametrize("layout", ["pages", "spreads", "booklets"])
+@pytest.mark.gui
 def test_gui_export_matches_cli_per_layout(qapp, tmp_path, layout):
     from agenda.gui.app import MainWindow
 
@@ -120,6 +124,7 @@ def test_gui_export_matches_cli_per_layout(qapp, tmp_path, layout):
     assert _sig(gui_pdf) == _sig(cli_pdf)
 
 
+@pytest.mark.gui
 def test_gui_export_matches_cli_styled(qapp, tmp_path):
     import shutil
 

@@ -9,6 +9,9 @@ from agenda.gui.hover_tooltip import ExpandingToolTip
 SMALL = {"year": 2026, "planners": ["weekly"], "daily_months": []}
 
 
+pytestmark = pytest.mark.gui
+
+
 @pytest.fixture(scope="module")
 def qapp():
     return QApplication.instance() or QApplication([])

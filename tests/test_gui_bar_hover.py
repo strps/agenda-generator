@@ -2,7 +2,6 @@ import os
 
 import pytest
 
-pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QEvent
@@ -12,6 +11,8 @@ from agenda.assembler import build_plan
 from agenda.config import Config
 from agenda.gui import bar_model as B
 from agenda.gui import help_text, section_bar
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")

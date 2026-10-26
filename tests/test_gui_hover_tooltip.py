@@ -2,7 +2,6 @@ import os
 
 import pytest
 
-pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QEvent, QPoint, QPointF
@@ -19,6 +18,9 @@ from agenda.gui.hover_tooltip import ExpandingToolTip
 
 SHORT = "short text"
 DETAIL = "detailed explanation"
+
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")

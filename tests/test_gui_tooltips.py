@@ -2,10 +2,11 @@ import os
 
 import pytest
 
-pytest.importorskip("PySide6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from agenda.gui import help_text as HT
+
+pytestmark = pytest.mark.gui
 
 
 @pytest.fixture(scope="module")
