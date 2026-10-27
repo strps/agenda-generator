@@ -21,3 +21,17 @@ def test_legacy_appearance_ignored_with_warning(tmp_path, text, clean):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         assert configfile.load_yaml(b) == got
+
+
+@pytest.mark.gui
+def test_appearance_items_translated_value_kept():
+    from PySide6.QtWidgets import QApplication
+
+    from agenda import uitext
+    from agenda.gui.prefs_dialog import GuiSettingsDialog
+
+    QApplication.instance() or QApplication([])
+    uitext.set_language("es")
+    dlg = GuiSettingsDialog("light")
+    assert dlg.appearance() == "light"
+    assert dlg.appearance_box.currentText() == "claro"

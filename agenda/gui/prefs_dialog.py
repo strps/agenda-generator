@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 from agenda.gui import help_text
 from agenda.gui import style_model as SM
 from agenda.gui.hover_tooltip import ExpandingToolTip
+from agenda.uitext import tr
 
 
 class GuiSettingsDialog(QDialog):
@@ -22,17 +23,17 @@ class GuiSettingsDialog(QDialog):
 
     def __init__(self, appearance: str = SM.DEFAULT_APPEARANCE, parent: QWidget | None = None):
         super().__init__(parent)
-        self.setWindowTitle("Preferences")
+        self.setWindowTitle(tr("prefs.title"))
         self.setObjectName("prefs_dialog")
         lay = QVBoxLayout(self)
         form = QFormLayout()
         self.appearance_box = QComboBox()
         self.appearance_box.setObjectName("appearance")
-        self.appearance_box.addItems(list(SM.APPEARANCES))
-        self.appearance_box.setCurrentText(
-            appearance if appearance in SM.APPEARANCES else SM.DEFAULT_APPEARANCE
-        )
-        label = QLabel("Appearance")
+        for value in SM.APPEARANCES:
+            self.appearance_box.addItem(tr(f"prefs.appearance.{value}"), value)
+        chosen = appearance if appearance in SM.APPEARANCES else SM.DEFAULT_APPEARANCE
+        self.appearance_box.setCurrentIndex(self.appearance_box.findData(chosen))
+        label = QLabel(tr("prefs.appearance"))
         label.setObjectName("label_appearance")
         self.appearance_tooltip = ExpandingToolTip(
             self.appearance_box, help_text.TOOLTIPS["appearance"], ""
@@ -51,4 +52,4 @@ class GuiSettingsDialog(QDialog):
         lay.addWidget(buttons)
 
     def appearance(self) -> str:
-        return self.appearance_box.currentText()
+        return str(self.appearance_box.currentData())
