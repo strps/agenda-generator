@@ -62,3 +62,29 @@ def test_main_window_shows_spanish_texts(qapp):
     assert win.legend.title.text() == uitext.tr("legend.title")
     win.preview.wait_idle()
     win.close()
+
+
+@pytest.mark.gui
+def test_accepting_prefs_stores_ui_language(qapp, tmp_path, monkeypatch):
+    from PySide6.QtCore import QSettings
+    from PySide6.QtWidgets import QDialog
+
+    from agenda import uitext
+    from agenda.config import Config
+    from agenda.gui import app as gui_app
+    from agenda.gui.prefs_dialog import GuiSettingsDialog
+
+    prefs = QSettings(str(tmp_path / "p.ini"), QSettings.Format.IniFormat)
+    win = gui_app.MainWindow(prefs)
+
+    def fake_exec(self):
+        self.language_box.setCurrentIndex(self.language_box.findData("es"))
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(GuiSettingsDialog, "exec", fake_exec)
+    before = Config().language
+    win.open_preferences()
+    assert prefs.value("ui_language") == "es"
+    assert uitext.get_language() == "en"  # applies on restart, not live
+    assert Config().language == before
+    win.close()

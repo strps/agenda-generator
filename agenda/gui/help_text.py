@@ -19,6 +19,7 @@ TOOLTIPS: Mapping[str, str] = Table(
         "mode_spread",
         "mode_sheet",
         "appearance",
+        "ui_language",
         "color_swatch",
         "color_clear",
         "font_browse",

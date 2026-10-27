@@ -51,6 +51,19 @@ def resolve_language(pref: str | None, system_locale: str | None) -> str:
     return _from_locale(system_locale)
 
 
+def startup_language(
+    pref: str | None, system_locale: str | None, environ: Mapping[str, str] | None = None
+) -> str:
+    """GUI startup: saved preference (en/es) > AGENDA_UI_LANG > system locale > en."""
+    if pref in LANGUAGES:
+        return str(pref)
+    env = os.environ if environ is None else environ
+    explicit = env.get(ENV_VAR, "").strip().lower()
+    if explicit in LANGUAGES:
+        return explicit
+    return resolve_language(pref, system_locale)
+
+
 def set_language(lang: str) -> None:
     global _current
     if lang not in LANGUAGES:

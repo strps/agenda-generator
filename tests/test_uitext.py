@@ -68,3 +68,13 @@ def test_tr_falls_back_to_english(monkeypatch):
 
 def test_conftest_forces_english():
     assert uitext.get_language() == "en"
+
+
+def test_startup_language_precedence():
+    from agenda.uitext import startup_language
+
+    assert startup_language(None, "es_AR", {}) == "es"
+    assert startup_language("en", "es_AR", {}) == "en"
+    assert startup_language("system", "es_AR", {"AGENDA_UI_LANG": "en"}) == "en"
+    assert startup_language("es", "en_US", {"AGENDA_UI_LANG": "en"}) == "es"
+    assert startup_language(None, None, {}) == "en"

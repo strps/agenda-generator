@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, Qt, QThreadPool, QTimer, QUrl
+from PySide6.QtCore import QLocale, QSettings, Qt, QThreadPool, QTimer, QUrl
 from PySide6.QtGui import QAction, QColor, QDesktopServices, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QApplication,
@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from agenda import uitext
 from agenda.assembler import build_plan, summarize
 from agenda.configfile import ConfigFileError
 from agenda.gui import export_model as EM
@@ -46,6 +47,7 @@ DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-render
 
 
 PREFS_ORG, PREFS_APP, PREFS_KEY = "agenda-gen", "agenda-gui", "appearance"
+PREF_UI_LANGUAGE = "ui_language"
 PREF_OPEN_AFTER, PREF_LAST_DIR = "export/open_after", "export/last_dir"
 
 
@@ -208,9 +210,16 @@ class MainWindow(QMainWindow):
 
     def open_preferences(self) -> None:
         """Show the GUI Settings dialog; apply and persist the appearance on accept."""
-        dlg = GuiSettingsDialog(self.appearance, self)
+        saved = str(self.prefs.value(PREF_UI_LANGUAGE, "system"))
+        dlg = GuiSettingsDialog(self.appearance, self, ui_language=saved)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self._set_appearance(dlg.appearance())
+            self._set_ui_language(dlg.ui_language())
+
+    def _set_ui_language(self, value: str) -> None:
+        """Remember the UI language; it applies on the next start, not live."""
+        self.prefs.setValue(PREF_UI_LANGUAGE, value)
+        self.prefs.sync()
 
     def _set_appearance(self, appearance: str) -> None:
         """User picked an appearance: restyle the running app and remember the choice."""
@@ -438,6 +447,11 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for `agenda-gui` and `python -m agenda.gui`."""
     app = QApplication.instance() or QApplication(sys.argv if argv is None else argv)
     prefs = QSettings(PREFS_ORG, PREFS_APP)
+    uitext.set_language(
+        uitext.startup_language(
+            str(prefs.value(PREF_UI_LANGUAGE, "system")), QLocale.system().name()
+        )
+    )
     saved = str(prefs.value(PREFS_KEY, SM.DEFAULT_APPEARANCE))
     apply_style(app, saved if saved in SM.APPEARANCES else SM.DEFAULT_APPEARANCE)
     win = MainWindow(prefs)
