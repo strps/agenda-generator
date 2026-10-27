@@ -9,3 +9,4 @@ its area. A changed decision gets a NEW ADR; the old one is marked superseded.
 - [0003](0003-gui-test-marker.md) Qt tests carry the `gui` pytest marker — Accepted — area: tests/, tests/conftest.py, pyproject.toml
 - [0004](0004-flat-config-and-section-grouping.md) Config stays flat; section grouping lives only in agenda/templates.py — Accepted — area: agenda/config, agenda/configfile, agenda/templates.py
 - [0005](0005-ui-catalog.md) GUI and CLI text goes through a Qt-free catalog (agenda/uitext), separate from PDF strings — Accepted — area: agenda/uitext, agenda/fields.py, agenda/templates.py, agenda/gui, agenda/cli.py
+- [0006](0006-ui-language-selection.md) The UI language is chosen per user, at startup, separately from the agenda language — Accepted — area: agenda/uitext, agenda/gui/app.py, agenda/gui/prefs_dialog.py, agenda/cli.py
