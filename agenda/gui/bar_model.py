@@ -1,9 +1,10 @@
 """Section bar geometry (Qt-free): proportional segments, gaps, padding runs, ticks, marker."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from agenda.gui.preview_model import SPREAD, sheet_number, step
+from agenda.uitext import Table, tr
 
 GAP_PX = 2.0
 PADDING = "padding"  # pseudo-section key for auto-inserted filler pages
@@ -113,15 +114,10 @@ def geometry(plan: Sequence, width: float, gap: float = GAP_PX) -> BarGeometry:
     return BarGeometry(keys, tuple(booklet_starts([e.booklet_index for e in plan])), width, gap)
 
 
-SECTION_LABELS = {
-    "front_back": "Front/back",
-    "monthly": "Monthly",
-    "weekly": "Weekly",
-    "daily": "Daily",
-    "optional": "Optional",
-    "value_added": "Value-added",
-    PADDING: "Padding",
-}
+SECTION_LABELS: Mapping[str, str] = Table(
+    "bar.section",
+    ("front_back", "monthly", "weekly", "daily", "optional", "value_added", PADDING),
+)
 
 
 def first_page_of(plan: Sequence, section: str) -> int | None:
@@ -139,25 +135,27 @@ def next_run_of(plan: Sequence, section: str, index: int) -> int | None:
     return next((s for s in starts if s > index), starts[0] if starts else None)
 
 
-def _day(d) -> str:
-    return f"{d:%b} {d.day}"
+def _month_day(d) -> str:
+    return tr("date.short", month=tr(f"date.month_abbr.{d.month}"), day=d.day)
 
 
 def _detail(entry) -> str:
     ctx = entry.ctx or {}
     if entry.kind == "filler":
-        return "Blank" if entry.is_blank else f"{entry.page_class.name} (filler)"
+        if entry.is_blank:
+            return tr("bar.blank")
+        return tr("bar.filler", name=entry.page_class.name)
     if "days" in ctx:
         days = ctx["days"]
         a, b = days[0], days[-1]
-        end = str(b.day) if a.month == b.month else _day(b)
-        return f"Week {ctx['number']} ({_day(a)}\u2013{end})"
+        end = str(b.day) if a.month == b.month else _month_day(b)
+        return tr("bar.week", number=ctx["number"], start=_month_day(a), end=end)
     if "date" in ctx:
-        return f"{ctx['date']:%a} {_day(ctx['date'])}"
+        d = ctx["date"]
+        weekday = tr(f"date.day_abbr.{d.weekday()}")
+        return tr("date.weekday", weekday=weekday, date=_month_day(d))
     if "month" in ctx and entry.section == "monthly":
-        import calendar
-
-        return calendar.month_name[ctx["month"]]
+        return tr(f"date.month.{ctx['month']}")
     cls = entry.page_class
     return getattr(cls, "name", "") if cls else ""
 
@@ -166,12 +164,12 @@ def tooltip_text(plan: Sequence, index: int) -> str:
     """e.g. `Page 143 \u00b7 Weekly \u00b7 Week 12 (Mar 16\u201322) \u00b7 Booklet 8, sheet 2`."""
     e = plan[index]
     key = PADDING if e.kind == "padding" else e.section
-    parts = [f"Page {index + 1}", SECTION_LABELS.get(key, key)]
+    parts = [tr("bar.page", n=index + 1), SECTION_LABELS.get(key, key)]
     if e.kind != "padding" and (d := _detail(e)):
         parts.append(d)
     if e.booklet_index is not None:
         sheet = sheet_number(index, [x.booklet_index for x in plan])
-        parts.append(f"Booklet {e.booklet_index}, sheet {sheet}")
+        parts.append(tr("bar.booklet_sheet", booklet=e.booklet_index, sheet=sheet))
     return " \u00b7 ".join(parts)
 
 

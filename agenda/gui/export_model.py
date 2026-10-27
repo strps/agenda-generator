@@ -8,10 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from agenda.config import Config
+from agenda.uitext import tr
 
-EXPORT_FIELDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
-        "Page numbers",
+        "page_numbers",
         (
             "page_numbers",
             "page_number_start",
@@ -21,13 +22,20 @@ EXPORT_FIELDS: tuple[tuple[str, tuple[str, ...]], ...] = (
             "page_number_format",
         ),
     ),
-    ("Layout", ("imposition", "spreads", "sheet_size", "crop_marks", "bleed")),
+    ("layout", ("imposition", "spreads", "sheet_size", "crop_marks", "bleed")),
     (
-        "Booklets",
+        "booklets",
         ("booklet_size", "booklet_unit", "booklet_folded", "num_booklets", "separate_covers"),
     ),
-    ("Output", ("output", "debug_grid")),
+    ("output", ("output", "debug_grid")),
 )
+
+
+def __getattr__(name: str):
+    if name == "EXPORT_FIELDS":  # (group title in the UI language, field names)
+        return tuple((tr(f"export.group.{key}"), fields) for key, fields in _GROUPS)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 LAYOUTS = ("pages", "spreads", "booklets")
 
@@ -37,7 +45,7 @@ _NO_NEGATIVE = {"debug_grid"}
 
 
 def export_field_names() -> list[str]:
-    return [f for _, fields in EXPORT_FIELDS for f in fields]
+    return [f for _, fields in _GROUPS for f in fields]
 
 
 def layout_of(values: Mapping[str, Any]) -> str:
@@ -108,11 +116,11 @@ def validate(values: Mapping[str, Any], page_range: str = "") -> str:
         return err
     if (page_range or "").strip().lower() not in ("", "all"):
         if cfg.imposition or cfg.spreads:
-            return "page range: a page range can only be exported as single pages"
+            return tr("export.err.single_pages")
         try:
             parse_page_range(page_range, len(build_plan(cfg)))
         except ValueError as exc:
-            return f"page range: {exc}"
+            return tr("export.err.page_range", message=exc)
     return ""
 
 

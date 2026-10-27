@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, Qt, QThreadPool, QTimer, QUrl
+from PySide6.QtCore import QLocale, QSettings, Qt, QThreadPool, QTimer, QUrl
 from PySide6.QtGui import QAction, QColor, QDesktopServices, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QApplication,
@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from agenda import uitext
 from agenda.assembler import build_plan, summarize
 from agenda.configfile import ConfigFileError
 from agenda.gui import export_model as EM
@@ -39,12 +40,14 @@ from agenda.gui.render_cache import Debounce
 from agenda.gui.section_bar import SectionBar
 from agenda.gui.settings_panel import SettingsPanel
 from agenda.pagerange import parse_page_range
-from agenda.templates import GLOBAL, TEMPLATE_KEYS, is_enabled, section
+from agenda.templates import GLOBAL, TEMPLATE_KEYS, is_enabled, section_label
+from agenda.uitext import tr
 
 DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-renders
 
 
 PREFS_ORG, PREFS_APP, PREFS_KEY = "agenda-gen", "agenda-gui", "appearance"
+PREF_UI_LANGUAGE = "ui_language"
 PREF_OPEN_AFTER, PREF_LAST_DIR = "export/open_after", "export/last_dir"
 
 
@@ -98,8 +101,8 @@ class MainWindow(QMainWindow):
         gap, margin = SM.SPACING["gap"], SM.SPACING["margin"]
         row.setContentsMargins(margin, gap, margin, gap)
         row.setSpacing(gap)
-        self.open_button = QPushButton("Open config")
-        self.save_button = QPushButton("Save config")
+        self.open_button = QPushButton(tr("app.open_config"))
+        self.save_button = QPushButton(tr("app.save_config"))
         self.open_button.setToolTip(HT.TOOLTIPS["open_config"])
         self.save_button.setToolTip(HT.TOOLTIPS["save_config"])
         row.addWidget(self.open_button)
@@ -109,7 +112,7 @@ class MainWindow(QMainWindow):
         erow = QHBoxLayout(export)
         erow.setContentsMargins(0, 0, 0, 0)
         erow.setSpacing(gap)
-        self.export_button = QPushButton("Export PDF")
+        self.export_button = QPushButton(tr("app.export_pdf"))
         self.export_button.setObjectName("export_button")
         self.export_progress = QProgressBar()
         self.export_progress.setRange(0, 100)
@@ -192,8 +195,8 @@ class MainWindow(QMainWindow):
         self.legend.section_clicked.connect(self.section_bar.next_page_of)
         self.legend.section_clicked.connect(lambda _k: self.show_preview_for(GLOBAL))
         self.settings.section_activated.connect(self.show_preview_for)
-        menu = self.menuBar().addMenu("&Settings")
-        self.preferences_action = QAction("Preferences...", self)
+        menu = self.menuBar().addMenu(tr("app.menu_settings"))
+        self.preferences_action = QAction(tr("app.preferences"), self)
         self.preferences_action.setObjectName("action_preferences")
         self.preferences_action.setShortcut(QKeySequence(QKeySequence.StandardKey.Preferences))
         self.preferences_action.setToolTip(HT.TOOLTIPS["preferences"])
@@ -207,9 +210,16 @@ class MainWindow(QMainWindow):
 
     def open_preferences(self) -> None:
         """Show the GUI Settings dialog; apply and persist the appearance on accept."""
-        dlg = GuiSettingsDialog(self.appearance, self)
+        saved = str(self.prefs.value(PREF_UI_LANGUAGE, "system"))
+        dlg = GuiSettingsDialog(self.appearance, self, ui_language=saved)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self._set_appearance(dlg.appearance())
+            self._set_ui_language(dlg.ui_language())
+
+    def _set_ui_language(self, value: str) -> None:
+        """Remember the UI language; it applies on the next start, not live."""
+        self.prefs.setValue(PREF_UI_LANGUAGE, value)
+        self.prefs.sync()
 
     def _set_appearance(self, appearance: str) -> None:
         """User picked an appearance: restyle the running app and remember the choice."""
@@ -260,9 +270,8 @@ class MainWindow(QMainWindow):
         for key in TEMPLATE_KEYS:
             off = not is_enabled(cfg, key)
             self.template_previews[key].set_inactive(off)
-            label = section(key).label
             self.template_notices[key].setText(
-                f"{label} is disabled and is not included in the agenda." if off else ""
+                tr("app.template_disabled", label=section_label(key)) if off else ""
             )
         self._stale = set(TEMPLATE_KEYS)
         if self.preview_key in TEMPLATE_KEYS:
@@ -351,7 +360,7 @@ class MainWindow(QMainWindow):
         sig.failed.connect(self._on_export_failed)
         self.export_progress.setValue(0)
         self.export_progress.show()
-        self.export_status.setText("Exporting...")
+        self.export_status.setText(tr("app.exporting"))
         self._sync_export_button(valid=True)
         self._export_pool.start(ExportJob(cfg, str(EM.ensure_pdf(path)), sig, pages))
         return True
@@ -378,16 +387,16 @@ class MainWindow(QMainWindow):
         self._sync_export_button(valid=cfg is not None)
         if self._export_interactive:
             box = QMessageBox.information if ok else QMessageBox.warning
-            box(self, "Export PDF", text)
+            box(self, tr("app.export_pdf"), text)
 
     def _on_export_done(self, path: str) -> None:
         self.export_progress.setValue(100)
-        self._finish_export(f"Exported {path}", True)
+        self._finish_export(tr("app.exported", path=path), True)
         if self._export_interactive and self._open_after:
             self.open_file(path)
 
     def _on_export_failed(self, msg: str) -> None:
-        self._finish_export(f"Export failed: {msg}", False)
+        self._finish_export(tr("app.export_failed", message=msg), False)
 
     def load_config(self, path: str) -> str:
         """Load a YAML file into the settings panel. Returns "" or the error message."""
@@ -402,14 +411,18 @@ class MainWindow(QMainWindow):
         return self.settings.save_file(path)
 
     def open_config_dialog(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Open config", "", "YAML (*.yaml *.yml)")
+        path, _ = QFileDialog.getOpenFileName(
+            self, tr("app.open_config"), "", tr("app.yaml_open_filter")
+        )
         if path and (err := self.load_config(path)):
-            QMessageBox.warning(self, "Open config", err)
+            QMessageBox.warning(self, tr("app.open_config"), err)
 
     def save_config_dialog(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Save config", "config.yaml", "YAML (*.yaml)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, tr("app.save_config"), "config.yaml", tr("app.yaml_save_filter")
+        )
         if path and (err := self.save_config(path)):
-            QMessageBox.warning(self, "Save config", err)
+            QMessageBox.warning(self, tr("app.save_config"), err)
 
     def _region(self, name: str) -> QWidget:
         w = QWidget()
@@ -434,6 +447,11 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for `agenda-gui` and `python -m agenda.gui`."""
     app = QApplication.instance() or QApplication(sys.argv if argv is None else argv)
     prefs = QSettings(PREFS_ORG, PREFS_APP)
+    uitext.set_language(
+        uitext.startup_language(
+            str(prefs.value(PREF_UI_LANGUAGE, "system")), QLocale.system().name()
+        )
+    )
     saved = str(prefs.value(PREFS_KEY, SM.DEFAULT_APPEARANCE))
     apply_style(app, saved if saved in SM.APPEARANCES else SM.DEFAULT_APPEARANCE)
     win = MainWindow(prefs)

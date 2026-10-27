@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from agenda.assembler import PagePlan, PlanEntry, make_entry
@@ -18,7 +19,9 @@ from agenda.templates import (
     STYLING,
     TEMPLATE_KEYS,
     section,
+    section_label,
 )
+from agenda.uitext import Table, tr
 
 PLACEHOLDER_URLS = ["https://example.com"]
 
@@ -76,19 +79,9 @@ PAD_FIELDS: dict[str, tuple[str, str]] = {
     "month_start_pages": (MONTH_START, "printed after each monthly page"),
     "month_end_pages": (MONTH_END, "printed after each month's last week"),
 }
-PAD_SHORT = {
-    "pad_with": "padding",
-    "weekly_filler": "week filler",
-    "daily_filler": "day filler",
-    "month_start_pages": "month start",
-    "month_end_pages": "month end",
-}
+PAD_SHORT: Mapping[str, str] = Table("pad.short", tuple(PAD_FIELDS))
 MONTH_FIELDS = ("month_start_pages", "month_end_pages")
-FILLER_TEXT = {
-    "blank": "Blank: leave the slot empty.",
-    "none": "None: no filler; a week spread may start on a right page.",
-}
-_CATEGORY = {"core": "Core", "optional": "Optional", "value_added": "Value-added"}
+FILLER_TEXT: Mapping[str, str] = Table("filler", ("blank", "none"))
 
 
 def section_of_page(page_id: str) -> str | None:
@@ -116,8 +109,12 @@ def pad_label(fields: list[str]) -> str:
 def pad_text(fields: list[str]) -> str:
     """One line per use: "Padding: pads the last booklet (set in Padding)."."""
     return "\n".join(
-        f"{PAD_SHORT[f].capitalize()}: {PAD_FIELDS[f][1]} "
-        f"(set in {section(PAD_FIELDS[f][0]).label})."
+        tr(
+            "pad.text",
+            short=PAD_SHORT[f].capitalize(),
+            use=tr(f"pad.use.{f}"),
+            section=section_label(PAD_FIELDS[f][0]),
+        )
         for f in fields
     )
 
@@ -125,11 +122,15 @@ def pad_text(fields: list[str]) -> str:
 def page_text(page_id: str) -> str:
     """What a catalog page is: "Notes: core page, 1 page, set up in its Notes section."."""
     cls = get_page(page_id)
-    size = "2-page spread" if cls.pages == 2 else f"{cls.pages} page" + ("s" * (cls.pages > 1))
+    if cls.pages == 2:
+        size = tr("page.size.spread")
+    else:
+        size = tr("page.size.many" if cls.pages > 1 else "page.size.one", n=cls.pages)
     key = section_of_page(page_id)
-    repeat = ", one per month" if cls.per_month else ""
-    where = f", set up in its {section(key).label} section" if key else ""
-    return f"{cls.name}: {_CATEGORY[cls.category].lower()} page, {size}{repeat}{where}."
+    repeat = tr("page.per_month") if cls.per_month else ""
+    where = tr("page.where", section=section_label(key)) if key else ""
+    category = tr(f"page.category.{cls.category}")
+    return tr("page.text", name=cls.name, category=category, size=size, repeat=repeat, where=where)
 
 
 def choice_tooltip(value: str) -> str:
@@ -142,14 +143,14 @@ def header_tooltip(key: str, fields: list[str]) -> str:
     s = section(key)
     lines = [page_text(s.page_id)] if s.page_id else []
     if s.enable == "count":
-        lines.append(f"The box sets {s.count_field} to 0 (off) or at least 1 (on).")
+        lines.append(tr("header.count", field=s.count_field))
     elif s.enable != "none":
-        lines.append("The box includes it in the agenda.")
+        lines.append(tr("header.enable"))
     if s.page_id and get_page(s.page_id).per_month and not any(f in MONTH_FIELDS for f in fields):
-        lines.append("Pick Start or End of each month to print it inside every month instead.")
+        lines.append(tr("header.month_hint"))
     if fields:
         lines.append(pad_text(fields))
-        lines.append("A ringed box means the page is printed there even when the box is off.")
+        lines.append(tr("header.ringed"))
     if any(f in MONTH_FIELDS for f in fields):
-        lines.append("While placed in each month it is not repeated after the planner.")
+        lines.append(tr("header.month_note"))
     return "\n".join(lines)

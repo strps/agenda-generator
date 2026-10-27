@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from agenda.gui.style_model import SPACING
+from agenda.uitext import tr
 
 BOX_KINDS = ("planner", "page", "count")
 ANIM_MS = 160
@@ -189,7 +190,7 @@ class CollapsibleSection(_Expandable, QFrame):
             self.enable_box = QCheckBox()
             self.enable_box.setObjectName("section_enable")
             self.enable_box.setChecked(True)
-            self.enable_box.setToolTip("Include this template in the agenda.")
+            self.enable_box.setToolTip(tr("section.include_tip"))
             self.enable_box.toggled.connect(self._box_toggled)
             hl.addWidget(self.enable_box)
         lay.addWidget(header)

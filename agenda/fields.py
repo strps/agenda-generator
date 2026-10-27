@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from agenda import uitext
 from agenda.config import Config
 
 
@@ -26,12 +27,17 @@ def _extra(name: str) -> dict[str, Any]:
 
 def short_help(name: str) -> str:
     """One-phrase help text of a field."""
-    return Config.model_fields[name].description or ""
+    return uitext.lookup(f"field.{name}.short") or Config.model_fields[name].description or ""
 
 
 def detail_help(name: str) -> str:
     """Detailed explanation of a field (cross-field rules included)."""
-    return str(_extra(name).get("detail", ""))
+    return uitext.lookup(f"field.{name}.detail") or str(_extra(name).get("detail", ""))
+
+
+def field_label(name: str) -> str:
+    """Display label of a field: the translation, else the name with spaces for underscores."""
+    return uitext.lookup(f"field.{name}.label") or name.replace("_", " ")
 
 
 def cli_meta(name: str) -> dict[str, Any]:

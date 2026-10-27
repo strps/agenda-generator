@@ -5,8 +5,13 @@ from collections.abc import Sequence
 from typing import NamedTuple
 
 from agenda.gui.bar_model import SECTION_LABELS, page_keys
+from agenda.uitext import tr
 
-NO_PLAN_TEXT = "No agenda: fix the settings"
+
+def __getattr__(name: str) -> str:
+    if name == "NO_PLAN_TEXT":
+        return tr("legend.no_plan")
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class LegendEntry(NamedTuple):
@@ -24,7 +29,7 @@ def legend_entries(plan: Sequence) -> list[LegendEntry]:
 
 
 def _n(count: int, word: str) -> str:
-    return f"{count} {word}" + ("" if count == 1 else "s")
+    return tr(f"summary.{word}.{'one' if count == 1 else 'other'}", n=count)
 
 
 def summary_text(summary) -> str:
@@ -36,7 +41,7 @@ def summary_text(summary) -> str:
         _n(summary.booklets, "booklet"),
     ]
     if summary.padding_pages:
-        parts.append(_n(summary.padding_pages, "padding page"))
+        parts.append(_n(summary.padding_pages, "padding"))
     if summary.warnings:
         parts.append("⚠ " + _n(len(summary.warnings), "warning"))
     return " · ".join(parts)

@@ -25,14 +25,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from agenda.fields import field_label
 from agenda.gui import export_model as EM
 from agenda.gui import help_text
 from agenda.gui import settings_model as M
 from agenda.gui.hover_tooltip import ExpandingToolTip
+from agenda.uitext import tr
 
 _BIG = 10**9
 _LAYOUT_FIELDS = {"imposition", "spreads"}  # represented by the layout radio buttons
-_LAYOUT_LABELS = {"pages": "Single pages", "spreads": "Spreads", "booklets": "Booklets"}
+_GROUP_KEYS = ("page_numbers", "layout", "booklets", "output")  # parallel to EM.EXPORT_FIELDS
 
 
 class ExportDialog(QDialog):
@@ -48,7 +50,7 @@ class ExportDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setObjectName("export_dialog")
-        self.setWindowTitle("Export PDF")
+        self.setWindowTitle(tr("export.title"))
         self._values: dict[str, Any] = {**M.default_values(), **values}
         self._specs = {s.name: s for s in M.field_specs()}
         self._loading = True
@@ -59,32 +61,32 @@ class ExportDialog(QDialog):
 
         root = QVBoxLayout(self)
         groups: dict[str, QFormLayout] = {}
-        for title, fields in EM.EXPORT_FIELDS:
-            if title == "Output":
-                title = "Range & output"
+        for key, (title, fields) in zip(_GROUP_KEYS, EM.EXPORT_FIELDS, strict=True):
+            if key == "output":
+                key, title = "range_output", tr("export.group.range_output")
             box = QGroupBox(title)
-            box.setObjectName("group_" + title.lower().replace(" & ", "_").replace(" ", "_"))
+            box.setObjectName("group_" + key)
             form = QFormLayout(box)
-            groups[title] = form
+            groups[key] = form
             root.addWidget(box)
-            if title == "Layout":
+            if key == "layout":
                 self._add_layout_radios(form)
             for name in fields:
                 if name in _LAYOUT_FIELDS or name in ("output", "debug_grid"):
                     continue
                 self._add_field(form, name)
 
-        out = groups["Range & output"]
+        out = groups["range_output"]
         self.page_range_edit = QLineEdit(page_range)
         self.page_range_edit.setObjectName("page_range")
         self.page_range_edit.setPlaceholderText(
-            f"all ({total_pages} pages)" if total_pages else "all"
+            tr("export.all_pages", total=total_pages) if total_pages else tr("export.all")
         )
         self.page_range_edit.textChanged.connect(self._edited)
         self._add_row(
             out,
             "page_range",
-            "page range",
+            tr("export.page_range_label"),
             self.page_range_edit,
             "page_range",
             help_text.EXPORT_HELP,
@@ -93,7 +95,7 @@ class ExportDialog(QDialog):
         self.output_edit = QLineEdit()
         self.output_edit.setObjectName("export_output")
         self.output_edit.textChanged.connect(self._edited)
-        self.browse_button = QPushButton("Browse...")
+        self.browse_button = QPushButton(tr("export.browse"))
         self.browse_button.setObjectName("browse_output")
         self.browse_button.clicked.connect(self._browse)
         row = QWidget()
@@ -101,7 +103,7 @@ class ExportDialog(QDialog):
         h.setContentsMargins(0, 0, 0, 0)
         h.addWidget(self.output_edit, 1)
         h.addWidget(self.browse_button)
-        self._add_row(out, "output", "output", row, "output")
+        self._add_row(out, "output", field_label("output"), row, "output")
         self.controls["output"] = self.output_edit
         self._tip(self.output_edit, *self._param("output"))
         self._tip(self.browse_button, *self._help("browse_output"))
@@ -109,7 +111,7 @@ class ExportDialog(QDialog):
 
         self._add_field(out, "debug_grid")
 
-        self.open_after_box = QCheckBox("open after export")
+        self.open_after_box = QCheckBox(tr("export.open_after"))
         self.open_after_box.setObjectName("open_after")
         self.open_after_box.setChecked(bool(open_after))
         self.open_after_box.toggled.connect(self._edited)
@@ -120,7 +122,7 @@ class ExportDialog(QDialog):
         self.cli_line = QLineEdit()
         self.cli_line.setObjectName("cli_line")
         self.cli_line.setReadOnly(True)
-        cli_label = QLabel("equivalent command")
+        cli_label = QLabel(tr("export.cli_label"))
         self._tip(self.cli_line, *self._help("cli_preview"))
         self._tip(cli_label, *self._help("cli_preview"))
         self.controls["cli_line"] = self.cli_line
@@ -136,7 +138,7 @@ class ExportDialog(QDialog):
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         self.ok_button = self.buttons.button(QDialogButtonBox.StandardButton.Ok)
-        self.ok_button.setText("Export")
+        self.ok_button.setText(tr("export.export_button"))
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
         root.addWidget(self.buttons)
@@ -179,7 +181,7 @@ class ExportDialog(QDialog):
     def _add_layout_radios(self, form: QFormLayout) -> None:
         self.layout_group = QButtonGroup(self)
         for layout in EM.LAYOUTS:
-            rb = QRadioButton(_LAYOUT_LABELS[layout])
+            rb = QRadioButton(tr(f"export.layout.{layout}"))
             rb.setObjectName(f"layout_{layout}")
             self.layout_group.addButton(rb)
             self.layout_buttons[layout] = rb
@@ -214,7 +216,7 @@ class ExportDialog(QDialog):
         else:  # text, auto_int: edited as text, parsed by Config
             w = QLineEdit()
             w.textEdited.connect(self._edited)
-        label = QLabel(name.replace("_", " "))
+        label = QLabel(field_label(name))
         label.setObjectName(f"label_{name}")
         form.addRow(label, w)
         self.rows[name] = [label, w]
@@ -293,7 +295,7 @@ class ExportDialog(QDialog):
 
     def _browse(self) -> None:
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export PDF", self.output_edit.text(), "PDF (*.pdf)"
+            self, tr("export.title"), self.output_edit.text(), "PDF (*.pdf)"
         )
         if path:
             self.output_edit.setText(str(EM.ensure_pdf(path)))

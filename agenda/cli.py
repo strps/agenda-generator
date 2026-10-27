@@ -16,8 +16,9 @@ from agenda.config import Config
 from agenda.configfile import load_yaml, merge
 from agenda.exporter import DEFAULT_OUTPUT, FontsMissingError, export_agenda, export_blank
 from agenda.fields import cli_meta, field_names, short_help
+from agenda.uitext import tr
 
-app = typer.Typer(add_completion=False, help="Generate a printable agenda PDF.")
+app = typer.Typer(add_completion=False, help=tr("cli.help"))
 
 
 def split_csv(value: str | None) -> list[str] | None:
@@ -82,7 +83,7 @@ def _list(value: bool) -> None:
 
 
 def _fail(message: str, code: int) -> "typer.Exit":
-    typer.echo(f"agenda-gen: {message}", err=True)
+    typer.echo(tr("cli.error", message=message), err=True)
     return typer.Exit(code)
 
 
@@ -132,7 +133,7 @@ def _hand_params() -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
             "version",
             Annotated[
                 bool,
-                typer.Option("--version", callback=_version, is_eager=True, help="Show version."),
+                typer.Option("--version", callback=_version, is_eager=True, help=tr("cli.version")),
             ],
             False,
         ),
@@ -140,17 +141,13 @@ def _hand_params() -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
             "list_pages",
             Annotated[
                 bool,
-                typer.Option(
-                    "--list", callback=_list, is_eager=True, help="List the page catalog."
-                ),
+                typer.Option("--list", callback=_list, is_eager=True, help=tr("cli.list")),
             ],
             False,
         ),
         param(
             "config",
-            Annotated[
-                Path | None, typer.Option("--config", help="YAML settings file; flags override it.")
-            ],
+            Annotated[Path | None, typer.Option("--config", help=tr("cli.config"))],
             None,
         ),
     ]
@@ -165,7 +162,7 @@ def _hand_params() -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
             "category",
             Annotated[
                 str | None,
-                typer.Option(help="Comma list of categories: core,optional,value_added."),
+                typer.Option(help=tr("cli.category")),
             ],
             None,
         ),
@@ -175,7 +172,7 @@ def _hand_params() -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
                 str | None,
                 typer.Option(
                     "--page-range",
-                    help='Export only these pages, e.g. "1-4,9" (single pages only).',
+                    help=tr("cli.page_range"),
                 ),
             ],
             None,
@@ -184,15 +181,13 @@ def _hand_params() -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
             "blank_pages",
             Annotated[
                 int | None,
-                typer.Option(help="Write N blank pages instead of the agenda (temporary)."),
+                typer.Option(help=tr("cli.blank_pages")),
             ],
             None,
         ),
         param(
             "dry_run",
-            Annotated[
-                bool, typer.Option("--dry-run", help="Print the plan summary; render nothing.")
-            ],
+            Annotated[bool, typer.Option("--dry-run", help=tr("cli.dry_run"))],
             False,
         ),
     ]
@@ -236,7 +231,7 @@ def run(**opts: Any) -> None:
 
     if not themes.is_known(cfg.theme):
         typer.echo(
-            f"warning: unknown theme {cfg.theme!r}; using minimal (known: {', '.join(themes.THEMES)})",
+            tr("cli.unknown_theme", theme=repr(cfg.theme), known=", ".join(themes.THEMES)),
             err=True,
         )
     if dry_run:
@@ -252,10 +247,10 @@ def run(**opts: Any) -> None:
 
         try:
             if cfg.imposition or cfg.spreads:
-                raise ValueError("a page range can only be exported as single pages")
+                raise ValueError(tr("cli.range_singles_only"))
             pages = parse_page_range(page_range, len(build_plan(cfg)))
         except ValueError as exc:
-            raise _fail(f"page range: {exc}", 2) from None
+            raise _fail(tr("cli.page_range_error", message=exc), 2) from None
     try:
         if blank_pages is None:
             out = (
@@ -267,14 +262,14 @@ def run(**opts: Any) -> None:
             out = export_blank(cfg, blank_pages, target)
     except FontsMissingError as exc:
         raise _fail(str(exc), 1) from None
-    typer.echo(f"wrote {out}")
+    typer.echo(tr("cli.wrote", path=out))
 
 
 _first, _last = _hand_params()
 _params = [*_first, *_generated_params(), *_last]
 run.__signature__ = inspect.Signature(_params, return_annotation=None)  # type: ignore[attr-defined]
 run.__annotations__ = {p.name: p.annotation for p in _params} | {"return": None}
-app.command()(run)
+app.command(help=tr("cli.help"))(run)
 
 
 def main(argv: list[str] | None = None) -> int:

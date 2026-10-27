@@ -120,3 +120,14 @@ def test_cli_line_and_getters(qapp):
     assert "--page-numbers" in d.cli_line.text()
     d.open_after_box.setChecked(True)
     assert d.open_after()
+
+
+def test_dialog_texts_follow_ui_language(qapp):
+    from agenda import uitext
+
+    uitext.set_language("es")
+    dlg = ExportDialog(base(), total_pages=5)
+    assert dlg.windowTitle() == uitext.tr("export.title") != "Export PDF"
+    assert dlg.findChild(type(dlg.browse_button), "browse_output").text() == "Examinar..."
+    assert dlg.ok_button.text() == "Exportar"
+    assert dlg.findChild(object, "group_range_output") is not None

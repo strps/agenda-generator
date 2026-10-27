@@ -30,6 +30,7 @@ from agenda import templates as T
 from agenda import themes
 from agenda.catalog import catalog_rows, get_page
 from agenda.config import Config
+from agenda.fields import field_label
 from agenda.gui import export_model as EM
 from agenda.gui import help_text
 from agenda.gui import settings_model as M
@@ -38,6 +39,7 @@ from agenda.gui.collapsible import CollapsibleGroup, CollapsibleSection
 from agenda.gui.hover_tooltip import ExpandingToolTip
 from agenda.gui.style_editors import ColorEdit, FontEdit
 from agenda.gui.style_model import SPACING
+from agenda.uitext import tr
 
 _BIG = 10**9
 SECTION_SWITCHED = ("planners", "pages")  # set by the section boxes, not edited directly
@@ -80,13 +82,13 @@ class SettingsPanel(QFrame):
         self._group_of: dict[str, CollapsibleGroup] = {}
         self.active_section = T.GLOBAL
         for sp in T.SECTIONS:
-            sec = CollapsibleSection(sp.key, sp.label, sp.enable)
+            sec = CollapsibleSection(sp.key, T.section_label(sp.key), sp.enable)
             self.sections[sp.key] = sec
             sec.expanded_changed.connect(lambda on, k=sp.key: on and self.activate(k))
             sec.enable_toggled.connect(lambda on, k=sp.key: self._section_toggled(k, on))
             sec.pressed.connect(lambda k=sp.key: self.activate(k, expand=False))
         for g in T.GROUPS:
-            group = CollapsibleGroup(g.key, g.label)
+            group = CollapsibleGroup(g.key, T.group_label(g.key))
             self.groups[g.key] = group
             col.addWidget(group)
             for key in g.sections:
@@ -108,7 +110,7 @@ class SettingsPanel(QFrame):
             if spec.kind in (M.PAGES, M.PAGE_LIST):
                 form.addRow(w)
             else:
-                label = QLabel(spec.name.replace("_", " "))
+                label = QLabel(field_label(spec.name))
                 label.setObjectName(f"label_{spec.name}")
                 self.label_tooltips[spec.name] = ExpandingToolTip(label, short, detail)
                 form.addRow(label, w)
@@ -192,9 +194,7 @@ class SettingsPanel(QFrame):
             sec.toggle_button.setToolTip(TM.header_tooltip(key, fields))
             if sec.enable_box is not None:
                 note = TM.pad_text(fields)
-                sec.enable_box.setToolTip(
-                    "Include this template in the agenda." + (f"\n{note}" if note else "")
-                )
+                sec.enable_box.setToolTip(tr("section.include_tip") + (f"\n{note}" if note else ""))
 
     # --- widget factory ---
     def _make(self, spec: M.FieldSpec) -> QWidget:
@@ -205,7 +205,7 @@ class SettingsPanel(QFrame):
         elif k in (M.CHOICE, M.OPT_CHOICE):
             w = QComboBox()
             if k == M.OPT_CHOICE:
-                w.addItem("(none)", None)
+                w.addItem(tr("settings.none"), None)
             for c in spec.choices:
                 w.addItem(c, c)
             w.currentIndexChanged.connect(self._edited)
@@ -246,7 +246,7 @@ class SettingsPanel(QFrame):
                 lay.addWidget(cb)
         elif k == M.TEXT_LIST:
             w = QPlainTextEdit()
-            w.setPlaceholderText("one per line")
+            w.setPlaceholderText(tr("settings.one_per_line"))
             w.setFixedHeight(60)
             w.textChanged.connect(self._edited)
         elif k == M.PAGES:
@@ -279,13 +279,13 @@ class SettingsPanel(QFrame):
         w.setItemData(w.count() - 1, tip, Qt.ItemDataRole.ToolTipRole)
 
     def _make_pages(self) -> QGroupBox:
-        box = QGroupBox("pages (none checked = default core pages)")
+        box = QGroupBox(tr("settings.pages_title"))
         lay = QVBoxLayout(box)
         category = None
         for row in catalog_rows():
             if row["category"] != category:
                 category = row["category"]
-                lay.addWidget(QLabel(f"<b>{category}</b>"))
+                lay.addWidget(QLabel(tr("settings.category", category=category)))
             cb = QCheckBox(f"{row['name']} ({row['id']})")
             cb.toggled.connect(self._edited)
             self.page_boxes[str(row["id"])] = cb

@@ -272,6 +272,14 @@ The look of the app itself (dark, light or system) is set in **Settings > Prefer
 (`GuiSettingsDialog`), is remembered between runs in the GUI's own settings and never affects the
 PDF. The panel section **PDF colors & fonts** edits the generated file's style instead (see PDF style).
 
+The language of the app itself (GUI and CLI help and messages; English or Spanish) is separate from
+the PDF `language` field, which only sets the language of the printed agenda. In the GUI, pick
+**Settings > Preferences... > Language** (System, English, Español); it is saved between runs and
+applies after a restart. Precedence: saved GUI preference, then `AGENDA_UI_LANG` (`en` or `es`), then
+the system locale (`LC_ALL`, `LC_MESSAGES`, `LANG`; `es*` gives Spanish), then English. The CLI has no
+flag: set `AGENDA_UI_LANG=es agenda-gen --help`, or rely on the locale. Config and file errors stay
+in English.
+
 ## Development
 
 ```sh
