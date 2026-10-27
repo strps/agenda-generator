@@ -89,3 +89,25 @@ def lookup(key: str) -> str | None:
     literal braces such as ``{n}``.
     """
     return _TABLES[get_language()].get(key)
+
+
+class Table(Mapping[str, str]):
+    """Read-only mapping ``key -> tr(f"{prefix}.{key}")``, resolved in the current language."""
+
+    def __init__(self, prefix: str, keys: tuple[str, ...]) -> None:
+        self._prefix = prefix
+        self._keys = keys
+
+    def __getitem__(self, key: str) -> str:
+        if key not in self._keys:
+            raise KeyError(key)
+        return tr(f"{self._prefix}.{key}")
+
+    def __iter__(self):
+        return iter(self._keys)
+
+    def __len__(self) -> int:
+        return len(self._keys)
+
+    def __repr__(self) -> str:
+        return f"Table({dict(self)!r})"

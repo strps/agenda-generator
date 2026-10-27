@@ -6,6 +6,8 @@ are (2,3), (4,5), ...; page 1 and an even last page stand alone.
 
 from collections.abc import Sequence
 
+from agenda.uitext import tr
+
 SINGLE, SPREAD, SHEET = "single", "spread", "sheet"
 MODES = (SINGLE, SPREAD, SHEET)
 FIT = "fit"
@@ -148,13 +150,13 @@ def zoom_scale(
 
 def label(rows: Sequence[Sequence[int]], total: int, mode: str) -> str:
     """Toolbar text, 1-based page numbers, e.g. "Spread 72-73 of 498"."""
-    name = {SINGLE: "Page", SPREAD: "Spread", SHEET: "Sheet"}[mode]
+    name = tr(f"preview.mode.{mode}")
     pages = sorted(i + 1 for i in render_indices(rows))
     if mode == SHEET:
         span = ",".join(map(str, pages))
     else:
         span = str(pages[0]) if len(pages) == 1 else f"{pages[0]}-{pages[-1]}"
-    return f"{name} {span} of {total}"
+    return tr("preview.label", mode=name, span=span, total=total)
 
 
 def _check(index: int, total: int) -> None:
