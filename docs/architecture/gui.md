@@ -188,6 +188,10 @@ access; `MainWindow` stores the choice in QSettings key "appearance" and applies
 `_set_appearance`. It never touches the Config or the PDF; `configfile.load_yaml` drops legacy
 `appearance` keys with a warning.
 
+The UI language (QSettings key "ui_language": system|en|es) is chosen in the same dialog, resolved in
+`main()` by `uitext.startup_language` and applied on restart; it is unrelated to `Config.language`
+(PDF). The CLI reads `AGENDA_UI_LANG`, then `LC_ALL`/`LC_MESSAGES`/`LANG` (ADR 0005).
+
 The settings panel section "PDF colors & fonts" (`style:` block) edits the PDF style with editors from
 `agenda/gui/style_editors.py`: `ColorEdit` (text, swatch opening `QColorDialog`, clear button; the
 swatch shows the theme color when the value is empty) and `FontEdit` (built-in names plus Browse for a
