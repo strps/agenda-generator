@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from agenda import fonts
 from agenda.gui import help_text
 from agenda.themes import rgb_to_hex
+from agenda.uitext import tr
 
 
 class ColorEdit(QWidget):
@@ -34,14 +35,14 @@ class ColorEdit(QWidget):
         lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         self.line = QLineEdit()
-        self.line.setPlaceholderText("theme default")
+        self.line.setPlaceholderText(tr("style.theme_default"))
         self.swatch = QToolButton()
         self.swatch.setObjectName("color_swatch")
         self.swatch.setFixedSize(24, 24)
         self.swatch.setToolTip(help_text.TOOLTIPS["color_swatch"])
         self.clear_button = QToolButton()
         self.clear_button.setObjectName("color_clear")
-        self.clear_button.setText("x")
+        self.clear_button.setText(tr("style.clear_glyph"))
         self.clear_button.setToolTip(help_text.TOOLTIPS["color_clear"])
         lay.addWidget(self.swatch)
         lay.addWidget(self.line, 1)
@@ -108,7 +109,7 @@ class FontEdit(QWidget):
             self.combo.addItem(name)
         self.browse_button = QToolButton()
         self.browse_button.setObjectName("font_browse")
-        self.browse_button.setText("Browse...")
+        self.browse_button.setText(tr("style.browse"))
         self.browse_button.setToolTip(help_text.TOOLTIPS["font_browse"])
         lay.addWidget(self.combo, 1)
         lay.addWidget(self.browse_button)

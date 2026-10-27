@@ -25,6 +25,7 @@ from agenda.gui import preview_model as M
 from agenda.gui.help_text import TOOLTIPS
 from agenda.gui.render_cache import LatestGate, LruCache, cache_key, config_hash
 from agenda.gui.workers import RenderJob, RenderSignals, rasterise
+from agenda.uitext import tr
 
 __all__ = ["PreviewWidget", "rasterise"]
 
@@ -68,7 +69,7 @@ class PreviewWidget(QFrame):
         group = QButtonGroup(self)
         group.setExclusive(True)
         for m in M.MODES:
-            b = QPushButton(m.capitalize())
+            b = QPushButton(tr(f"preview.button.{m}"))
             b.setToolTip(TOOLTIPS[f"mode_{m}"])
             b.setCheckable(True)
             b.setChecked(m == self.mode)
@@ -83,7 +84,7 @@ class PreviewWidget(QFrame):
         bar.addStretch(1)
         self.zoom_box = QComboBox()
         for z in M.ZOOM_CHOICES:
-            self.zoom_box.addItem("fit" if z == M.FIT else f"{z}%", z)
+            self.zoom_box.addItem(tr("preview.zoom_fit") if z == M.FIT else f"{z}%", z)
         self.zoom_box.setToolTip(TOOLTIPS["zoom"])
         bar.addWidget(self.zoom_box)
 

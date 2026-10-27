@@ -10,6 +10,7 @@ from agenda.gui import legend_model as M
 from agenda.gui import section_colors as C
 from agenda.gui.bar_model import PADDING
 from agenda.gui.style_model import SPACING
+from agenda.uitext import tr
 
 CHIP_H = 24
 HATCH_ALPHA = 110  # padding hatch over the gray, light enough to keep the label readable
@@ -61,12 +62,9 @@ class Legend(QWidget):
         self._row = QHBoxLayout(self)
         self._row.setContentsMargins(SPACING["margin"], 2, SPACING["margin"], 2)
         self._row.setSpacing(SPACING["gap"])
-        self.title = QLabel("Legend:")
+        self.title = QLabel(tr("legend.title"))
         self.title.setObjectName("legend_title")
-        self.title.setToolTip(
-            "The colors mark the agenda sections in the bar above. "
-            "Hatching marks padding (blank filler pages)."
-        )
+        self.title.setToolTip(tr("legend.tip"))
         self._row.addWidget(self.title)
 
     def dark(self) -> bool:
@@ -84,8 +82,7 @@ class Legend(QWidget):
         for e in self.entries:
             chip = LegendChip(e)
             chip.setToolTip(
-                f"{help_text.section_tooltip(e.key)}\n"
-                f"Click to go to the first {e.label} page; click again for the next one."
+                f"{help_text.section_tooltip(e.key)}\n" + tr("legend.chip_tip", label=e.label)
             )
             chip.clicked.connect(lambda _=False, k=e.key: self.section_clicked.emit(k))
             self._row.addWidget(chip, 1)

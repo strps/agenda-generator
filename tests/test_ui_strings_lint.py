@@ -13,19 +13,6 @@ import pytest
 
 GUI_DIR = Path(__file__).resolve().parent.parent / "agenda" / "gui"
 
-# Files not converted yet (emptied by the last extraction phase).
-PENDING: frozenset[str] = frozenset(
-    {
-        "settings_panel.py",
-        "preview.py",
-        "legend.py",
-        "collapsible.py",
-        "style_editors.py",
-        "hover_tooltip.py",
-        "section_bar.py",
-    }
-)
-
 CONSTRUCTORS = {
     "QLabel",
     "QPushButton",
@@ -91,20 +78,9 @@ def _gui_files() -> list[Path]:
     return sorted(GUI_DIR.glob("*.py"))
 
 
-def test_pending_names_exist():
-    names = {p.name for p in _gui_files()}
-    assert PENDING <= names
-
-
 @pytest.mark.parametrize("path", _gui_files(), ids=lambda p: p.name)
 def test_gui_file_has_no_literal_text(path: Path):
-    if path.name in PENDING:
-        pytest.skip("not converted to the UI catalog yet")
     assert violations(path.read_text(encoding="utf-8")) == []
-
-
-def test_converted_files_are_not_pending():
-    assert not PENDING & {"app.py", "prefs_dialog.py", "export_dialog.py"}
 
 
 def test_lint_flags_literals():
