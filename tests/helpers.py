@@ -55,12 +55,17 @@ def drawn_points(pdf_bytes: bytes) -> list[list[tuple[float, float]]]:
 
 
 def assert_in_safe_area(
-    pdf_bytes: bytes, config: Config | None = None, allow_blank: bool = False
+    pdf_bytes: bytes,
+    config: Config | None = None,
+    allow_blank: bool = False,
+    x_slack: float = 0.0,
 ) -> None:
     """Assert all drawn points lie inside each page's safe area (needs debug_grid False).
 
     Checks text origins (not their right edge) and rect/line vertices.
     ``allow_blank`` tolerates empty pages (e.g. a leading filler page).
+    ``x_slack`` (mm) lets points sit that far past the left/right edges: title backgrounds grow
+    outward by ``config.title_padding`` on purpose.
     """
     cfg = config or Config()
     assert not cfg.debug_grid, "debug grid draws in the margins"
@@ -70,6 +75,7 @@ def assert_in_safe_area(
             continue
         assert pts, f"page {n}: nothing drawn"
         for x, y in pts:
-            assert s.x - _EPS <= x <= s.x2 + _EPS and s.y - _EPS <= y <= s.y2 + _EPS, (
+            dx = _EPS + x_slack
+            assert s.x - dx <= x <= s.x2 + dx and s.y - _EPS <= y <= s.y2 + _EPS, (
                 f"page {n}: ({x:.2f}, {y:.2f}) outside safe {tuple(round(v, 2) for v in s)}"
             )

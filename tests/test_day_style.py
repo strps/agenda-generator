@@ -49,4 +49,4 @@ def test_unknown_country_raises():
 @pytest.mark.parametrize("page", [Yearly, Monthly, Weekly])
 def test_pages_render_in_safe_area(page):
     cfg = Config(year=2026)
-    assert_in_safe_area(render_page(page, cfg), cfg, allow_blank=True)
+    assert_in_safe_area(render_page(page, cfg), cfg, allow_blank=True, x_slack=cfg.title_padding)

@@ -153,6 +153,18 @@ def color(pdf: FPDF, name: str) -> tuple[int, int, int]:
     return getattr(pdf, "agenda_palette", _DEFAULT)[name]
 
 
+def fill_title_band(
+    pdf: FPDF, x: float, y: float, w: float, h: float, rgb: tuple[int, int, int], pad: float
+) -> None:
+    """Fill a title background, widened by ``pad`` mm on both sides.
+
+    The text keeps its column alignment; only the background grows outward, so the title does
+    not sit flush against the edge of its fill.
+    """
+    pdf.set_fill_color(*rgb)
+    pdf.rect(x - pad, y, w + 2 * pad, h, style="F")
+
+
 def switch_page(pdf: FPDF, n: int) -> None:
     """Make page ``n`` current and write the current stroke/fill state into its stream.
 

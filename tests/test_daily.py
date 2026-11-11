@@ -63,7 +63,7 @@ def test_render_valid_and_in_safe_area(size, lang):
     assert s("week.number", n=1) in text
     assert s("schedule") in text and s("priorities") in text and s("notes.title") in text
     assert s.month_name(1) in text and "06:00" in text
-    assert_in_safe_area(data, cfg)
+    assert_in_safe_area(data, cfg, x_slack=cfg.title_padding)
 
 
 def test_header_localized():

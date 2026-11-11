@@ -76,7 +76,7 @@ def test_all_extras_long_text_in_safe_area(tmp_path):
     e = tmp_path / "e.txt"
     e.write_text("01-01 " + "E" * 300 + "\n", encoding="utf-8")
     cfg = cfg_of(daily_quotes=True, daily_quotes_file=q, daily_extra_file=e)
-    assert_in_safe_area(day_pdf(cfg, date(2027, 1, 1)), cfg)
+    assert_in_safe_area(day_pdf(cfg, date(2027, 1, 1)), cfg, x_slack=cfg.title_padding)
 
 
 def test_truncate():

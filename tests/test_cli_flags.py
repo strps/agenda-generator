@@ -503,6 +503,14 @@ EXPECTED_PARAMS = {
         "multiple": False,
         "type": "str",
     },
+    "title_padding": {
+        "opts": ["--title-padding"],
+        "secondary_opts": [],
+        "default": None,
+        "is_flag": False,
+        "multiple": False,
+        "type": "float",
+    },
     "imposition": {
         "opts": ["--imposition"],
         "secondary_opts": ["--no-imposition"],
@@ -636,6 +644,7 @@ FIELD_TO_PARAMS = {
     "color_holiday_fill": ["color_holiday_fill"],
     "font_primary": ["font_primary"],
     "font_secondary": ["font_secondary"],
+    "title_padding": ["title_padding"],
     "imposition": ["imposition"],
     "crop_marks": ["crop_marks"],
     "spreads": ["spreads"],

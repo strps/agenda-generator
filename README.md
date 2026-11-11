@@ -117,10 +117,11 @@ habits:     {max: 20}
 qr:         {urls: ["https://example.com"]}
 niche_student: {pages: 1}
 style:                     # all keys optional; omitted = theme / built-in defaults
-  theme: minimal           # minimal | mono | ocean | forest
+  theme: minimal           # minimal | mono | ocean | forest | blush | lavender | peony
   accent: "#1e6fd9"        # ink, muted, line, accent, tint, weekend_fill, holiday_fill
   primary_font: inter      # inter or a .ttf/.otf path (headings, bold text)
   secondary_font: inter    # body text, labels, numbers
+  title_padding: 2         # mm of fill on each side of a title background
 holidays_file: examples/holidays.txt
 ```
 
@@ -228,7 +229,7 @@ block (flat Config names also load), with a CLI flag each. They apply to the exp
 
 | YAML key (`style:`) | Config field | CLI flag | Meaning |
 | --- | --- | --- | --- |
-| `theme` | `theme` | `--theme` | Palette: `minimal` (default look), `mono`, `ocean`, `forest`; unknown names render as minimal and the CLI warns |
+| `theme` | `theme` | `--theme` | Palette: `minimal` (default look), `mono`, `ocean`, `forest`, and the feminine `blush`, `lavender`, `peony`; unknown names render as minimal and the CLI warns |
 | `ink` | `color_ink` | `--color-ink` | Text and strong lines |
 | `muted` | `color_muted` | `--color-muted` | Secondary text |
 | `line` | `color_line` | `--color-line` | Rules and dots |
@@ -238,6 +239,7 @@ block (flat Config names also load), with a CLI flag each. They apply to the exp
 | `holiday_fill` | `color_holiday_fill` | `--color-holiday-fill` | Holiday cells |
 | `primary_font` | `font_primary` | `--font-primary` | Headings, titles and bold text |
 | `secondary_font` | `font_secondary` | `--font-secondary` | Body text, labels, numbers |
+| `title_padding` | `title_padding` | `--title-padding` | Mm the weekend/holiday fill behind a day page header or week day row extends past the text on each side (default 2; 0 = flush) |
 
 Colors are `#rgb` or `#rrggbb` (the `#` is optional); empty means the theme's color. A font is the
 built-in `inter` or a path to a `.ttf`/`.otf` file (relative paths resolve against the working

@@ -704,7 +704,8 @@ class Config(BaseModel):
         json_schema_extra={
             "detail": (
                 "Name of the color palette of the PDF: minimal (default), "
-                "mono, ocean or forest. An unknown name renders as minimal "
+                "mono, ocean, forest, blush, lavender or peony. An unknown name "
+                "renders as minimal "
                 "(the command line warns)."
             ),
             "cli": {"type": "str"},
@@ -823,6 +824,22 @@ class Config(BaseModel):
             "cli": {"type": "str"},
         },
     )  # body text, labels, numbers
+    title_padding: float = Field(
+        2.0,
+        ge=0,
+        le=20,
+        description="Side padding of title backgrounds, in mm.",
+        json_schema_extra={
+            "detail": (
+                "Extra width, in mm, added on both sides of a title background "
+                "(the weekend or holiday fill behind a day page header or a "
+                "week page day row). The text stays aligned with the rest of "
+                "the page; only the fill grows outward. 0 keeps the fill flush "
+                "with the text."
+            ),
+            "cli": {},
+        },
+    )  # mm
     imposition: bool = Field(
         False,
         description="Export in booklet print order.",

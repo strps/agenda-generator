@@ -40,6 +40,34 @@ THEMES: dict[str, Palette] = {
         "weekend_fill": (241, 245, 241),
         "holiday_fill": (210, 230, 214),
     },
+    # Feminine palettes: soft pastel fills with an accent dark enough for title text.
+    "blush": {
+        "ink": (45, 30, 35),
+        "muted": (128, 100, 108),
+        "line": (222, 196, 202),
+        "accent": (196, 72, 108),
+        "tint": (251, 236, 239),
+        "weekend_fill": (252, 242, 244),
+        "holiday_fill": (248, 214, 223),
+    },
+    "lavender": {
+        "ink": (38, 32, 50),
+        "muted": (112, 104, 132),
+        "line": (206, 198, 224),
+        "accent": (124, 82, 180),
+        "tint": (241, 236, 250),
+        "weekend_fill": (246, 243, 252),
+        "holiday_fill": (224, 212, 244),
+    },
+    "peony": {
+        "ink": (48, 28, 40),
+        "muted": (130, 98, 116),
+        "line": (226, 194, 210),
+        "accent": (168, 44, 104),
+        "tint": (250, 232, 241),
+        "weekend_fill": (252, 241, 246),
+        "holiday_fill": (244, 206, 226),
+    },
 }
 
 

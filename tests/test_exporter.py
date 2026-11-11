@@ -119,7 +119,7 @@ def test_export_agenda_full_default(tmp_path, monkeypatch, capsys):
     assert len(starts) >= 52
     for p in starts:
         assert side_for_page(p) == "left" and side_for_page(p + 1) == "right"
-    assert_in_safe_area(data, cfg, allow_blank=True)
+    assert_in_safe_area(data, cfg, allow_blank=True, x_slack=cfg.title_padding)
 
 
 def test_cli_default_writes_full_agenda(tmp_path):

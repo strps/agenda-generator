@@ -337,7 +337,8 @@ FIELDS: dict[str, tuple[str, str, str]] = {
     "theme": (
         "tema",
         "Paleta de colores del PDF.",
-        "Nombre de la paleta de colores del PDF: minimal (por defecto), mono, ocean o forest. "
+        "Nombre de la paleta de colores del PDF: minimal (por defecto), mono, ocean, forest, "
+        "blush, lavender o peony. "
         "Un nombre desconocido se muestra como minimal (la línea de comandos avisa).",
     ),
     "color_ink": (
@@ -396,6 +397,14 @@ FIELDS: dict[str, tuple[str, str, str]] = {
         "junto al archivo (MyFont-Regular.ttf -> MyFont-Italic.ttf); los estilos que falten "
         "usan el archivo regular. La fuente debe contener los caracteres del idioma de la "
         "agenda.",
+    ),
+    "title_padding": (
+        "margen lateral de títulos",
+        "Margen lateral de los fondos de título, en mm.",
+        "Ancho extra, en mm, añadido a ambos lados de un fondo de título (el relleno de fin de "
+        "semana o feriado detrás del encabezado de una página de día o de la fila de un día en "
+        "la página semanal). El texto sigue alineado con el resto de la página; solo el relleno "
+        "crece hacia afuera. 0 deja el relleno al ras del texto.",
     ),
     "imposition": (
         "imposición",

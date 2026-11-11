@@ -60,11 +60,12 @@ pages:
 # spreads: false                    # 2-up reader spreads (not with imposition)
 # sheet_size: auto                  # auto | letter | a4 (spreads and imposition)
 # style:                            # PDF colors and fonts (flat keys theme, color_*, font_* also work)
-#   theme: minimal                  # minimal | mono | ocean | forest
+#   theme: minimal                  # minimal | mono | ocean | forest | blush | lavender | peony
 #   ink: "#1a1a1a"                  # ink, muted, line, accent, tint, weekend_fill, holiday_fill
 #   accent: "#1e6fd9"               # empty = the theme's color
 #   primary_font: inter             # inter or a .ttf/.otf path (headings, bold)
 #   secondary_font: inter           # body text, labels, numbers
+#   title_padding: 2                # mm of fill on each side of a title background
 # imposition: false
 # crop_marks: false
 # output: agenda.pdf

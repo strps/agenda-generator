@@ -19,6 +19,7 @@ from agenda.draw import (
     day_style_for,
     draw_mini_month,
     draw_pattern,
+    fill_title_band,
     font,
     holiday_name_for,
     quotes_for,
@@ -264,6 +265,7 @@ class Weekly(BasePage):
             s("week.number", n=ctx["number"]),
             style_of,
             name_of,
+            title_pad=config.title_padding,
         )
         switch_page(pdf, last)
         months = []
@@ -275,7 +277,17 @@ class Weekly(BasePage):
         title = " – ".join(months)
         if days[0].year == days[-1].year:
             title += f" {days[0].year}"
-        self._page(pdf, grids[1], s, days[self.LEFT_DAYS :], title, style_of, name_of, notes=True)
+        self._page(
+            pdf,
+            grids[1],
+            s,
+            days[self.LEFT_DAYS :],
+            title,
+            style_of,
+            name_of,
+            notes=True,
+            title_pad=config.title_padding,
+        )
 
     def _page(
         self,
@@ -287,6 +299,7 @@ class Weekly(BasePage):
         style_of: Callable[[date], DayStyle | None],
         name_of: Callable[[date], str | None],
         notes: bool = False,
+        title_pad: float = 0.0,
     ) -> None:
         x, w = g.col(0, g.columns)
         pdf.c_margin = 0
@@ -308,8 +321,7 @@ class Weekly(BasePage):
                 d = days[i]
                 style = style_of(d)
                 if style and style.fill:
-                    pdf.set_fill_color(*style.fill)
-                    pdf.rect(x, y0, w, g.baseline, style="F")
+                    fill_title_band(pdf, x, y0, w, g.baseline, style.fill, title_pad)
                 pdf.set_text_color(*((style and style.color) or color(pdf, "ink")))
                 pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
                 pdf.set_xy(x + pad, y0)
@@ -369,8 +381,7 @@ class Daily(BasePage):
         h = g.header
         style = day_style_for(config, pdf)(d)
         if style and style.fill:
-            pdf.set_fill_color(*style.fill)
-            pdf.rect(h.x, h.y, h.w, h.h, style="F")
+            fill_title_band(pdf, h.x, h.y, h.w, h.h, style.fill, config.title_padding)
         pdf.set_text_color(*((style and style.color) or color(pdf, "accent")))
         pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
         title = s(

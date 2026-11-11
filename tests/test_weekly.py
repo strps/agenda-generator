@@ -75,7 +75,7 @@ def test_spreads_render_left_right_in_safe_area(size, lang, week_start):
         assert (side_for_page(left), side_for_page(right)) == ("left", "right")
         assert f"{s('week.number', n=i + 1)}" in reader.pages[left - 1].extract_text()
         assert s("notes.title") in reader.pages[right - 1].extract_text()
-    assert_in_safe_area(data, cfg, allow_blank=True)
+    assert_in_safe_area(data, cfg, allow_blank=True, x_slack=cfg.title_padding)
 
 
 def test_year_boundary_days_shown():
@@ -89,7 +89,7 @@ def test_year_boundary_days_shown():
 
 
 def test_margins_flip_between_pages():
-    cfg = Config(year=2026)
+    cfg = Config(year=2026, title_padding=0)  # padded title fills reach into the margin
     pts = drawn_points(render_spreads(cfg))
     gl, gr = Grid.for_page(cfg, 2), Grid.for_page(cfg, 3)
     assert min(x for x, _ in pts[1]) == pytest.approx(gl.safe.x, abs=0.1)

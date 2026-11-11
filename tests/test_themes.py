@@ -34,7 +34,15 @@ def test_default_fingerprint_unchanged(tmp_path):
 
 
 def test_theme_registry():
-    assert tuple(themes.THEMES) == ("minimal", "mono", "ocean", "forest")
+    assert tuple(themes.THEMES) == (
+        "minimal",
+        "mono",
+        "ocean",
+        "forest",
+        "blush",
+        "lavender",
+        "peony",
+    )
     assert themes.THEMES["minimal"] == tokens.COLORS
     for palette in themes.THEMES.values():
         assert set(palette) == set(tokens.COLORS)
@@ -132,3 +140,11 @@ def test_cli_color_flags(tmp_path):
         [*base, str(tmp_path / "x.pdf"), "--color-accent", "#0000ff", "--color-ink", "#111111"]
     ) in (0, None)
     assert main([*base, str(tmp_path / "y.pdf"), "--color-accent", "nope"]) == 2
+
+
+@pytest.mark.parametrize("name", ["blush", "lavender", "peony"])
+def test_feminine_fills_keep_title_text_readable(name):
+    p = themes.THEMES[name]
+    # holiday titles are accent on holiday_fill; weekend titles are muted on weekend_fill
+    assert contrast_ratio(_hex(p["accent"]), _hex(p["holiday_fill"])) >= 3
+    assert contrast_ratio(_hex(p["muted"]), _hex(p["weekend_fill"])) >= 4.5
