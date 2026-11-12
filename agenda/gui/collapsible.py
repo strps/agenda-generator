@@ -1,5 +1,4 @@
-"""Collapsible settings panel parts: a section (arrow toggle, optional enable box, form body) and a
-flat group header over a column of sections."""
+"""Collapsible settings section: arrow toggle, optional enable box, form body."""
 
 from __future__ import annotations
 
@@ -74,7 +73,7 @@ class _Clip(QWidget):
         for w in chain:  # invalidate explicitly: updateGeometry() is a no-op while hidden
             if w.layout() is not None:
                 w.layout().invalidate()
-        for w in chain:  # innermost first; an enclosing clip re-sizes its inner (the group column)
+        for w in chain:  # innermost first; an enclosing clip re-sizes its inner
             if isinstance(w, _Clip):
                 w.inner.setGeometry(0, 0, w.width(), w.natural_height())
                 w.updateGeometry()
@@ -130,8 +129,7 @@ class _Slide(QObject):
 
 
 class _Expandable:
-    """Arrow-toggle behaviour shared by sections and groups: user clicks slide, set_expanded is
-    instant. Needs `toggle_button`, `_slide`, `_animate`, `_refresh_text` and `expanded_changed`."""
+    """Arrow-toggle behaviour: user clicks slide, set_expanded is instant. Needs `toggle_button`, `_slide`, `_animate`, `_refresh_text` and `expanded_changed`."""
 
     def _toggled(self, on: bool) -> None:
         self._refresh_text(on)
@@ -212,31 +210,20 @@ class CollapsibleSection(_Expandable, QFrame):
         self.pressed.emit()
         super().mousePressEvent(event)
 
-    def set_active(self, on: bool) -> None:
-        """Ring the section whose preview is showing and accent its header."""
-        if self.property("active") == on:
-            return
-        for w in (self, self.toggle_button):
-            w.setProperty("active", on)
-            w.style().unpolish(w)
-            w.style().polish(w)
-
-    def set_collapsible(self, on: bool) -> None:
-        """Off: a plain header (title and enable box) with no body to open."""
+    def set_static(self, open_body: bool) -> None:
+        """No arrow: a plain header (title and enable box) over a body that is always shown
+        (``open_body``) or never."""
         self.set_expanded(False)
-        self.collapsible = on
-        self.toggle_button.setCheckable(on)
+        self.collapsible = False
+        self.toggle_button.setCheckable(False)
         self._refresh_text(False)
+        self._slide.show(open_body)
 
     def _refresh_text(self, expanded: bool) -> None:
         title = self._title.replace("&", "&&")  # a lone & would be a mnemonic
         if self.collapsible:
-            arrow = "▾" if expanded else "▸"
-            self.toggle_button.setText(f"{arrow} {title}")
-            return
-        fm = self.toggle_button.fontMetrics()  # blank arrow-wide indent keeps titles aligned
-        n = round(fm.horizontalAdvance("▸ ") / max(fm.horizontalAdvance(" "), 1))
-        self.toggle_button.setText(" " * n + title)
+            title = f"{'▾' if expanded else '▸'} {title}"
+        self.toggle_button.setText(title)
 
     @property
     def title(self) -> str:
@@ -266,40 +253,3 @@ class CollapsibleSection(_Expandable, QFrame):
 
     def enabled_state(self) -> bool:
         return self.enable_box.isChecked() if self.enable_box is not None else True
-
-
-class CollapsibleGroup(_Expandable, QWidget):
-    """Flat header (`toggle_button`) over a column of sections; `add` appends one."""
-
-    expanded_changed = Signal(bool)
-
-    def __init__(self, key: str, title: str) -> None:
-        super().__init__()
-        self.key = key
-        self.setObjectName(f"group_{key}")
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(0)
-        self.toggle_button = QPushButton()
-        self.toggle_button.setObjectName("group_toggle")
-        self.toggle_button.setCheckable(True)
-        self.toggle_button.setFlat(True)
-        self._title = title
-        lay.addWidget(self.toggle_button)
-        self.body = QWidget()
-        self.body.setObjectName("group_body")
-        self._column = QVBoxLayout(self.body)
-        self._column.setContentsMargins(0, 0, 0, 0)
-        self._column.setSpacing(SPACING["gap"])
-        self._slide = _Slide(self.body, self)
-        lay.addWidget(self._slide.clip)
-        self._animate = True  # user clicks slide; set_expanded is instant
-        self.toggle_button.toggled.connect(self._toggled)
-        self.set_expanded(False)
-
-    def add(self, w: QWidget) -> None:
-        self._column.addWidget(w)
-
-    def _refresh_text(self, expanded: bool) -> None:
-        arrow = "▾" if expanded else "▸"
-        self.toggle_button.setText(f"{arrow} {self._title.replace('&', '&&')}")

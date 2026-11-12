@@ -1,4 +1,4 @@
-"""Qt-free sample plans for per-template previews, and which preview the main window shows."""
+"""Qt-free sample plans for per-template previews, and section-header texts."""
 
 from __future__ import annotations
 
@@ -11,12 +11,10 @@ from agenda.config import Config
 from agenda.grid import side_for_page
 from agenda.gui import preview_model
 from agenda.templates import (
-    GLOBAL,
     MONTH_END,
     MONTH_START,
     PADDING,
     SECTIONS,
-    STYLING,
     TEMPLATE_KEYS,
     section,
     section_label,
@@ -61,13 +59,6 @@ def preview_mode(key: str) -> str:
     """Spread for two-page templates, else single."""
     cls = get_page(section(key).page_id)
     return preview_model.SPREAD if cls.pages == 2 else preview_model.SINGLE
-
-
-def preview_target(active: str, last_template: str | None) -> str:
-    """Key of the preview to show: a template shows itself, STYLING keeps the last template."""
-    if active == STYLING:
-        return last_template or GLOBAL
-    return active
 
 
 # Fields that print another section's page as padding or filler: field -> (owning section, use).

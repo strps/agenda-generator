@@ -19,9 +19,9 @@ REGIONS = (TOOLBAR, SETTINGS, PREVIEW, SECTION_BAR, LEGEND, SUMMARY, EXPORT)
 @dataclass(frozen=True)
 class WindowLayout:
     title: str = field(default_factory=lambda: tr("app.title"))
-    width: int = 1200
+    width: int = 1280
     height: int = 800
-    settings_width: int = 320
+    settings_width: int = 520  # tab list + the current tab's settings
     min_width: int = 800
     min_height: int = 500
 

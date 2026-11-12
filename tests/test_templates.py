@@ -130,6 +130,19 @@ def test_groups_partition_sections():
     assert "contacts" in by_key["optional"] and "notes" in by_key["planner"]
 
 
+def test_tabs():
+    assert T.WHOLE_SECTIONS == (T.GLOBAL, T.PADDING, T.MONTH_START, T.MONTH_END, T.STYLING)
+    tabbed = [k for _, keys in T.tab_groups() for k in keys]
+    assert sorted(tabbed) == sorted(T.TEMPLATE_KEYS) and len(tabbed) == len(set(tabbed))
+    assert [g for g, _ in T.tab_groups()] == ["planner", "optional", "value_added"]
+    assert T.tab_groups()[0][1] == ("daily", "weekly", "notes")
+    assert T.tab_of("daily") == "daily"
+    for key in T.WHOLE_SECTIONS:
+        assert T.tab_of(key) == T.GLOBAL
+    with pytest.raises(KeyError):
+        T.tab_of("nope")
+
+
 def test_month_sections():
     """Per-month pages are those with one instance per month; month placement is in Planner pages."""
     cfg = Config()

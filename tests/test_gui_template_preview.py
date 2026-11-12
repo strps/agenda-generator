@@ -4,13 +4,13 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
+from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect, QLabel
 
 from agenda.gui import layout as L
 from agenda.gui import template_model as TM
 from agenda.gui.app import MainWindow
 from agenda.gui.preview import PreviewWidget
-from agenda.templates import GLOBAL, STYLING, TEMPLATE_KEYS
+from agenda.templates import GLOBAL, STYLING, TEMPLATE_KEYS, section_label
 
 pytestmark = pytest.mark.gui
 
@@ -26,6 +26,7 @@ def win(qapp):
     yield w
     for pv in [w.preview, *w.template_previews.values()]:
         pv.wait_idle()
+    w.close()
 
 
 def _current(win):
@@ -34,9 +35,19 @@ def _current(win):
 
 def test_structure(win):
     assert win.preview_stack.count() == 1 + len(TEMPLATE_KEYS)
-    assert win.preview_stack.widget(0) is win.preview
+    assert win.preview_stack.widget(0) is win.whole_page
+    for name in (L.PREVIEW, L.SECTION_BAR, L.LEGEND, L.SUMMARY):
+        assert win.whole_page.isAncestorOf(win.regions[name])
     assert win.regions[L.PREVIEW] is win.preview
     assert win.preview_key == GLOBAL
+    titles = {
+        win.preview_stack.widget(i).objectName(): win.preview_stack.widget(i)
+        .findChild(QLabel, "preview_title")
+        .text()
+        for i in range(win.preview_stack.count())
+    }
+    assert titles["whole_page"] == "Whole agenda"
+    assert titles["template_page_daily"] == section_label("daily")
 
 
 def test_follows_active_section(win):
@@ -51,15 +62,15 @@ def test_follows_active_section(win):
     assert _current(win) == "template_page_qr"
 
 
-def test_styling_and_global(win):
-    win.settings.activate(STYLING)
-    assert win.preview_stack.currentIndex() == 0
+def test_whole_agenda_sections(win):
     win.settings.activate("daily")
-    win.settings.activate(STYLING)
-    assert _current(win) == "template_page_daily"
-    win.settings.activate(GLOBAL)
+    win.settings.activate(STYLING)  # every non-template section shows the whole agenda
     assert win.preview_stack.currentIndex() == 0
     assert win.preview_key == GLOBAL
+    win.settings.tab_list.setCurrentItem(win.settings.tab_items["weekly"])
+    assert _current(win) == "template_page_weekly"
+    win.settings.activate(GLOBAL)
+    assert win.preview_stack.currentIndex() == 0
 
 
 def test_weekly_spread(win):
@@ -100,13 +111,6 @@ def test_invalid_config(win):
     win.flush_preview()
     assert win.settings.config()[0] is None
     assert all(pv.plan is None for pv in win.template_previews.values())
-
-
-def test_page_requested_shows_full(win):
-    win.settings.activate("daily")
-    win.section_bar.page_requested.emit(0)
-    assert win.preview_stack.currentIndex() == 0
-    assert win.preview_key == GLOBAL
 
 
 def test_set_inactive_survives_refresh(qapp):

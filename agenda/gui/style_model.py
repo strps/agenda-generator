@@ -103,18 +103,19 @@ QFrame[objectName^="section_"] {{
     background-color: {t["panel"]}; border: 1px solid transparent; border-radius: {radius}px;
     margin: {gap // 2}px {margin // 2}px;
 }}
-QFrame[objectName^="section_"][active="true"] {{ border: 1px solid {t["accent"]}; }}
 QFrame[objectName^="section_"] > QWidget {{ background-color: transparent; }}
 QWidget#section_body {{ background-color: transparent; }}
 QWidget#page_list, QWidget#page_list > QCheckBox {{ background-color: transparent; }}
-QPushButton#group_toggle {{
-    background-color: transparent; border: none; color: {t["muted"]}; font-weight: bold;
-    padding: {pad}px {gap}px; margin-top: {gap}px; text-align: left;
+QListWidget#tab_list {{
+    background-color: {t["panel"]}; border: none; padding: {pad}px 0; outline: none;
 }}
-QPushButton#group_toggle:hover, QPushButton#group_toggle:focus {{ color: {t["text"]}; }}
-QPushButton#group_toggle:checked, QPushButton#group_toggle:pressed {{
-    background-color: transparent; border: none;
+QListWidget#tab_list::item {{ padding: {pad}px {gap}px; border: none; }}
+QListWidget#tab_list::item:hover {{ background-color: {t["selection"]}; }}
+QListWidget#tab_list::item:selected {{
+    background-color: {t["accent"]}; color: {t["accent_text"]}; border-radius: {radius}px;
 }}
+QLabel#preview_title {{ font-weight: bold; padding: {pad}px {gap}px; }}
+QLabel#tab_hint {{ color: {t["muted"]}; padding: {pad}px {gap}px; }}
 QPushButton#section_toggle {{
     background-color: transparent; border: none; font-weight: bold;
     padding: {pad}px {gap}px; text-align: left;
@@ -123,7 +124,6 @@ QPushButton#section_toggle:hover, QPushButton#section_toggle:checked,
 QPushButton#section_toggle:pressed {{ background-color: transparent; border: none; }}
 QFrame#collapsible_header {{ background-color: transparent; border-radius: {radius}px; }}
 QFrame#collapsible_header:hover {{ background-color: {t["selection"]}; }}
-QPushButton#section_toggle[active="true"] {{ color: {t["accent"]}; }}
 QCheckBox#section_enable {{ background-color: transparent; spacing: {gap}px; }}
 QCheckBox::indicator {{
     width: 14px; height: 14px; background-color: {t["input_bg"]};

@@ -9,7 +9,7 @@ from agenda.catalog import get_page
 from agenda.config import Config
 from agenda.exporter import render_pages
 from agenda.gui import template_model
-from agenda.gui.template_model import preview_mode, preview_target, sample_plan
+from agenda.gui.template_model import preview_mode, sample_plan
 from agenda.templates import GLOBAL, STYLING, TEMPLATE_KEYS, section
 
 
@@ -71,11 +71,7 @@ def test_modes():
     assert preview_mode("daily") == "single"
 
 
-def test_target_and_errors():
-    assert preview_target("daily", None) == "daily"
-    assert preview_target(GLOBAL, "daily") == GLOBAL
-    assert preview_target(STYLING, "qr") == "qr"
-    assert preview_target(STYLING, None) == GLOBAL
+def test_sample_plan_errors():
     for k in (GLOBAL, STYLING, "nope"):
         with pytest.raises(ValueError):
             sample_plan(Config(), k)

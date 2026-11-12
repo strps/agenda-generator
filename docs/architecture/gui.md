@@ -32,7 +32,7 @@ A desktop window to configure the agenda, preview pages as they will print, and 
   - *Single:* one page.
   - *Spread:* left + right pages as they face each other when bound (the default; the way to check WO2P layouts and alternating margins).
   - *Sheet:* the imposed printer sheet (only when booklets are folded).
-- **Section bar (bottom):** described in section 3.
+- **Section bar (under the Whole agenda preview):** described in section 3. See "Tabs, sections and preview target" for the tab layout.
 - **Export:** writes the full PDF in a background thread with a progress bar.
 
 ## 2. Architecture
@@ -75,16 +75,21 @@ Rendering a single spread instead of ~500 pages keeps the preview interactive.
 
 PyMuPDF would also work for rasterising, but it is AGPL-licensed, which matters if the tool is ever sold. NiceGUI (web-based UI in the browser) is a lighter alternative to PySide6 if a browser UI is preferred.
 
-### Collapsible sections and preview target
+### Tabs, sections and preview target
 
-The settings panel holds one `CollapsibleSection` (`collapsible.py`) per entry of
-`agenda/templates.py` `SECTIONS`: Global (open), Padding, the template sections and Colors &
-styling. Template headers carry an enable checkbox, a view of `templates.is_enabled`. `activate(key)`
-expands a section and emits `section_activated`; focus changes do the same.
-
-`templates.GROUPS` sorts the sections under four headers: **General** (Global, Padding, PDF colors &
-fonts), **Planner pages** (Start of each month, Day pages, Week pages, End of each month, Notes),
-**Optional pages** (Contacts first) and **Value-added pages**.
+The settings panel is a tab list (`tab_list`, far left) beside a stack of settings pages
+(`tab_stack`); the main window's `preview_stack` follows the selected tab, so every tab has its own
+settings and its own titled preview. The **Whole agenda** tab (key `GLOBAL`) holds the sections
+without a page of their own (`templates.WHOLE_SECTIONS`: Global, Padding, Start/End of each month,
+PDF colors & fonts, as `CollapsibleSection`s with Global open) and shows the full-agenda preview
+with the section bar, legend and summary under it. Every template section gets a tab of its own:
+its section has no arrow and its settings are always open (`CollapsibleSection.set_static`), with a
+hint when it has none. The tab list groups the template tabs under the `templates.GROUPS` headers
+that hold templates (`templates.tab_groups()`: Planner, Optional, Value-added pages) and dims and
+italicises templates left out of the agenda. Template headers carry an enable checkbox, a view of
+`templates.is_enabled`. `activate(key)` shows the tab `templates.tab_of(key)` (opening the section
+inside the Whole agenda tab) and emits `section_activated`; focus changes do the same, and a tab
+change emits `tab_changed`.
 
 Start/End of each month are plain checkbox lists (`settings_model.PAGE_LIST`, no row label) of the
 per-month pages (`BasePage.per_month`: budget, habits, monthly_review, health, quotes), editing
@@ -100,11 +105,10 @@ header ("padding", "week filler", "day filler", "month start", "month end") and 
 the page is off (printed only as padding or filler), a checked box with a text-colored outline when
 it is also on (icons `pad_dark.svg`/`pad_light.svg`).
 
-The main window keeps a `preview_stack`: page 0 is the full-agenda preview, then one container per
-template (`template_page_<key>`, a notice plus a `PreviewWidget`). `show_preview_for(key)` switches
-to the page given by `template_model.preview_target(active, last_template)`: Global gives the full
-agenda, PDF colors & fonts keeps the last template, and a template gives its own sample page
-(`sample_plan`), grayed out when disabled.
+The main window keeps a `preview_stack`: page 0 is `whole_page` (title, full-agenda preview,
+section bar, legend, summary), then one container per template (`template_page_<key>`: title,
+notice and a `PreviewWidget`). `show_preview_for(key)` switches to the page of `tab_of(key)`; a
+template shows its own sample page (`sample_plan`), grayed out when disabled.
 
 `style_model.py` is the Qt-free source of the minimalist stylesheet: themes (dark default, light),
 spacing, `stylesheet(dark)` and a contrast check. `app.apply_style` applies it; the choice is saved

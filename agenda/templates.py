@@ -173,7 +173,6 @@ class GroupSpec:
     key: str
     label: str
     sections: tuple[str, ...]  # section keys, in display order
-    expanded: bool = True  # initial state in the settings panel
 
 
 def _keys(start: str, stop: str) -> tuple[str, ...]:
@@ -182,17 +181,18 @@ def _keys(start: str, stop: str) -> tuple[str, ...]:
     return tuple(keys[keys.index(start) : keys.index(stop) + 1])
 
 
-# Settings panel grouping (GUI only; the YAML layout follows SECTIONS).
+# Settings tab-list grouping (GUI only; the YAML layout follows SECTIONS).
 GROUPS: tuple[GroupSpec, ...] = (
     GroupSpec("general", "General", (GLOBAL, PADDING, STYLING)),
     GroupSpec("planner", "Planner pages", _keys(MONTH_START, "notes")),
-    GroupSpec("optional", "Optional pages", _keys("contacts", "todo"), expanded=False),
-    GroupSpec(
-        "value_added", "Value-added pages", _keys("niche_entrepreneur", "quotes"), expanded=False
-    ),
+    GroupSpec("optional", "Optional pages", _keys("contacts", "todo")),
+    GroupSpec("value_added", "Value-added pages", _keys("niche_entrepreneur", "quotes")),
 )
 
 TEMPLATE_KEYS: tuple[str, ...] = tuple(s.key for s in SECTIONS if s.page_id)
+# The GUI's "Whole agenda" tab (key GLOBAL) holds the sections without a page of their own; every
+# template section gets a tab of its own.
+WHOLE_SECTIONS: tuple[str, ...] = tuple(s.key for s in SECTIONS if not s.page_id)
 
 _BY_KEY = {s.key: s for s in SECTIONS}
 
@@ -207,6 +207,22 @@ def section(key: str) -> SectionSpec:
 def section_label(key: str) -> str:
     """Display label of a section in the current UI language (English from the spec)."""
     return uitext.lookup(f"section.{key}") or section(key).label
+
+
+def tab_of(key: str) -> str:
+    """GUI tab holding section ``key``: the template itself, or GLOBAL for the whole agenda."""
+    section(key)
+    return key if key in TEMPLATE_KEYS else GLOBAL
+
+
+def tab_groups() -> list[tuple[str, tuple[str, ...]]]:
+    """(group key, template keys) for each group with templates, in tab-list order."""
+    out = []
+    for g in GROUPS:
+        keys = tuple(k for k in g.sections if k in TEMPLATE_KEYS)
+        if keys:
+            out.append((g.key, keys))
+    return out
 
 
 def group_label(key: str) -> str:

@@ -39,7 +39,9 @@ def test_sections_in_order(panel):
     for s in T.SECTIONS:
         assert panel.sections[s.key].toggle_button.text().replace("&&", "&").endswith(s.label)
     assert panel.sections[T.GLOBAL].is_expanded()
-    assert not panel.sections["daily"].is_expanded()
+    assert not panel.sections[T.PADDING].is_expanded()
+    daily = panel.sections["daily"]
+    assert daily.body.isVisibleTo(daily) and not daily.toggle_button.text().startswith("▸")
 
 
 def test_editor_placement(panel):
@@ -95,10 +97,15 @@ def test_qr_box_with_preset(panel):
 
 
 def test_activation(panel):
-    seen = []
+    seen, tabs = [], []
     panel.section_activated.connect(seen.append)
-    panel.sections["daily"].set_expanded(True)
+    panel.tab_changed.connect(tabs.append)
+    panel.activate("daily")
     assert seen == ["daily"] and panel.active_section == "daily"
+    assert tabs == ["daily"] and panel.current_tab == "daily"
+    seen.clear()
+    panel.sections[T.PADDING].set_expanded(True)
+    assert seen == [T.PADDING] and panel.current_tab == T.GLOBAL
     seen.clear()
     panel.notify_focus(panel.editors["qr_urls"])
     assert seen == ["qr"]
@@ -108,23 +115,44 @@ def test_activation(panel):
     assert seen == []
 
 
-def test_active_header(panel):
-    def active():
-        return [k for k, s in panel.sections.items() if s.toggle_button.property("active")]
+def test_tab_list(panel):
+    items = [panel.tab_list.item(i) for i in range(panel.tab_list.count())]
+    keys = [it.data(Qt.ItemDataRole.UserRole) for it in items]
+    assert keys[0] == T.GLOBAL and items[0].text() == "Whole agenda"
+    assert [k for k in keys if k] == [T.GLOBAL, *(k for _, ks in T.tab_groups() for k in ks)]
+    headers = [it for it, k in zip(items, keys, strict=True) if not k]
+    assert [h.text() for h in headers] == [T.group_label(g).upper() for g, _ in T.tab_groups()]
+    assert all(not h.flags() & Qt.ItemFlag.ItemIsSelectable for h in headers)
+    assert panel.tab_stack.count() == 1 + len(T.TEMPLATE_KEYS)
+    for key in T.WHOLE_SECTIONS:
+        assert panel.tab_pages[T.GLOBAL].isAncestorOf(panel.sections[key])
+    for key in T.TEMPLATE_KEYS:
+        assert panel.tab_pages[key].isAncestorOf(panel.sections[key])
 
-    assert active() == [T.GLOBAL]
+
+def test_tab_list_click_and_focus(panel):
+    seen = []
+    panel.section_activated.connect(seen.append)
+    panel.tab_list.setCurrentItem(panel.tab_items["todo"])
+    assert seen == ["todo"] and panel.tab_stack.currentWidget() is panel.tab_pages["todo"]
+    panel.activate(T.STYLING)
+    assert panel.tab_list.currentItem() is panel.tab_items[T.GLOBAL]
+    assert panel.sections[T.STYLING].is_expanded()
     panel.notify_focus(panel.editors["qr_urls"])
-    assert active() == ["qr"]
-    panel.sections["daily"].pressed.emit()
-    assert active() == ["daily"] and not panel.sections["daily"].is_expanded()
+    assert panel.current_tab == "qr" and panel.tab_list.currentItem() is panel.tab_items["qr"]
+
+
+def test_disabled_tabs_dimmed(panel):
+    qr, daily = panel.tab_items["qr"], panel.tab_items["daily"]
+    assert qr.font().italic() and qr.toolTip() and not daily.font().italic()
+    panel.sections["qr"].enable_box.setChecked(True)
+    assert not qr.font().italic() and qr.toolTip() == ""
 
 
 def test_header_focus_does_not_expand(panel):
-    sec = panel.sections["weekly"]
+    sec = panel.sections[T.PADDING]
     panel.notify_focus(sec.toggle_button)
-    assert panel.active_section == "weekly" and not sec.is_expanded()
-    panel.notify_focus(sec.enable_box)
-    assert not sec.is_expanded()
+    assert panel.active_section == T.PADDING and not sec.is_expanded()
 
 
 def test_set_values_resyncs(panel):
@@ -138,33 +166,26 @@ def test_page_sections_replace_global_lists(panel):
         assert not panel.editors[name].isVisibleTo(panel.sections[T.GLOBAL])
     sec = panel.sections["budget"]
     assert not sec.collapsible and not sec.toggle_button.isCheckable()
+    assert not sec.body.isVisibleTo(sec)
+    hint = panel.tab_pages["budget"].findChild(QLabel, "tab_hint")
+    assert hint is not None and hint.text()
+    assert panel.tab_pages["daily"].findChild(QLabel, "tab_hint") is None
     panel.activate("budget")
-    assert panel.active_section == "budget" and not sec.is_expanded()
+    assert panel.active_section == "budget" and panel.current_tab == "budget"
     sec.enable_box.setChecked(True)
     assert "budget" in panel.values()["pages"]
     sec.enable_box.setChecked(False)
     assert "budget" not in (panel.values()["pages"] or [])
 
 
-def test_collapsible_iff_visible_fields(panel):
+def test_open_iff_visible_fields(panel):
     hidden = {*EM.export_field_names(), *SECTION_SWITCHED}
     with_fields = {T.group_of(s.name) for s in panel.specs if s.name not in hidden}
     for key, sec in panel.sections.items():
-        assert sec.collapsible == (key in with_fields), key
-    assert not panel.sections["budget"].collapsible and panel.sections["weekly"].collapsible
-
-
-def test_groups(panel):
-    assert list(panel.groups) == [g.key for g in T.GROUPS]
-    for g in T.GROUPS:
-        group = panel.groups[g.key]
-        assert group.is_expanded() == g.expanded
-        for key in g.sections:
-            assert group.body.isAncestorOf(panel.sections[key])
-    group = panel.groups["optional"]
-    assert not group.is_expanded()
-    panel.activate("todo")  # activating a section inside a closed group opens the group
-    assert group.is_expanded() and panel.active_section == "todo"
+        if key in T.TEMPLATE_KEYS:  # alone in its tab: settings always open
+            assert not sec.collapsible and sec.body.isVisibleTo(sec) == (key in with_fields), key
+        else:
+            assert sec.collapsible == (key in with_fields), key
 
 
 def test_page_selects(panel):

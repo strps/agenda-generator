@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QBrush, QColor, QPalette
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -17,11 +18,15 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFrame,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QPlainTextEdit,
     QScrollArea,
     QSpinBox,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -35,7 +40,7 @@ from agenda.gui import export_model as EM
 from agenda.gui import help_text
 from agenda.gui import settings_model as M
 from agenda.gui import template_model as TM
-from agenda.gui.collapsible import CollapsibleGroup, CollapsibleSection
+from agenda.gui.collapsible import CollapsibleSection
 from agenda.gui.hover_tooltip import ExpandingToolTip
 from agenda.gui.style_editors import ColorEdit, FontEdit
 from agenda.gui.style_model import SPACING
@@ -50,10 +55,14 @@ def _join_ints(v: Any) -> str:
 
 
 class SettingsPanel(QFrame):
-    """Scrollable form. `changed` fires on any edit; `editors` maps field name -> widget."""
+    """Tab list (Whole agenda, then one tab per template) beside the settings of the current tab.
+
+    `changed` fires on any edit; `editors` maps field name -> widget; `tab_changed` gives the key
+    of the newly shown tab (GLOBAL or a template key)."""
 
     changed = Signal()
     section_activated = Signal(str)
+    tab_changed = Signal(str)
 
     def __init__(self) -> None:
         super().__init__()
@@ -67,36 +76,46 @@ class SettingsPanel(QFrame):
         self._extra_pages: list[str] = []
         self._loading = False
 
-        outer = QVBoxLayout(self)
+        outer = QHBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        outer.addWidget(scroll, 1)
-        body = QWidget()
-        col = QVBoxLayout(body)
-        col.setSpacing(SPACING["gap"])
-        gap = SPACING["gap"]
-        col.setContentsMargins(gap, gap, gap, gap)
+        outer.setSpacing(0)
+        self.tab_list = QListWidget()
+        self.tab_list.setObjectName("tab_list")
+        self.tab_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        outer.addWidget(self.tab_list)
+        right = QVBoxLayout()
+        right.setContentsMargins(0, 0, 0, 0)
+        right.setSpacing(0)
+        self.tab_stack = QStackedWidget()
+        right.addWidget(self.tab_stack, 1)
+        outer.addLayout(right, 1)
+
         self.sections: dict[str, CollapsibleSection] = {}
-        self.groups: dict[str, CollapsibleGroup] = {}
-        self._group_of: dict[str, CollapsibleGroup] = {}
-        self.active_section = T.GLOBAL
         for sp in T.SECTIONS:
             sec = CollapsibleSection(sp.key, T.section_label(sp.key), sp.enable)
             self.sections[sp.key] = sec
             sec.expanded_changed.connect(lambda on, k=sp.key: on and self.activate(k))
             sec.enable_toggled.connect(lambda on, k=sp.key: self._section_toggled(k, on))
             sec.pressed.connect(lambda k=sp.key: self.activate(k, expand=False))
-        for g in T.GROUPS:
-            group = CollapsibleGroup(g.key, T.group_label(g.key))
-            self.groups[g.key] = group
-            col.addWidget(group)
-            for key in g.sections:
-                group.add(self.sections[key])
-                self._group_of[key] = group
-            group.set_expanded(g.expanded)
+        self.tab_pages: dict[str, QScrollArea] = {}
+        self.tab_items: dict[str, QListWidgetItem] = {}
+        self._header_items: list[QListWidgetItem] = []
+        self.current_tab = T.GLOBAL
+        self.active_section = T.GLOBAL
+        self._build_tab(T.GLOBAL, tr("tabs.whole"), T.WHOLE_SECTIONS)
+        self.tab_items[T.GLOBAL].setToolTip(tr("tabs.whole_tip"))
+        for group, keys in T.tab_groups():
+            header = QListWidgetItem(T.group_label(group).upper())
+            header.setFlags(Qt.ItemFlag.NoItemFlags)
+            font = header.font()
+            font.setBold(True)
+            font.setPointSizeF(font.pointSizeF() * 0.85)
+            header.setFont(font)
+            self.tab_list.addItem(header)
+            self._header_items.append(header)
+            for key in keys:
+                self._build_tab(key, T.section_label(key), (key,))
         self.sections[T.GLOBAL].set_expanded(True)
-        self.sections[T.GLOBAL].set_active(True)
         for key in (T.GLOBAL, T.PADDING, T.MONTH_START, T.MONTH_END, T.STYLING):
             self.sections[key].toggle_button.setToolTip(help_text.TOOLTIPS[f"{key}_section"])
         shown: set[str] = set()  # sections with at least one visible field
@@ -120,15 +139,24 @@ class SettingsPanel(QFrame):
                 form.setRowVisible(w, False)
             else:
                 shown.add(T.group_of(spec.name))
-        for key, sec in self.sections.items():
+        for key in T.TEMPLATE_KEYS:  # alone in its tab: no arrow, the settings always open
+            self.sections[key].set_static(key in shown)
             if key not in shown:
-                sec.set_collapsible(False)
-        col.addStretch(1)
-        scroll.setWidget(body)
+                hint = QLabel(tr("settings.no_options"))
+                hint.setObjectName("tab_hint")
+                hint.setWordWrap(True)
+                self.tab_pages[key].widget().layout().insertWidget(1, hint)
+        for key in T.WHOLE_SECTIONS:
+            if key not in shown:
+                self.sections[key].set_static(False)
+        self.tab_list.setCurrentItem(self.tab_items[T.GLOBAL])
+        self.tab_list.currentItemChanged.connect(self._tab_item_changed)
+        width = self.tab_list.sizeHintForColumn(0) + 2 * self.tab_list.frameWidth()
+        self.tab_list.setFixedWidth(width + self.tab_list.verticalScrollBar().sizeHint().width())
         self.error_label = QLabel("")
         self.error_label.setWordWrap(True)
         self.error_label.setObjectName("settings_error")
-        outer.addWidget(self.error_label)
+        right.addWidget(self.error_label)
         self.changed.connect(self._sync_boxes)
         self.changed.connect(self._refresh_swatches)
         self.changed.connect(self._refresh_pad_uses)
@@ -137,16 +165,53 @@ class SettingsPanel(QFrame):
             app.focusChanged.connect(lambda _old, new: self.notify_focus(new))
         self.set_values(M.default_values())
 
-    # --- sections ---
+    def _build_tab(self, tab: str, title: str, keys: tuple[str, ...]) -> None:
+        """A tab-list item and a scrollable settings page holding sections ``keys``."""
+        item = QListWidgetItem(title)
+        item.setData(Qt.ItemDataRole.UserRole, tab)
+        self.tab_list.addItem(item)
+        self.tab_items[tab] = item
+        body = QWidget()
+        col = QVBoxLayout(body)
+        gap = SPACING["gap"]
+        col.setSpacing(gap)
+        col.setContentsMargins(gap, gap, gap, gap)
+        for key in keys:
+            col.addWidget(self.sections[key])
+        col.addStretch(1)
+        scroll = QScrollArea()
+        scroll.setObjectName(f"tab_{tab}")
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(body)
+        self.tab_stack.addWidget(scroll)
+        self.tab_pages[tab] = scroll
+
+    # --- tabs and sections ---
+    def show_tab(self, tab: str) -> None:
+        """Show tab ``tab`` (GLOBAL or a template key) and select it in the tab list."""
+        if tab not in self.tab_pages:
+            raise KeyError(f"unknown tab {tab!r}")
+        self.tab_list.blockSignals(True)
+        self.tab_list.setCurrentItem(self.tab_items[tab])
+        self.tab_list.blockSignals(False)
+        self.tab_stack.setCurrentWidget(self.tab_pages[tab])
+        if tab != self.current_tab:
+            self.current_tab = tab
+            self.tab_changed.emit(tab)
+
+    def _tab_item_changed(self, item: QListWidgetItem | None, _prev: object = None) -> None:
+        tab = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+        if tab:
+            self.activate(tab, expand=False)
+
     def activate(self, key: str, expand: bool = True) -> None:
+        """Show the tab of section ``key``; inside the Whole agenda tab, open the section too."""
         sec = self.sections[key]
-        self._group_of[key].set_expanded(True)
+        self.show_tab(T.tab_of(key))
         if expand and sec.collapsible and not sec.is_expanded():
             sec.set_expanded(True)  # its expanded_changed handler re-enters and emits
             return
         self.active_section = key
-        for k, other in self.sections.items():
-            other.set_active(k == key)
         self.section_activated.emit(key)
 
     def notify_focus(self, widget: QWidget | None) -> None:
@@ -157,6 +222,28 @@ class SettingsPanel(QFrame):
                 self.activate(w.key, expand=w.body.isAncestorOf(widget))
                 return
             w = w.parentWidget()
+
+    def refresh_tab_states(self) -> None:
+        """Dim the tabs of templates left out of the agenda, and the group headers."""
+        pal = self.tab_list.palette()
+        text, base = pal.color(QPalette.ColorRole.Text), pal.color(QPalette.ColorRole.Base)
+        muted = QColor(
+            (text.red() + base.red()) // 2,
+            (text.green() + base.green()) // 2,
+            (text.blue() + base.blue()) // 2,
+        )
+        for item in self._header_items:
+            item.setForeground(QBrush(muted))
+        for key in T.TEMPLATE_KEYS:
+            sec = self.sections[key]
+            on = sec.enabled_state()
+            item = self.tab_items[key]
+            item.setForeground(QBrush(text if on else muted))
+            font = item.font()
+            font.setItalic(not on)
+            item.setFont(font)
+            label = T.section_label(key)
+            item.setToolTip("" if on else tr("app.template_disabled", label=label))
 
     def _section_toggled(self, key: str, on: bool) -> None:
         before = self.values()
@@ -175,6 +262,7 @@ class SettingsPanel(QFrame):
         for key, sec in self.sections.items():
             if sec.enable_box is not None:
                 sec.set_enabled_state(T.is_enabled(cfg, key))
+        self.refresh_tab_states()
 
     def _refresh_swatches(self) -> None:
         palette = themes.palette_for(self.values()["theme"])

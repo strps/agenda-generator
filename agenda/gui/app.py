@@ -40,7 +40,7 @@ from agenda.gui.render_cache import Debounce
 from agenda.gui.section_bar import SectionBar
 from agenda.gui.settings_panel import SettingsPanel
 from agenda.pagerange import parse_page_range
-from agenda.templates import GLOBAL, TEMPLATE_KEYS, is_enabled, section_label
+from agenda.templates import GLOBAL, TEMPLATE_KEYS, is_enabled, section_label, tab_of
 from agenda.uitext import tr
 
 DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-renders
@@ -132,23 +132,34 @@ class MainWindow(QMainWindow):
         row.addWidget(export)
         col.addWidget(toolbar)
 
-        # Middle: settings (left) | preview (center).
+        # Middle: tab list and the current tab's settings (left) | that tab's preview (right).
         split = QSplitter(Qt.Orientation.Horizontal)
         self.settings = SettingsPanel()
         self.regions[L.SETTINGS] = self.settings
         split.addWidget(self.settings)
+        self.preview_stack = QStackedWidget()
         self.preview = PreviewWidget()
         self.regions[L.PREVIEW] = self.preview
-        self.preview_stack = QStackedWidget()
-        self.preview_stack.addWidget(self.preview)
+        whole, wlay = self._preview_page(GLOBAL, tr("tabs.whole"))
+        wlay.addWidget(self.preview, 1)
+        self.section_bar = SectionBar()
+        self.regions[L.SECTION_BAR] = self.section_bar
+        wlay.addWidget(self.section_bar)
+        self.legend = Legend()
+        self.legend.setObjectName(L.LEGEND)
+        self.regions[L.LEGEND] = self.legend
+        wlay.addWidget(self.legend)
+        self.summary_label = QLabel()
+        self.summary_label.setObjectName(L.SUMMARY)
+        self.summary_label.setContentsMargins(4, 2, 4, 2)
+        self.regions[L.SUMMARY] = self.summary_label
+        wlay.addWidget(self.summary_label)
+        self.whole_page = whole
         self.template_previews: dict[str, PreviewWidget] = {}
         self.template_notices: dict[str, QLabel] = {}
         self._template_pages: dict[str, QWidget] = {}
         for key in TEMPLATE_KEYS:
-            page = QWidget()
-            page.setObjectName(f"template_page_{key}")
-            lay = QVBoxLayout(page)
-            lay.setContentsMargins(0, 0, 0, 0)
+            page, lay = self._preview_page(key, section_label(key))
             notice = QLabel("")
             notice.setObjectName(f"template_notice_{key}")
             notice.setWordWrap(True)
@@ -156,32 +167,16 @@ class MainWindow(QMainWindow):
             pv.set_mode(TM.preview_mode(key))
             lay.addWidget(notice)
             lay.addWidget(pv, 1)
-            self.preview_stack.addWidget(page)
             self.template_previews[key] = pv
             self.template_notices[key] = notice
             self._template_pages[key] = page
         self.preview_key = GLOBAL
-        self.last_template: str | None = None
         self._stale: set[str] = set(TEMPLATE_KEYS)
         split.addWidget(self.preview_stack)
         split.setStretchFactor(0, 0)
         split.setStretchFactor(1, 1)
         split.setSizes(list(spec.splitter_sizes()))
         col.addWidget(split, 1)
-
-        # Bottom: section bar, legend, summary.
-        self.section_bar = SectionBar()
-        self.regions[L.SECTION_BAR] = self.section_bar
-        col.addWidget(self.section_bar)
-        self.legend = Legend()
-        self.legend.setObjectName(L.LEGEND)
-        self.regions[L.LEGEND] = self.legend
-        col.addWidget(self.legend)
-        self.summary_label = QLabel()
-        self.summary_label.setObjectName(L.SUMMARY)
-        self.summary_label.setContentsMargins(4, 2, 4, 2)
-        self.regions[L.SUMMARY] = self.summary_label
-        col.addWidget(self.summary_label)
         self.setCentralWidget(root)
         self.debounce = Debounce(DEBOUNCE_S)
         self._timer = QTimer(self)
@@ -191,10 +186,8 @@ class MainWindow(QMainWindow):
         self.settings.changed.connect(self._on_settings_changed)
         self.preview.page_changed.connect(self.section_bar.set_position)
         self.section_bar.page_requested.connect(self.preview.goto)
-        self.section_bar.page_requested.connect(lambda _i: self.show_preview_for(GLOBAL))
         self.legend.section_clicked.connect(self.section_bar.next_page_of)
-        self.legend.section_clicked.connect(lambda _k: self.show_preview_for(GLOBAL))
-        self.settings.section_activated.connect(self.show_preview_for)
+        self.settings.tab_changed.connect(self.show_preview_for)
         menu = self.menuBar().addMenu(tr("app.menu_settings"))
         self.preferences_action = QAction(tr("app.preferences"), self)
         self.preferences_action.setObjectName("action_preferences")
@@ -227,6 +220,7 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         if app is not None:
             apply_style(app, appearance)
+        self.settings.refresh_tab_states()  # dimmed tab colors follow the new palette
         self.prefs.setValue(PREFS_KEY, appearance)
         self.prefs.sync()
 
@@ -281,11 +275,21 @@ class MainWindow(QMainWindow):
         self.template_previews[key].set_plan(cfg, TM.sample_plan(cfg, key))
         self._stale.discard(key)
 
+    def _preview_page(self, key: str, title: str) -> tuple[QWidget, QVBoxLayout]:
+        """A preview-stack page titled ``title``; returns it and the layout to fill."""
+        page = QWidget()
+        page.setObjectName(f"template_page_{key}" if key in TEMPLATE_KEYS else "whole_page")
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 0, 0)
+        label = QLabel(title)
+        label.setObjectName("preview_title")
+        lay.addWidget(label)
+        self.preview_stack.addWidget(page)
+        return page, lay
+
     def show_preview_for(self, key: str) -> None:
-        """Show the full agenda preview or the preview of the template for section ``key``."""
-        if key in TEMPLATE_KEYS:
-            self.last_template = key
-        target = TM.preview_target(key, self.last_template)
+        """Show the preview of the tab holding section ``key``: the whole agenda or a template."""
+        target = tab_of(key)
         self.preview_key = target
         if target in TEMPLATE_KEYS:
             self.preview_stack.setCurrentWidget(self._template_pages[target])
@@ -296,7 +300,7 @@ class MainWindow(QMainWindow):
                 else:
                     self._refresh_template(target, cfg)
         else:
-            self.preview_stack.setCurrentWidget(self.preview)
+            self.preview_stack.setCurrentWidget(self.whole_page)
 
     def _sync_export_button(self, valid: bool) -> None:
         self.export_button.setEnabled(valid and not self.export_running)

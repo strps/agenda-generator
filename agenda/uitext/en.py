@@ -206,6 +206,10 @@ MESSAGES: dict[str, str] = {
     "app.menu_settings": "&Settings",
     "app.preferences": "Preferences...",
     "app.template_disabled": "{label} is disabled and is not included in the agenda.",
+    "tabs.whole": "Whole agenda",
+    "tabs.whole_tip": "Settings for the whole agenda, with its full preview, section bar and legend.",
+    "settings.no_options": "This page has no settings of its own. Tick the box above to include "
+    "it in the agenda.",
     "app.exporting": "Exporting...",
     "app.exported": "Exported {path}",
     "app.export_failed": "Export failed: {message}",
