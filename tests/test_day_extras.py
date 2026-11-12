@@ -75,3 +75,54 @@ def test_yaml_roundtrip_with_paths(tmp_path):
     out = tmp_path / "c.yaml"
     M.save_yaml(cfg, out)
     assert Config(**M.load_values(out)) == cfg
+
+
+def test_csv_dated_header_year_and_delimiters(tmp_path):
+    f = tmp_path / "h.csv"
+    f.write_text("month,day,name,year\n12,25,Xmas,\n3,1,Trip,2027\n12,25,Family\n\n#,skip\n")
+    want = {date(2027, 12, 25): "Xmas · Family", date(2027, 3, 1): "Trip"}
+    assert D.load_dated(f, 2027) == want
+    assert date(2028, 3, 1) not in D.load_dated(f, 2028)
+    semi = tmp_path / "s.csv"  # European-locale export: ";" delimiter, BOM, no header
+    semi.write_bytes("﻿2;14;Día del cariño\n02;29;Leap\n".encode())
+    assert D.load_dated(semi, 2027) == {date(2027, 2, 14): "Día del cariño"}
+    assert D.load_dated(semi, 2028)[date(2028, 2, 29)] == "Leap"
+    tab = tmp_path / "t.csv"
+    tab.write_text("1\t2\tTab, with comma\n")
+    assert D.load_dated(tab, 2027) == {date(2027, 1, 2): "Tab, with comma"}
+    win = tmp_path / "w.csv"  # spreadsheet "CSV" saved as Windows-1252
+    win.write_bytes("5,1,Día\n".encode("cp1252"))
+    assert D.load_dated(win, 2027) == {date(2027, 5, 1): "Día"}
+
+
+def test_csv_dated_errors_name_the_row(tmp_path):
+    f = tmp_path / "bad.csv"
+    for body, msg in (
+        ("1,1,ok\nx,1,bad\n", "row 2"),
+        ("1,1,ok\n13,1,bad\n", "row 2"),
+        ("1,1,ok\n1,2\n", "row 2"),
+    ):
+        f.write_text(body)
+        with pytest.raises(ValueError, match=msg):
+            D.load_dated(f, 2027)
+    f.write_text("1,1,ok\n13,1,bad\n")
+    with pytest.raises(ValidationError, match="row 2"):
+        Config(holidays_file=f)
+
+
+def test_csv_phrases(tmp_path):
+    f = tmp_path / "q.csv"
+    f.write_text('phrase\n"One, with a comma"\nTwo\n\n# note\n')
+    assert D.load_phrases(f) == ["One, with a comma", "Two"]
+    f.write_text("No header here\nSecond\n")
+    assert D.load_phrases(f) == ["No header here", "Second"]
+    assert Config(daily_quotes_file=f).daily_quotes_file == f
+
+
+def test_txt_files_still_read_as_lines(tmp_path):
+    f = tmp_path / "q.txt"
+    f.write_text("Begin, where you are\n")
+    assert D.load_phrases(f) == ["Begin, where you are"]
+    h = tmp_path / "h.txt"
+    h.write_text("12-25 Xmas\n")
+    assert D.load_dated(h, 2027) == {date(2027, 12, 25): "Xmas"}

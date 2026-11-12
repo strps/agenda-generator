@@ -42,12 +42,12 @@ pages:
 #   hour_end: 21                # last hour (must be after hour_start)
 #   holidays: true              # print the holiday name in the header
 #   quotes: false               # print a rotating phrase in the footer
-#   quotes_file: examples/daily_quotes.txt   # one phrase per line (default: built-in)
-#   extra_file: examples/daily_extra.txt     # "MM-DD text" lines shown in the footer
+#   quotes_file: examples/daily_quotes.csv   # CSV, one phrase per row (default: built-in)
+#   extra_file: examples/daily_extra.csv     # CSV month,day,text[,year] shown in the footer
 #   filler: blank               # page after a week's day pages: blank, none or a page id
 # weekly:
 #   filler: blank               # page before a week spread: blank, none or a page id
-# holidays_file: examples/holidays.txt       # extra holidays, merged on every page
+# holidays_file: examples/holidays.csv       # CSV month,day,name[,year]: extra holidays, merged on every page
 
 # Other options (defaults shown, uncomment to change):
 # qr_urls: ["https://example.com"]   # URLs for the qr page

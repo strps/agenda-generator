@@ -1,4 +1,5 @@
-"""Editors for the PDF style fields: ColorEdit (hex + swatch + clear) and FontEdit (name or file).
+"""Small composite editors: ColorEdit (hex + swatch + clear), FontEdit (name or font file) and
+FileEdit (data file path + Browse + clear).
 
 Qt dialogs are opened by small methods (`_pick_color`, `_pick_file`) so tests can replace them.
 Widgets only hold text; ``Config`` validates it.
@@ -130,3 +131,52 @@ class FontEdit(QWidget):
         path = self._pick_file()
         if path:
             self.set_value(path)
+
+
+class FileEdit(QWidget):
+    """Optional data-file path: editable text + Browse button (CSV dialog) + clear button."""
+
+    edited = Signal()
+
+    def __init__(self) -> None:
+        super().__init__()
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        self.line = QLineEdit()
+        self.line.setPlaceholderText(tr("file.none"))
+        self.browse_button = QToolButton()
+        self.browse_button.setObjectName("file_browse")
+        self.browse_button.setText(tr("style.browse"))
+        self.browse_button.setToolTip(help_text.TOOLTIPS["file_browse"])
+        self.clear_button = QToolButton()
+        self.clear_button.setObjectName("file_clear")
+        self.clear_button.setText(tr("style.clear_glyph"))
+        self.clear_button.setToolTip(help_text.TOOLTIPS["file_clear"])
+        lay.addWidget(self.line, 1)
+        lay.addWidget(self.browse_button)
+        lay.addWidget(self.clear_button)
+        self.line.textEdited.connect(lambda _t: self.edited.emit())
+        self.browse_button.clicked.connect(self._browse)
+        self.clear_button.clicked.connect(lambda: self.set_value(None, emit=True))
+
+    def value(self) -> str | None:
+        return self.line.text().strip() or None
+
+    def set_value(self, value: object, emit: bool = False) -> None:
+        text = "" if value is None else str(value)
+        if text == self.line.text():
+            return
+        self.line.setText(text)
+        if emit:
+            self.edited.emit()
+
+    def _pick_file(self) -> str:
+        path, _ = QFileDialog.getOpenFileName(
+            self, tr("file.dialog_title"), self.value() or "", tr("file.filter")
+        )
+        return path
+
+    def _browse(self) -> None:
+        path = self._pick_file()
+        if path:
+            self.set_value(path, emit=True)

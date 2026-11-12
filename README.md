@@ -122,7 +122,7 @@ style:                     # all keys optional; omitted = theme / built-in defau
   primary_font: inter      # inter or a .ttf/.otf path (headings, bold text)
   secondary_font: inter    # body text, labels, numbers
   title_padding: 2         # mm of fill on each side of a title background
-holidays_file: examples/holidays.txt
+holidays_file: examples/holidays.csv
 ```
 
 Values that used to be fixed in the pages are now settings; the defaults reproduce the old output:
@@ -163,16 +163,27 @@ last booklet (see above).
 Day pages can show, besides the date:
 
 - **Holiday names** (`daily_holidays`, on by default): in the header. Holidays come from the
-  `holiday_country` library merged with `holidays_file` (lines `MM-DD name`), the same on every
-  page that uses holidays.
+  `holiday_country` library merged with `holidays_file`, the same on every page that uses holidays.
 - **A rotating phrase** (`daily_quotes`, off by default): in the footer, one per day of the year,
-  cycling through the list (day 1 uses the first phrase). `daily_quotes_file` gives your own list,
-  one phrase per line; otherwise the built-in phrases are used.
-- **Extra data** (`daily_extra_file`): lines `MM-DD text` (every year) or `YYYY-MM-DD text` (that
-  year only), shown right of the footer; several on one date are joined with " · ".
+  cycling through the list (day 1 uses the first phrase). `daily_quotes_file` gives your own list;
+  otherwise the built-in phrases are used.
+- **Extra data** (`daily_extra_file`): shown right of the footer; several on one date are joined
+  with " · ".
 
-Files are UTF-8; blank lines and lines starting with `#` are ignored. See
-[examples/](examples/). Paths are checked when the config is built and relative paths are resolved
+The three files are CSV, so you can make them in any spreadsheet (Excel, LibreOffice, Google
+Sheets) and save or export as `.csv`. A header row is optional.
+
+| File | Columns |
+|---|---|
+| `holidays_file` | `month`, `day`, `name`, `year` (optional: empty = every year) |
+| `daily_extra_file` | `month`, `day`, `text`, `year` (optional: empty = every year) |
+| `daily_quotes_file` | one phrase per row, first column |
+
+The delimiter (`,`, `;` or tab) is detected, so CSVs saved with a Spanish or European locale work
+too. Encoding is UTF-8 (with or without BOM), else Windows-1252. Empty rows and rows whose first
+cell starts with `#` are ignored. Files that do not end in `.csv` are still read in the old text
+format (one entry per line, `MM-DD text`). See [examples/](examples/). In the GUI each file has a
+**Browse...** button. Paths are checked when the config is built and relative paths are resolved
 against the current directory. Files are read once and cached by path and modification time. A file edited while the GUI is open
 is re-read only when its timestamp changes; if the preview looks stale, touch the file or restart.
 

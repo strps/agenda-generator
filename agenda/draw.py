@@ -212,7 +212,7 @@ def _mtime(path: Path) -> float:
 
 @lru_cache(maxsize=32)
 def _dated_file(path: str, mtime: float, year: int) -> dict[date, str]:
-    return day_extras.parse_dated(day_extras.read_lines(path), year)
+    return day_extras.load_dated(path, year)
 
 
 def dated_entries(path: Path | None, year: int) -> dict[date, str]:
@@ -224,11 +224,11 @@ def dated_entries(path: Path | None, year: int) -> dict[date, str]:
 
 @lru_cache(maxsize=8)
 def _lines_file(path: str, mtime: float) -> list[str]:
-    return day_extras.read_lines(path)
+    return day_extras.load_phrases(path)
 
 
 def quotes_for(config: Config) -> list[str]:
-    """Daily phrases: ``daily_quotes_file`` lines, else the built-in quotes."""
+    """Daily phrases: ``daily_quotes_file`` entries, else the built-in quotes."""
     path = config.daily_quotes_file
     if path is None:
         return day_extras.builtin_quotes(config.language)

@@ -42,7 +42,7 @@ from agenda.gui import settings_model as M
 from agenda.gui import template_model as TM
 from agenda.gui.collapsible import CollapsibleSection
 from agenda.gui.hover_tooltip import ExpandingToolTip
-from agenda.gui.style_editors import ColorEdit, FontEdit
+from agenda.gui.style_editors import ColorEdit, FileEdit, FontEdit
 from agenda.gui.style_model import SPACING
 from agenda.uitext import tr
 
@@ -313,6 +313,9 @@ class SettingsPanel(QFrame):
         elif k == M.FONT:
             w = FontEdit()
             w.edited.connect(self._edited)
+        elif k == M.OPT_PATH:
+            w = FileEdit()
+            w.edited.connect(self._edited)
         elif k == M.INT:
             w = QSpinBox()
             w.setRange(int(spec.minimum) if spec.minimum is not None else -_BIG, _BIG)
@@ -350,7 +353,7 @@ class SettingsPanel(QFrame):
                 cb.setToolTip(TM.page_text(c))
                 cb.toggled.connect(self._edited)
                 lay.addWidget(cb)
-        else:  # text, path, opt_path, int_list, auto_int: edited as text, parsed by Config
+        else:  # text, path, int_list, auto_int: edited as text, parsed by Config
             w = QLineEdit()
             w.textEdited.connect(self._edited)
         return w
@@ -395,7 +398,7 @@ class SettingsPanel(QFrame):
                 out[spec.name] = w.isChecked()  # type: ignore[attr-defined]
             elif k in (M.CHOICE, M.OPT_CHOICE, M.THEME, M.PAGE_CHOICE):
                 out[spec.name] = w.currentData()  # type: ignore[attr-defined]
-            elif k in (M.COLOR, M.FONT) or k in (M.INT, M.FLOAT):
+            elif k in (M.COLOR, M.FONT, M.OPT_PATH) or k in (M.INT, M.FLOAT):
                 out[spec.name] = w.value()  # type: ignore[attr-defined]
             elif k == M.MULTI_CHOICE:
                 out[spec.name] = [
@@ -415,7 +418,7 @@ class SettingsPanel(QFrame):
                 out[spec.name] = ids or None
             else:
                 text = w.text().strip()  # type: ignore[attr-defined]
-                if k in (M.OPT_PATH, M.OPT_TEXT):
+                if k == M.OPT_TEXT:
                     text = text or None  # type: ignore[assignment]
                 if k == M.AUTO_INT:
                     text = int(text) if text.isdigit() else (text or "auto")  # type: ignore[assignment]
@@ -453,7 +456,7 @@ class SettingsPanel(QFrame):
                 w.addItem(str(v), v)  # type: ignore[attr-defined]
                 i = w.findData(v)  # type: ignore[attr-defined]
             w.setCurrentIndex(i)  # type: ignore[attr-defined]
-        elif k in (M.COLOR, M.FONT):
+        elif k in (M.COLOR, M.FONT, M.OPT_PATH):
             w.set_value(v)  # type: ignore[attr-defined]
         elif k == M.INT:
             w.setValue(int(v))  # type: ignore[attr-defined]
@@ -474,7 +477,7 @@ class SettingsPanel(QFrame):
                 cb.setChecked(pid in ids)
         elif k == M.INT_LIST:
             w.setText(_join_ints(v))  # type: ignore[attr-defined]
-        elif k in (M.OPT_PATH, M.OPT_TEXT):
+        elif k == M.OPT_TEXT:
             w.setText("" if v is None else str(v))  # type: ignore[attr-defined]
         else:
             w.setText(str(v))  # type: ignore[attr-defined]

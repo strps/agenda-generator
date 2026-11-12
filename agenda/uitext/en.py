@@ -29,6 +29,9 @@ MESSAGES: dict[str, str] = {
     "tooltip.color_clear": "Clear the override and use the theme's color again.",
     "tooltip.font_browse": "Choose a .ttf or .otf font file. Bold and italic files next to it are "
     "used too.",
+    "tooltip.file_browse": "Choose a CSV file. Make it in any spreadsheet and save it as .csv; a "
+    "header row is optional.",
+    "tooltip.file_clear": "Remove the file.",
     "tooltip.global_section": "Settings for the whole agenda: page size, margins, booklets, year, "
     "language, planners and page numbers.",
     "tooltip.padding_section": "Which page fills the last booklet so it ends on a whole sheet, and "
@@ -226,6 +229,9 @@ MESSAGES: dict[str, str] = {
     "style.theme_default": "theme default",
     "style.clear_glyph": "x",
     "style.browse": "Browse...",
+    "file.none": "no file",
+    "file.dialog_title": "Choose a CSV file",
+    "file.filter": "CSV files (*.csv);;All files (*)",
     "preview.button.single": "Single",
     "preview.button.spread": "Spread",
     "preview.button.sheet": "Sheet",

@@ -606,32 +606,32 @@ class Config(BaseModel):
     )
     daily_quotes_file: Path | None = Field(
         None,
-        description="Text file with one phrase per line.",
+        description="CSV file with one phrase per row.",
         json_schema_extra={
             "detail": (
-                "Optional text file with one phrase per line (UTF-8; blank "
-                "lines and lines starting with # are ignored). The phrases "
-                "rotate, one per day of the year, cycling. Empty means the "
-                "built-in phrases of the chosen language. Used only with "
-                "daily_quotes."
+                "Optional CSV file (any spreadsheet can make it) with one "
+                "phrase per row in the first column; a header row such as "
+                "'phrase' is optional. The phrases rotate, one per day of the "
+                "year, cycling. Empty means the built-in phrases of the "
+                "chosen language. Used only with daily_quotes."
             ),
             "cli": {},
         },
-    )  # one phrase per line; None = built-in quotes
+    )  # one phrase per row; None = built-in quotes
     daily_extra_file: Path | None = Field(
         None,
-        description="File of dated notes shown on day pages.",
+        description="CSV file of dated notes shown on day pages.",
         json_schema_extra={
             "detail": (
-                "Optional text file with one dated entry per line, as 'MM-DD "
-                "text' (every year) or 'YYYY-MM-DD text' (that year only); "
-                "lines starting with # are comments. The text is shown in the "
-                "footer of the matching day page. Several entries on one date "
-                "are joined."
+                "Optional CSV file (any spreadsheet can make it) with the "
+                "columns month, day, text and an optional year (empty = "
+                "every year); a header row is optional. The text is shown in "
+                "the footer of the matching day page. Several entries on one "
+                "date are joined."
             ),
             "cli": {},
         },
-    )  # dated lines shown on the matching day page
+    )  # dated rows shown on the matching day page
 
     # Calendar / locale
     year: int = Field(
@@ -684,18 +684,18 @@ class Config(BaseModel):
     )
     holidays_file: Path | None = Field(
         None,
-        description="Extra holidays file, merged with the library.",
+        description="Extra holidays CSV file, merged with the library.",
         json_schema_extra={
             "detail": (
-                "Optional text file of your own holidays, one per line as "
-                "'MM-DD name' (every year) or 'YYYY-MM-DD name' (that year "
-                "only); lines starting with # are comments. They are merged "
-                "with the country holidays and shown the same way on every "
-                "page."
+                "Optional CSV file (any spreadsheet can make it) of your own "
+                "holidays, with the columns month, day, name and an optional "
+                "year (empty = every year); a header row is optional. They "
+                "are merged with the country holidays and shown the same way "
+                "on every page."
             ),
             "cli": {},
         },
-    )  # user holidays (MM-DD text), merged with the library
+    )  # user holidays (CSV rows), merged with the library
 
     # Look & output
     theme: str = Field(
@@ -1059,11 +1059,12 @@ class Config(BaseModel):
         """A set file must exist and parse. Lazy import keeps day_extras Config-free."""
         if v is None:
             return v
-        from agenda.day_extras import parse_dated, read_lines
+        from agenda.day_extras import load_dated, load_phrases
 
-        lines = read_lines(v)
-        if info.field_name != "daily_quotes_file":
-            parse_dated(lines, 2000)
+        if info.field_name == "daily_quotes_file":
+            load_phrases(v)
+        else:
+            load_dated(v, 2000)
         return v
 
     @model_validator(mode="after")

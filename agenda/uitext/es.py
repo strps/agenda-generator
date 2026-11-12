@@ -34,6 +34,9 @@ MESSAGES: dict[str, str] = {
     "tooltip.color_clear": "Quita el color personalizado y vuelve a usar el color del tema.",
     "tooltip.font_browse": "Elige un archivo de fuente .ttf u .otf. También se usan los archivos en "
     "negrita y cursiva que estén junto a él.",
+    "tooltip.file_browse": "Elige un archivo CSV. Créalo en cualquier hoja de cálculo y guárdalo "
+    "como .csv; la fila de encabezado es opcional.",
+    "tooltip.file_clear": "Quita el archivo.",
     "tooltip.global_section": "Ajustes de toda la agenda: tamaño de página, márgenes, cuadernillos, "
     "año, idioma, planificadores y numeración de páginas.",
     "tooltip.padding_section": "Qué página rellena el último cuadernillo para que termine en una hoja "
@@ -241,6 +244,9 @@ MESSAGES: dict[str, str] = {
     "style.theme_default": "predeterminado del tema",
     "style.clear_glyph": "x",
     "style.browse": "Examinar...",
+    "file.none": "sin archivo",
+    "file.dialog_title": "Elegir un archivo CSV",
+    "file.filter": "Archivos CSV (*.csv);;Todos los archivos (*)",
     "preview.button.single": "Individual",
     "preview.button.spread": "Doble",
     "preview.button.sheet": "Hoja",

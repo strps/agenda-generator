@@ -23,6 +23,8 @@ TOOLTIPS: Mapping[str, str] = Table(
         "color_swatch",
         "color_clear",
         "font_browse",
+        "file_browse",
+        "file_clear",
         "global_section",
         "padding_section",
         "month_start_section",

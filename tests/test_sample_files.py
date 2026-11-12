@@ -5,7 +5,7 @@ from pathlib import Path
 
 from agenda.config import Config
 from agenda.configfile import load_yaml
-from agenda.day_extras import parse_dated, read_lines
+from agenda.day_extras import load_dated, load_phrases
 
 ROOT = Path(__file__).resolve().parent.parent
 PAGES = [
@@ -42,17 +42,19 @@ def test_config_yaml_matches_flat_sample():
 
 
 def test_example_files_parse():
-    assert len(read_lines(ROOT / "examples/daily_quotes.txt")) >= 7
-    extra = parse_dated(read_lines(ROOT / "examples/daily_extra.txt"), 2027)
+    quotes = load_phrases(ROOT / "examples/daily_quotes.csv")
+    assert len(quotes) >= 7 and quotes[0].startswith("Small steps, taken daily")
+    extra = load_dated(ROOT / "examples/daily_extra.csv", 2027)
     assert date(2027, 9, 14) in extra
-    assert parse_dated(read_lines(ROOT / "examples/holidays.txt"), 2027)
+    assert date(2028, 9, 14) not in load_dated(ROOT / "examples/daily_extra.csv", 2028)
+    assert load_dated(ROOT / "examples/holidays.csv", 2027)[date(2027, 2, 14)] == "Team anniversary"
 
 
 def test_config_with_example_files_validates():
     cfg = Config(
         year=2027,
-        daily_quotes_file=ROOT / "examples/daily_quotes.txt",
-        daily_extra_file=ROOT / "examples/daily_extra.txt",
-        holidays_file=ROOT / "examples/holidays.txt",
+        daily_quotes_file=ROOT / "examples/daily_quotes.csv",
+        daily_extra_file=ROOT / "examples/daily_extra.csv",
+        holidays_file=ROOT / "examples/holidays.csv",
     )
     assert cfg.holidays_file is not None

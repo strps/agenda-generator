@@ -124,3 +124,29 @@ def test_yaml_round_trip(panel, tmp_path):
 
 def test_no_appearance_widget(panel):
     assert not [w for w in panel.findChildren(QWidget) if w.objectName() == "appearance"]
+
+
+DATA_FILES = ["daily_quotes_file", "daily_extra_file", "holidays_file"]
+
+
+def test_data_files_use_file_field(panel, tmp_path, monkeypatch):
+    from agenda.gui.style_editors import FileEdit
+
+    f = tmp_path / "h.csv"
+    f.write_text("month,day,name\n2,14,Mine\n", encoding="utf-8")
+    seen = []
+    panel.changed.connect(lambda: seen.append(1))
+    for name in DATA_FILES:
+        ed = panel.editors[name]
+        assert isinstance(ed, FileEdit)
+        assert panel.values()[name] is None
+        seen.clear()
+        monkeypatch.setattr(type(ed), "_pick_file", lambda self: str(f))
+        ed.browse_button.click()
+        assert panel.values()[name] == str(f) and seen
+        ed.clear_button.click()
+        assert panel.values()[name] is None
+    panel.set_values({"holidays_file": f})
+    assert panel.editors["holidays_file"].line.text() == str(f)
+    cfg, msg = panel.config()
+    assert msg == "" and cfg.holidays_file == f

@@ -199,7 +199,10 @@ The UI language (QSettings key "ui_language": system|en|es) is chosen in the sam
 The settings panel section "PDF colors & fonts" (`style:` block) edits the PDF style with editors from
 `agenda/gui/style_editors.py`: `ColorEdit` (text, swatch opening `QColorDialog`, clear button; the
 swatch shows the theme color when the value is empty) and `FontEdit` (built-in names plus Browse for a
-.ttf/.otf). `settings_model` gives them the kinds THEME, COLOR and FONT.
+.ttf/.otf). `settings_model` gives them the kinds THEME, COLOR and FONT. The same module has
+`FileEdit` (path text, Browse opening a CSV `QFileDialog`, clear button), used for every OPT_PATH
+field: the day-extras data files `holidays_file`, `daily_quotes_file` and `daily_extra_file` (CSV,
+parsed by `agenda/day_extras.py`).
 
 Data flow: panel editors -> `values()` -> Config (`theme`, `color_*`, `font_*`) -> `exporter.new_document`
 (palette via `themes.palette_for`, fonts via `register_document_fonts`, carried on the FPDF object) ->

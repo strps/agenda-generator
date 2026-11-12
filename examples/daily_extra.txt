@@ -1,5 +1,0 @@
-# MM-DD text (every year) or YYYY-MM-DD text (that year only).
-01-15 Water the plants
-03-08 Call grandma
-06-30 Quarterly review
-2027-09-14 Dentist at 10:00

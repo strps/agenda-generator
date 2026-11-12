@@ -288,18 +288,18 @@ FIELDS: dict[str, tuple[str, str, str]] = {
     ),
     "daily_quotes_file": (
         "archivo de frases",
-        "Archivo de texto con una frase por línea.",
-        "Archivo de texto opcional con una frase por línea (UTF-8; se ignoran las líneas en "
-        "blanco y las que empiezan con #). Las frases rotan, una por día del año, de forma "
-        "cíclica. Vacío significa las frases incluidas del idioma elegido. Solo se usa con "
-        "daily_quotes.",
+        "Archivo CSV con una frase por fila.",
+        "Archivo CSV opcional (se puede crear en cualquier hoja de cálculo) con una frase por "
+        "fila en la primera columna; una fila de encabezado como 'frase' es opcional. Las "
+        "frases rotan, una por día del año, de forma cíclica. Vacío significa las frases "
+        "incluidas del idioma elegido. Solo se usa con daily_quotes.",
     ),
     "daily_extra_file": (
         "archivo de notas con fecha",
-        "Archivo de notas con fecha mostradas en las páginas diarias.",
-        "Archivo de texto opcional con una entrada con fecha por línea, como 'MM-DD texto' (cada "
-        "año) o 'YYYY-MM-DD texto' (solo ese año); las líneas que empiezan con # son "
-        "comentarios. El texto se muestra en el pie de la página diaria correspondiente. Varias "
+        "Archivo CSV de notas con fecha mostradas en las páginas diarias.",
+        "Archivo CSV opcional (se puede crear en cualquier hoja de cálculo) con las columnas "
+        "mes, día, texto y un año opcional (vacío = cada año); una fila de encabezado es "
+        "opcional. El texto se muestra en el pie de la página diaria correspondiente. Varias "
         "entradas en una misma fecha se unen.",
     ),
     "year": (
@@ -328,11 +328,11 @@ FIELDS: dict[str, tuple[str, str, str]] = {
     ),
     "holidays_file": (
         "archivo de feriados",
-        "Archivo de feriados extra, combinado con la biblioteca.",
-        "Archivo de texto opcional con sus propios feriados, uno por línea como 'MM-DD nombre' "
-        "(cada año) o 'YYYY-MM-DD nombre' (solo ese año); las líneas que empiezan con # son "
-        "comentarios. Se combinan con los feriados del país y se muestran igual en todas las "
-        "páginas.",
+        "Archivo CSV de feriados extra, combinado con la biblioteca.",
+        "Archivo CSV opcional (se puede crear en cualquier hoja de cálculo) con sus propios "
+        "feriados en las columnas mes, día, nombre y un año opcional (vacío = cada año); una "
+        "fila de encabezado es opcional. Se combinan con los feriados del país y se muestran "
+        "igual en todas las páginas.",
     ),
     "theme": (
         "tema",
