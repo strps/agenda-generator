@@ -19,12 +19,13 @@ jobs:
           pip install ".[gui]" pyinstaller
       - name: Build
         run: pyinstaller --noconfirm packaging/agenda-gui.spec
-      - name: Smoke test (imports and data files resolve)
+      - name: Self-test the built exe (fonts, icons, holiday translations, export, GUI)
         shell: pwsh
         run: |
           $env:QT_QPA_PLATFORM = "offscreen"
-          python -c "from agenda.fonts import FONT_DIR; assert FONT_DIR.exists(), FONT_DIR"
-          if (-not (Test-Path dist/AgendaGenerator.exe)) { exit 1 }
+          $p = Start-Process dist/AgendaGenerator.exe -ArgumentList "--self-test" -Wait -PassThru
+          if (Test-Path self-test.log) { Get-Content self-test.log }
+          if ($p.ExitCode -ne 0) { exit 1 }
       - uses: actions/upload-artifact@v4
         with:
           name: AgendaGenerator-windows

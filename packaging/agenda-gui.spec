@@ -1,6 +1,6 @@
 # PyInstaller spec for a one-file Windows build of the GUI.
 # Build from the repo root:  pyinstaller packaging/agenda-gui.spec
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 ROOT = SPECPATH + "/.."
 
@@ -15,6 +15,9 @@ a = Analysis(
         # agenda/fonts.py looks in <package parent>/assets/fonts
         (ROOT + "/assets/fonts", "assets/fonts"),
         (ROOT + "/agenda/gui/icons", "agenda/gui/icons"),
+        # holidays loads its translations (holidays/locale/<lang>/LC_MESSAGES/<CC>.mo) from next
+        # to its own code; collect_submodules only packs the .py files.
+        *collect_data_files("holidays"),
     ],
     hiddenimports=hidden,
     excludes=["tkinter", "pytest"],

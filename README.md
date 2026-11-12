@@ -75,6 +75,12 @@ pyinstaller --noconfirm packaging/agenda-gui.spec
 The program is written to `dist\AgendaGenerator.exe`. The spec is
 [packaging/agenda-gui.spec](packaging/agenda-gui.spec).
 
+`AgendaGenerator.exe --self-test` checks the built program without opening the window: holiday
+names (which need the bundled translations), a full export with the bundled fonts, the preview
+renderer and the GUI icons. It writes the result to `self-test.log` in the current folder and exits
+with code 0 (pass) or 1 (fail). The GitHub build runs it on every exe, so a file left out of the
+bundle fails the build instead of the program on your computer.
+
 ### Holiday, phrase and note files in Excel
 
 Make the sheet with the columns described under [Day extras](#day-extras), then use **File > Save
