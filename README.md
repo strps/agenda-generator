@@ -26,6 +26,62 @@ pip install -e ".[dev]"     # tests and linting
 
 The Inter fonts are bundled in `assets/fonts/`.
 
+## Windows
+
+### Ready-made program (no Python needed)
+
+The GUI is built as a single `AgendaGenerator.exe` by GitHub Actions
+([.github/workflows/windows-exe.yml](.github/workflows/windows-exe.yml)).
+
+1. On GitHub, open **Actions > Windows executable**. Pick the latest successful run, or click
+   **Run workflow** to build one from the current branch. Pushing a tag such as `v1.0` also starts a
+   build.
+2. When the run finishes, download the **AgendaGenerator-windows** artifact at the bottom of the run
+   page. You must be signed in to GitHub, and artifacts expire after 90 days.
+3. Unzip it and double-click `AgendaGenerator.exe`. There is nothing to install.
+
+The program is not signed, so Windows SmartScreen may say "Windows protected your PC". Click
+**More info > Run anyway**. The first start takes a few seconds, because the program unpacks itself.
+
+Choose files with the **Browse...** buttons instead of typing paths. A relative path is resolved
+against the folder the program was started from, which may not be the folder you expect.
+
+### From source
+
+1. Install Python 3.11 or newer from [python.org](https://www.python.org/downloads/windows/). In the
+   installer, check **Add python.exe to PATH**.
+2. In PowerShell, from the project folder:
+
+   ```powershell
+   py -m venv .venv
+   .venv\Scripts\Activate.ps1
+   pip install -e ".[gui]"
+   agenda-gui                  # or agenda-gen for the command line
+   ```
+
+   If PowerShell refuses to run `Activate.ps1`, allow local scripts once with
+   `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or use `.venv\Scripts\activate.bat` in
+   Command Prompt instead.
+
+### Build the .exe yourself
+
+With the virtual environment active:
+
+```powershell
+pip install ".[gui]" pyinstaller
+pyinstaller --noconfirm packaging/agenda-gui.spec
+```
+
+The program is written to `dist\AgendaGenerator.exe`. The spec is
+[packaging/agenda-gui.spec](packaging/agenda-gui.spec).
+
+### Holiday, phrase and note files in Excel
+
+Make the sheet with the columns described under [Day extras](#day-extras), then use **File > Save
+As** and pick **CSV UTF-8 (Comma delimited) (\*.csv)**, so accented letters are kept. Plain **CSV
+(Comma delimited)** also works, including the `;`-separated files that Excel writes on Spanish
+systems.
+
 ## Quick start
 
 ```sh
