@@ -1,0 +1,31 @@
+name: Windows executable
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[gui]" pyinstaller
+      - name: Build
+        run: pyinstaller --noconfirm packaging/agenda-gui.spec
+      - name: Smoke test (imports and data files resolve)
+        shell: pwsh
+        run: |
+          $env:QT_QPA_PLATFORM = "offscreen"
+          python -c "from agenda.fonts import FONT_DIR; assert FONT_DIR.exists(), FONT_DIR"
+          if (-not (Test-Path dist/AgendaGenerator.exe)) { exit 1 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AgendaGenerator-windows
+          path: dist/AgendaGenerator.exe
