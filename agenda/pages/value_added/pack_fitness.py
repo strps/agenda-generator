@@ -12,7 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_label_rule,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -62,7 +62,7 @@ class PackFitness(_Counted):
         self._header(pdf, g, s("fitness.title"))
         x, w = g.safe.x, g.safe.w
         ex, notes = self.layout(g.rows)
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
         date = s("fitness.date")
         draw_label_rule(pdf, x, w, g.row(1), date, pdf.get_string_width(date) + g.gutter)
         for col, span, key in self.COLS:

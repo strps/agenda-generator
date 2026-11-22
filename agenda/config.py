@@ -24,6 +24,7 @@ from agenda.sizes import SIZES, PageSize, parse_size, resolve_size
 QR_MAX_CHARS = 200
 QR_MAX_COUNT = 24
 FILLER_MODES = ("blank", "none")
+FONT_SIZE_MIN, FONT_SIZE_MAX = 50, 200  # font size scale, % of the designed sizes
 
 
 def _parse_months(value: object) -> object:
@@ -810,6 +811,36 @@ class Config(BaseModel):
             "cli": {"type": "str"},
         },
     )  # headings, titles, bold text: "inter" or a .ttf/.otf path
+    font_primary_color: str | None = Field(
+        None,
+        description="Text color of the primary font (empty = default).",
+        json_schema_extra={
+            "detail": (
+                "Color of the text drawn with the primary font (headings, titles and bold text). "
+                "Text that uses the accent or muted color, such as month "
+                "titles, holidays and small labels, keeps that color. Hex "
+                "color such as #1e6fd9 (also #abc or without the #). Empty = "
+                "the default text color (the ink color)."
+            ),
+            "cli": {"type": "str"},
+        },
+    )
+    font_primary_size: int = Field(
+        100,
+        ge=FONT_SIZE_MIN,
+        le=FONT_SIZE_MAX,
+        description="Size of the primary font, in % of the default.",
+        json_schema_extra={
+            "detail": (
+                "Scales every text drawn with the primary font (headings, titles and bold text), in "
+                "percent of the designed sizes: 100 (the default) keeps them, "
+                "90 is a little smaller, 120 a little larger (50-200). Pages "
+                "keep their layout, so text that no longer fits its box is "
+                "shortened with an ellipsis."
+            ),
+            "cli": {},
+        },
+    )
     font_secondary: str = Field(
         "inter",
         description="Font of body text, labels and numbers.",
@@ -824,6 +855,36 @@ class Config(BaseModel):
             "cli": {"type": "str"},
         },
     )  # body text, labels, numbers
+    font_secondary_color: str | None = Field(
+        None,
+        description="Text color of the secondary font (empty = default).",
+        json_schema_extra={
+            "detail": (
+                "Color of the text drawn with the secondary font (body text, labels and numbers). "
+                "Text that uses the accent or muted color, such as month "
+                "titles, holidays and small labels, keeps that color. Hex "
+                "color such as #1e6fd9 (also #abc or without the #). Empty = "
+                "the default text color (the ink color)."
+            ),
+            "cli": {"type": "str"},
+        },
+    )
+    font_secondary_size: int = Field(
+        100,
+        ge=FONT_SIZE_MIN,
+        le=FONT_SIZE_MAX,
+        description="Size of the secondary font, in % of the default.",
+        json_schema_extra={
+            "detail": (
+                "Scales every text drawn with the secondary font (body text, labels and numbers), in "
+                "percent of the designed sizes: 100 (the default) keeps them, "
+                "90 is a little smaller, 120 a little larger (50-200). Pages "
+                "keep their layout, so text that no longer fits its box is "
+                "shortened with an ellipsis."
+            ),
+            "cli": {},
+        },
+    )
     title_padding: float = Field(
         2.0,
         ge=0,
@@ -929,6 +990,8 @@ class Config(BaseModel):
         "color_tint",
         "color_weekend_fill",
         "color_holiday_fill",
+        "font_primary_color",
+        "font_secondary_color",
     )
     @classmethod
     def _check_color(cls, v: str | None, info: ValidationInfo) -> str | None:

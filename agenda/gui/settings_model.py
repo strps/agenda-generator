@@ -54,7 +54,7 @@ _SPECIAL = {
     "theme": THEME,
     "font_primary": FONT,
     "font_secondary": FONT,
-    **{n: COLOR for n in Config.model_fields if n.startswith("color_")},
+    **{n: COLOR for n in Config.model_fields if n.startswith("color_") or n.endswith("_color")},
 }
 
 

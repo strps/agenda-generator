@@ -12,7 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_label_rule,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -64,7 +64,7 @@ class PackEntrepreneur(_Counted):
         self._header(pdf, g, s("entre.title"))
         x, w = g.safe.x, g.safe.w
         metric, pipe, dec = self.layout(g.rows)
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
         goal = s("entre.goal")
         draw_label_rule(pdf, x, w, g.row(1), goal, pdf.get_string_width(goal) + g.gutter)
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from fpdf import FPDF
 
 from agenda import tokens
-from agenda.draw import color, draw_checkbox, font
+from agenda.draw import color, draw_checkbox, set_font
 from agenda.grid import Grid
 
 
@@ -21,7 +21,7 @@ def _draw_task_list(
     task_w = dx - g.gutter - x
     box = min(box, g.baseline - 1.0)
     pdf.set_text_color(*color(pdf, "muted"))
-    pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+    set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
     pdf.set_xy(x, g.row(row))
     pdf.cell(task_w, g.baseline, labels[0])
     pdf.set_xy(dx, g.row(row))

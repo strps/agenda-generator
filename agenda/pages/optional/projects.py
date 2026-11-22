@@ -7,7 +7,7 @@ from fpdf import FPDF
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, draw_label_rule, font
+from agenda.draw import color, draw_label_rule, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -57,14 +57,14 @@ class Projects(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("projects.title"))
 
         tasks, notes = self.layout(g.rows)
         x, w = g.safe.x, g.safe.w
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
         draw_label_rule(pdf, x, w, g.row(1), s("projects.name"), self.LABEL_W)
         draw_label_rule(pdf, x, w, g.row(2), s("projects.objective"), self.LABEL_W)
         span = g.columns // 2
@@ -79,7 +79,7 @@ class Projects(BasePage):
 
         nr = tr + tasks + 2
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(x, g.row(nr))
         pdf.cell(w, g.baseline, s("projects.notes"))
         pdf.set_draw_color(*color(pdf, "line"))

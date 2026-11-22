@@ -150,3 +150,18 @@ def test_data_files_use_file_field(panel, tmp_path, monkeypatch):
     assert panel.editors["holidays_file"].line.text() == str(f)
     cfg, msg = panel.config()
     assert msg == "" and cfg.holidays_file == f
+
+
+def test_font_color_and_size_editors(panel):
+    from agenda.gui.style_editors import ColorEdit
+
+    for role in ("primary", "secondary"):
+        col, size = panel.editors[f"font_{role}_color"], panel.editors[f"font_{role}_size"]
+        assert isinstance(col, ColorEdit) and T.group_of(f"font_{role}_color") == T.STYLING
+        assert size.suffix() == " %" and (size.minimum(), size.maximum()) == (50, 200)
+        assert size.value() == 100 and col.value() is None
+    ink = themes.rgb_to_hex(themes.palette_for("minimal")["ink"])
+    assert panel.editors["font_primary_color"].swatch_color() == ink  # empty = the ink color
+    panel.set_values({"font_primary_color": "#1e6fd9", "font_secondary_size": 120})
+    cfg, msg = panel.config()
+    assert msg == "" and cfg.font_primary_color == "#1e6fd9" and cfg.font_secondary_size == 120

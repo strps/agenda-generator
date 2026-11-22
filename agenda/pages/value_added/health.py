@@ -16,7 +16,7 @@ from agenda.draw import (
     draw_checkbox,
     draw_circle,
     draw_mood,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -73,7 +73,7 @@ class HealthTracker(BasePage):
         month, year = ctx["month"], ctx["year"]
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("health.title", month=s.month_name(month), year=year))
@@ -88,7 +88,7 @@ class HealthTracker(BasePage):
 
         # mood legend: label, then the five faces with their level numbers
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
         ly = g.row(0)
         pdf.set_xy(x, ly)
         pdf.cell(name_w, g.baseline * self.LEGEND_ROWS, s("health.mood"))

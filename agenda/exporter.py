@@ -11,8 +11,9 @@ from fpdf import FPDF
 
 from agenda import __version__, fonts, themes
 from agenda.config import Config
-from agenda.draw import color, draw_debug_grid, font
+from agenda.draw import color, draw_debug_grid, set_font
 from agenda.grid import Grid
+from agenda.pdfdoc import AgendaPDF
 
 if TYPE_CHECKING:
     from agenda.assembler import PagePlan
@@ -71,7 +72,7 @@ def register_document_fonts(pdf: FPDF, cfg: Config, font_dir: str | Path = FONT_
 
 def new_document(cfg: Config, font_dir: str | Path = FONT_DIR) -> FPDF:
     """Create an empty FPDF in mm sized from `cfg.page_dimensions`, no auto page breaks."""
-    pdf = FPDF(unit="mm", format=tuple(cfg.page_dimensions))
+    pdf = AgendaPDF(unit="mm", format=tuple(cfg.page_dimensions))
     pdf.set_auto_page_break(False)
     pdf.set_margins(0, 0, 0)
     pdf.set_title(f"Agenda {cfg.year}")
@@ -84,6 +85,19 @@ def new_document(cfg: Config, font_dir: str | Path = FONT_DIR) -> FPDF:
         if (value := getattr(cfg, name)) is not None
     }
     pdf.agenda_palette = themes.palette_for(cfg.theme, overrides)
+    pdf.agenda_ink = tuple(pdf.agenda_palette["ink"])
+    pdf.agenda_font_scale = {
+        "primary": cfg.font_primary_size / 100,
+        "secondary": cfg.font_secondary_size / 100,
+    }
+    pdf.agenda_font_colors = {
+        role: themes.hex_to_rgb(value)
+        for role, value in (
+            ("primary", cfg.font_primary_color),
+            ("secondary", cfg.font_secondary_color),
+        )
+        if value is not None
+    }
     return pdf
 
 
@@ -148,7 +162,7 @@ def _draw_number(pdf: FPDF, cfg: Config, grid: Grid, entry_number: int, total: i
         y = safe.y2 - h
     else:
         y = safe.y2 + (grid.page_h - safe.y2 - h) / 2
-    pdf.set_font(font(pdf, "secondary"), "", 7)
+    set_font(pdf, "secondary", "", 7)
     pdf.set_text_color(*color(pdf, "muted"))
     pdf.set_xy(safe.x, y)
     pdf.cell(safe.w, h, text, align=align_for(grid.side, cfg.page_number_position))

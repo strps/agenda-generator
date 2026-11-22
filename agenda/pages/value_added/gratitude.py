@@ -12,7 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_label_rule,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -70,12 +70,12 @@ class Gratitude(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("gratitude.title"))
 
-        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
         label = s("gratitude.date")
         dx, dw = g.col(g.columns - self.DATE_COLS, self.DATE_COLS)
         draw_label_rule(pdf, dx, dw, g.row(1), label, pdf.get_string_width(label) + g.gutter)
@@ -91,10 +91,10 @@ class Gratitude(BasePage):
                 else ("gratitude.best" if b == self.GRATEFUL_BLOCKS else "gratitude.intention")
             )
             pdf.set_text_color(*color(pdf, "muted"))
-            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(x, g.row(top))
             pdf.cell(g.safe.w, g.baseline, s(key))
-            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+            set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
             pdf.set_draw_color(*color(pdf, "line"))
             pdf.set_line_width(tokens.STROKE_HAIRLINE)
             for k in range(n):

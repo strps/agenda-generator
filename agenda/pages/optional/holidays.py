@@ -7,7 +7,7 @@ from fpdf import FPDF
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, font, merged_holidays
+from agenda.draw import color, merged_holidays, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -52,7 +52,7 @@ class Holidays(BasePage):
             found = []
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, f"{s('holidays.title')} {config.year} {config.holiday_country}".strip())
@@ -72,13 +72,13 @@ class Holidays(BasePage):
                 continue
             d, name = found[i]
             pdf.set_text_color(*color(pdf, "muted"))
-            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
             mon = s.month_name(d.month, short=True)
             when = f"{d.day} {mon.lower()}" if config.language == "es" else f"{mon} {d.day}"
             pdf.set_xy(x, top + (rh - 1) * g.baseline)
             pdf.cell(date_w, g.baseline, when)
             pdf.set_text_color(*color(pdf, "ink"))
-            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[1])
+            set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[1])
             nw = col_w - date_w - g.gutter
             pdf.set_xy(x + date_w + g.gutter, top + (rh - 1) * g.baseline)
             pdf.cell(nw, g.baseline, _ellipsize(pdf, name, nw))

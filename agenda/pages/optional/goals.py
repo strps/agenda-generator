@@ -7,7 +7,7 @@ from fpdf import FPDF
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, draw_checkbox, draw_label_rule, font
+from agenda.draw import color, draw_checkbox, draw_label_rule, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -48,7 +48,7 @@ class Goals(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("goals.title"))
@@ -59,9 +59,9 @@ class Goals(BasePage):
         box = min(self.BOX, g.baseline - 1.0)
         for i in range(goals):
             r = i * block
-            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
             draw_label_rule(pdf, x, w, g.row(r + 1), s("goals.goal", n=i + 1), self.LABEL_W)
-            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+            set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
             for k in range(steps):
                 top, y = g.row(r + 1 + k), g.row(r + 2 + k)
                 draw_checkbox(pdf, x, top + (g.baseline - box) / 2, box)

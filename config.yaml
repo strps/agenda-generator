@@ -64,7 +64,11 @@ pages:
 #   ink: "#1a1a1a"                  # ink, muted, line, accent, tint, weekend_fill, holiday_fill
 #   accent: "#1e6fd9"               # empty = the theme's color
 #   primary_font: inter             # inter or a .ttf/.otf path (headings, bold)
+#   primary_color: "#1e6fd9"        # text color of the primary font (empty = ink)
+#   primary_size: 100               # % of the designed sizes, 50-200
 #   secondary_font: inter           # body text, labels, numbers
+#   secondary_color: ""             # text color of the secondary font
+#   secondary_size: 100
 #   title_padding: 2                # mm of fill on each side of a title background
 # imposition: false
 # crop_marks: false

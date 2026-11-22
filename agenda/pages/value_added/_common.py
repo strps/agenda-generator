@@ -8,7 +8,7 @@ from agenda import tokens
 from agenda.config import Config
 from agenda.draw import (
     color,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.pages.base import BasePage, Ctx
@@ -43,7 +43,7 @@ class _Counted(BasePage):
     def _header(pdf: FPDF, g: Grid, title: str) -> None:
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         pdf.set_xy(g.header.x, g.header.y)
         pdf.cell(g.header.w, g.header.h, title)
 
@@ -51,7 +51,7 @@ class _Counted(BasePage):
     def _label(pdf: FPDF, g: Grid, x: float, w: float, row: int, text: str) -> None:
         """Small bold muted label whose text cell starts at ``g.row(row)``."""
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(x, g.row(row))
         pdf.cell(w, g.baseline, text)
 

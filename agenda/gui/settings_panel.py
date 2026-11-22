@@ -114,7 +114,7 @@ class SettingsPanel(QFrame):
             self.tab_list.addItem(header)
             self._header_items.append(header)
             for key in keys:
-                self._build_tab(key, T.section_label(key), (key,))
+                self._build_tab(key, T.section_label(key), T.tab_sections(key))
         self.sections[T.GLOBAL].set_expanded(True)
         for key in (T.GLOBAL, T.PADDING, T.MONTH_START, T.MONTH_END, T.STYLING):
             self.sections[key].toggle_button.setToolTip(help_text.TOOLTIPS[f"{key}_section"])
@@ -139,9 +139,12 @@ class SettingsPanel(QFrame):
                 form.setRowVisible(w, False)
             else:
                 shown.add(T.group_of(spec.name))
-        for key in T.TEMPLATE_KEYS:  # alone in its tab: no arrow, the settings always open
+        for key in T.TEMPLATE_KEYS:  # no arrows in a template tab: the settings always open
+            subs = T.tab_sections(key)[1:]  # page-less sections sharing the tab (Month pages)
             self.sections[key].set_static(key in shown)
-            if key not in shown:
+            for sub in subs:
+                self.sections[sub].set_static(sub in shown)
+            if key not in shown and not any(sub in shown for sub in subs):
                 hint = QLabel(tr("settings.no_options"))
                 hint.setObjectName("tab_hint")
                 hint.setWordWrap(True)
@@ -269,7 +272,8 @@ class SettingsPanel(QFrame):
         for spec in self.specs:
             if spec.kind == M.COLOR:
                 w = self.editors[spec.name]
-                w.set_fallback(palette[spec.name.removeprefix("color_")])  # type: ignore[attr-defined]
+                role = "ink" if spec.name.startswith("font_") else spec.name.removeprefix("color_")
+                w.set_fallback(palette[role])  # type: ignore[attr-defined]
 
     def _refresh_pad_uses(self) -> None:
         """Badge, ring and tooltip of the sections whose page is used as padding or filler."""
@@ -321,6 +325,8 @@ class SettingsPanel(QFrame):
             w.setRange(int(spec.minimum) if spec.minimum is not None else -_BIG, _BIG)
             if spec.maximum is not None:
                 w.setMaximum(int(spec.maximum))
+            if spec.name.endswith("_size"):  # font size scale
+                w.setSuffix(" %")
             w.valueChanged.connect(self._edited)
         elif k == M.FLOAT:
             w = QDoubleSpinBox()

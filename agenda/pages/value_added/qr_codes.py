@@ -12,7 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_label_rule,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -91,14 +91,14 @@ class QRCodes(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("qr.title"))
 
         c = g.content
         lay = self.layout(c.w, c.h, g.baseline, g.gutter)
-        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
         label_w = pdf.get_string_width(s("qr.label")) + g.gutter
         for k, text in enumerate(ctx["urls"]):
             r, col = divmod(k, lay.cols)
@@ -115,7 +115,7 @@ class QRCodes(BasePage):
                         pdf.rect(x0 + j * mod, y0 + i * mod, mod, mod, style="F")
             cap = y + lay.side
             pdf.set_text_color(*color(pdf, "muted"))
-            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+            set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(x, cap)
             pdf.cell(lay.cell_w, g.baseline, _fit(pdf, text, lay.cell_w))
             draw_label_rule(pdf, x, lay.cell_w, cap + 2 * g.baseline, s("qr.label"), label_w)

@@ -12,7 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_checkbox,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -105,7 +105,7 @@ class ExtrasGuide(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("extras.title"))
@@ -119,13 +119,13 @@ class ExtrasGuide(BasePage):
             top = 1 + k * self.TIP_ROWS
             y = g.row(top)
             pdf.set_text_color(*color(pdf, "accent"))
-            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(g.safe.x, y)
             pdf.cell(num_w, g.baseline, str(k + 1))
             self._icon(pdf, key, g.safe.x + num_w, y, icon)
             pdf.set_text_color(*color(pdf, "ink"))
             pdf.set_xy(text_x, y)
-            pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+            set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
             lines = pdf.multi_cell(
                 text_w, g.baseline, s(f"extras.{key}"), dry_run=True, output="LINES"
             )
@@ -138,7 +138,7 @@ class ExtrasGuide(BasePage):
         if lay.supply_rows:
             top = 1 + lay.tips * self.TIP_ROWS
             pdf.set_text_color(*color(pdf, "muted"))
-            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(g.safe.x, g.row(top))
             pdf.cell(g.safe.w, g.baseline, s("extras.supplies"))
             pdf.set_draw_color(*color(pdf, "line"))

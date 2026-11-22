@@ -13,7 +13,7 @@ from agenda.draw import (
     color,
     draw_circle,
     draw_label_rule,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -85,13 +85,13 @@ class Challenge30(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("challenge.title"))
 
         x, w = g.safe.x, g.safe.w
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
         label_w = (
             max(pdf.get_string_width(s(k)) for k in ("challenge.mine", "challenge.why")) + g.gutter
         )
@@ -103,7 +103,7 @@ class Challenge30(BasePage):
         cw = (w - (lay.cols - 1) * g.gutter) / lay.cols
         ch = lay.cell_rows * g.baseline
         d = g.baseline * self.CIRCLE_RATIO
-        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
         for k in range(self.DAYS):
             r, c = divmod(k, lay.cols)
             cx = x + c * (cw + g.gutter)
@@ -118,7 +118,7 @@ class Challenge30(BasePage):
 
         top += 1 + lay.grid_rows * lay.cell_rows + 1
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(x, g.row(top))
         pdf.cell(w, g.baseline, s("challenge.reflection"))
         pdf.set_draw_color(*color(pdf, "line"))

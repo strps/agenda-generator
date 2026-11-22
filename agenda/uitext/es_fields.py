@@ -389,6 +389,22 @@ FIELDS: dict[str, tuple[str, str, str]] = {
         "(MyFont-Regular.ttf -> MyFont-Bold.ttf); los estilos que falten usan el archivo "
         "regular. La fuente debe contener los caracteres del idioma de la agenda.",
     ),
+    "font_primary_color": (
+        "color de la fuente principal",
+        "Color del texto de la fuente principal (vacío = predeterminado).",
+        "Color del texto dibujado con la fuente principal (encabezados, títulos y texto en negrita). El texto que usa el color de "
+        "acento o el atenuado, como los títulos de mes, los feriados y las etiquetas pequeñas, "
+        "conserva ese color. Color hexadecimal como #1e6fd9 (también #abc o sin el #). Vacío = "
+        "el color de texto predeterminado (el color de tinta).",
+    ),
+    "font_primary_size": (
+        "tamaño de la fuente principal",
+        "Tamaño de la fuente principal, en % del predeterminado.",
+        "Escala todo el texto dibujado con la fuente principal (encabezados, títulos y texto en negrita), en porcentaje de los tamaños "
+        "diseñados: 100 (por defecto) los mantiene, 90 es un poco más pequeño, 120 un poco más "
+        "grande (50-200). Las páginas mantienen su diseño, así que el texto que ya no cabe en "
+        "su recuadro se acorta con puntos suspensivos.",
+    ),
     "font_secondary": (
         "fuente secundaria",
         "Fuente del texto del cuerpo, etiquetas y números.",
@@ -397,6 +413,22 @@ FIELDS: dict[str, tuple[str, str, str]] = {
         "junto al archivo (MyFont-Regular.ttf -> MyFont-Italic.ttf); los estilos que falten "
         "usan el archivo regular. La fuente debe contener los caracteres del idioma de la "
         "agenda.",
+    ),
+    "font_secondary_color": (
+        "color de la fuente secundaria",
+        "Color del texto de la fuente secundaria (vacío = predeterminado).",
+        "Color del texto dibujado con la fuente secundaria (texto del cuerpo, etiquetas y números). El texto que usa el color de "
+        "acento o el atenuado, como los títulos de mes, los feriados y las etiquetas pequeñas, "
+        "conserva ese color. Color hexadecimal como #1e6fd9 (también #abc o sin el #). Vacío = "
+        "el color de texto predeterminado (el color de tinta).",
+    ),
+    "font_secondary_size": (
+        "tamaño de la fuente secundaria",
+        "Tamaño de la fuente secundaria, en % del predeterminado.",
+        "Escala todo el texto dibujado con la fuente secundaria (texto del cuerpo, etiquetas y números), en porcentaje de los tamaños "
+        "diseñados: 100 (por defecto) los mantiene, 90 es un poco más pequeño, 120 un poco más "
+        "grande (50-200). Las páginas mantienen su diseño, así que el texto que ya no cabe en "
+        "su recuadro se acorta con puntos suspensivos.",
     ),
     "title_padding": (
         "margen lateral de títulos",
@@ -450,6 +482,7 @@ FIELDS: dict[str, tuple[str, str, str]] = {
 SECTIONS: dict[str, str] = {
     "global": "Global",
     "padding": "Relleno",
+    "monthly": "Páginas del mes",
     "month_start": "Inicio de cada mes",
     "daily": "Páginas diarias",
     "weekly": "Páginas semanales",

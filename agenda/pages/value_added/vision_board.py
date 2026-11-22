@@ -11,7 +11,7 @@ from agenda.catalog import register
 from agenda.config import Config
 from agenda.draw import (
     color,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -74,7 +74,7 @@ class VisionBoard(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("vision.title"))
@@ -82,7 +82,7 @@ class VisionBoard(BasePage):
         x, w = g.safe.x, g.safe.w
         lay = self.layout(g.rows, w / g.baseline)
         pdf.set_text_color(*color(pdf, "ink"))
-        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[2])
+        set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[2])
         pdf.set_xy(x, g.row(0))
         pdf.cell(w, g.baseline * self.INTRO_ROWS, s("vision.subtitle", year=config.year))
 
@@ -93,7 +93,7 @@ class VisionBoard(BasePage):
         pdf.set_line_width(tokens.STROKE_REGULAR)
         pdf.rect(x, wy, w, wh)
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(x + tokens.GUTTER, wy)
         pdf.cell(w - 2 * tokens.GUTTER, g.baseline * 2, s("vision.word"))
         pdf.set_draw_color(*color(pdf, "line"))

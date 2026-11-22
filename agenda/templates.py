@@ -14,6 +14,7 @@ from agenda import uitext
 
 GLOBAL = "global"
 PADDING = "padding"
+MONTHLY = "monthly"
 MONTH_START = "month_start"
 MONTH_END = "month_end"
 STYLING = "styling"
@@ -30,6 +31,7 @@ class SectionSpec:
     page_id: str | None = None
     enable: str = "none"  # "planner" | "page" | "count" | "none"
     count_field: str | None = None  # Config field for enable="count" (on = value > 0)
+    tab: str | None = None  # page-less section shown in this template's GUI tab (None = Global)
 
 
 def _page(page_id: str, label: str) -> SectionSpec:
@@ -46,8 +48,12 @@ SECTIONS: tuple[SectionSpec, ...] = (
         "padding",
         {"pad_with": "pad_with", "extra_padding": "extra_padding"},
     ),
-    # Per-month pages (BasePage.per_month) printed inside each month, picked by checkboxes.
-    SectionSpec(MONTH_START, "Start of each month", MONTH_START, {"pages": "month_start_pages"}),
+    # The monthly calendar page: always printed, so no enable box. Its GUI tab also holds the
+    # per-month pages (BasePage.per_month) printed inside each month, picked by checkboxes.
+    SectionSpec(MONTHLY, "Month pages", None, page_id="monthly"),
+    SectionSpec(
+        MONTH_START, "Start of each month", MONTH_START, {"pages": "month_start_pages"}, tab=MONTHLY
+    ),
     SectionSpec(
         "daily",
         "Day pages",
@@ -73,7 +79,9 @@ SECTIONS: tuple[SectionSpec, ...] = (
         page_id="weekly",
         enable="planner",
     ),
-    SectionSpec(MONTH_END, "End of each month", MONTH_END, {"pages": "month_end_pages"}),
+    SectionSpec(
+        MONTH_END, "End of each month", MONTH_END, {"pages": "month_end_pages"}, tab=MONTHLY
+    ),
     SectionSpec(
         "notes",
         "Notes",
@@ -161,7 +169,11 @@ SECTIONS: tuple[SectionSpec, ...] = (
             "weekend_fill": "color_weekend_fill",
             "holiday_fill": "color_holiday_fill",
             "primary_font": "font_primary",
+            "primary_color": "font_primary_color",
+            "primary_size": "font_primary_size",
             "secondary_font": "font_secondary",
+            "secondary_color": "font_secondary_color",
+            "secondary_size": "font_secondary_size",
             "title_padding": "title_padding",
         },
     ),
@@ -184,15 +196,15 @@ def _keys(start: str, stop: str) -> tuple[str, ...]:
 # Settings tab-list grouping (GUI only; the YAML layout follows SECTIONS).
 GROUPS: tuple[GroupSpec, ...] = (
     GroupSpec("general", "General", (GLOBAL, PADDING, STYLING)),
-    GroupSpec("planner", "Planner pages", _keys(MONTH_START, "notes")),
+    GroupSpec("planner", "Planner pages", _keys(MONTHLY, "notes")),
     GroupSpec("optional", "Optional pages", _keys("contacts", "todo")),
     GroupSpec("value_added", "Value-added pages", _keys("niche_entrepreneur", "quotes")),
 )
 
 TEMPLATE_KEYS: tuple[str, ...] = tuple(s.key for s in SECTIONS if s.page_id)
-# The GUI's "Whole agenda" tab (key GLOBAL) holds the sections without a page of their own; every
-# template section gets a tab of its own.
-WHOLE_SECTIONS: tuple[str, ...] = tuple(s.key for s in SECTIONS if not s.page_id)
+# The GUI's "Whole agenda" tab (key GLOBAL) holds the sections that apply to the whole agenda
+# (no page and no ``tab``); every template section gets a tab of its own (see ``tab_sections``).
+WHOLE_SECTIONS: tuple[str, ...] = tuple(s.key for s in SECTIONS if not s.page_id and not s.tab)
 
 _BY_KEY = {s.key: s for s in SECTIONS}
 
@@ -210,9 +222,19 @@ def section_label(key: str) -> str:
 
 
 def tab_of(key: str) -> str:
-    """GUI tab holding section ``key``: the template itself, or GLOBAL for the whole agenda."""
-    section(key)
-    return key if key in TEMPLATE_KEYS else GLOBAL
+    """GUI tab holding section ``key``: the template itself, its ``tab``, or GLOBAL."""
+    s = section(key)
+    return key if key in TEMPLATE_KEYS else (s.tab or GLOBAL)
+
+
+def tab_sections(tab: str) -> tuple[str, ...]:
+    """Sections shown in GUI tab ``tab``: GLOBAL -> WHOLE_SECTIONS; a template -> itself first,
+    then the page-less sections that name it as their ``tab``, in ``SECTIONS`` order."""
+    if tab == GLOBAL:
+        return WHOLE_SECTIONS
+    if tab not in TEMPLATE_KEYS:
+        raise KeyError(f"unknown tab {tab!r}")
+    return (tab, *(s.key for s in SECTIONS if s.tab == tab))
 
 
 def tab_groups() -> list[tuple[str, tuple[str, ...]]]:

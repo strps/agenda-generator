@@ -12,7 +12,7 @@ from agenda.catalog import register
 from agenda.config import Config
 from agenda.draw import (
     color,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -87,7 +87,7 @@ class IdeaMap(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("ideas.title"))
@@ -117,6 +117,6 @@ class IdeaMap(BasePage):
         y = cy + cry * self.RULE_Y
         pdf.line(cx - crx * self.RULE_W, y, cx + crx * self.RULE_W, y)
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(cx - crx, cy - g.baseline)
         pdf.cell(2 * crx, g.baseline, s("ideas.main"), align="C")

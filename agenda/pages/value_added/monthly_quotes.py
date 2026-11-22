@@ -9,7 +9,7 @@ from agenda.catalog import register
 from agenda.config import Config
 from agenda.draw import (
     color,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -58,7 +58,7 @@ class MonthlyQuotes(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("quotes.title", month=s.month_name(ctx["month"]), year=ctx["year"]))
@@ -70,7 +70,7 @@ class MonthlyQuotes(BasePage):
         text = s(f"quotes.{ctx['month']}")
         size = self.QUOTE_SIZES[-1]
         for size in self.QUOTE_SIZES:
-            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[size])
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[size])
             lines = pdf.multi_cell(w, line_h, text, dry_run=True, output="LINES")
             if len(lines) <= max_lines:
                 break
@@ -82,7 +82,7 @@ class MonthlyQuotes(BasePage):
             pdf.cell(w, line_h, line)
 
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(x, g.row(q_rows))
         pdf.cell(w, g.baseline, s("quotes.reflection"))
         pdf.set_draw_color(*color(pdf, "line"))

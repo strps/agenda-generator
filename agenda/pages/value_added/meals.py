@@ -12,7 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_checkbox,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -66,7 +66,7 @@ class Meals(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("meals.title"))
@@ -78,11 +78,11 @@ class Meals(BasePage):
         row_h = day_rows * g.baseline
 
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
         for i, key in enumerate(self.MEALS):
             pdf.set_xy(gx + i * cell_w, g.row(0))
             pdf.cell(cell_w, g.baseline, s(f"meals.{key}"), align="C")
-        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
         pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         for d, name in enumerate(s.weekday_names(config.week_start, "short")):
@@ -94,7 +94,7 @@ class Meals(BasePage):
 
         top = 1 + self.DAYS * day_rows + 1
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_xy(x, g.row(top))
         pdf.cell(g.safe.w, g.baseline, s("meals.groceries"))
         box = min(self.BOX, g.baseline - 1.0)

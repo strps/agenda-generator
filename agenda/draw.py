@@ -29,7 +29,7 @@ def _ruler_ticks(pdf: FPDF, length: float, vertical: bool) -> None:
     pdf.set_draw_color(*_RULER)
     pdf.set_text_color(*_RULER)
     pdf.set_line_width(0.1)
-    pdf.set_font(font(pdf, "secondary"), "", 4)
+    set_font(pdf, "secondary", "", 4)
     for mm in range(int(length) + 1):
         size = 3.0 if mm % 10 == 0 else 2.0 if mm % 5 == 0 else 1.0
         if vertical:
@@ -89,7 +89,7 @@ def draw_debug_grid(pdf: FPDF, grid: Grid, page_no: int | None = None) -> None:
     _ruler_ticks(pdf, w, vertical=False)
     _ruler_ticks(pdf, h, vertical=True)
     pdf.set_text_color(*_RULER)
-    pdf.set_font(font(pdf, "primary"), "B", 6)
+    set_font(pdf, "primary", "B", 6)
     label = f"{'p.' + str(page_no) + ' ' if page_no else ''}{grid.side} page  inner {grid.inner:g} / outer {grid.outer:g} mm"
     pdf.text(s.x + 6, s.y + 4, label)
     pdf.set_draw_color(0, 0, 0)
@@ -120,11 +120,11 @@ def draw_mini_month(
     col_w = rect.w / 7
     pdf.c_margin = 0
     pdf.set_text_color(*color(pdf, "accent"))
-    pdf.set_font(font(pdf, "primary"), "B", title_pt)
+    set_font(pdf, "primary", "B", title_pt)
     pdf.set_xy(rect.x, rect.y)
     pdf.cell(rect.w, line_h, s.month_name(month))
     pdf.set_text_color(*color(pdf, "muted"))
-    pdf.set_font(font(pdf, "secondary"), "", body_pt)
+    set_font(pdf, "secondary", "", body_pt)
     for i, name in enumerate(s.weekday_names(week_start, "letter")):
         pdf.set_xy(rect.x + i * col_w, rect.y + line_h)
         pdf.cell(col_w, line_h, name, align="C")
@@ -181,6 +181,19 @@ def switch_page(pdf: FPDF, n: int) -> None:
 def font(pdf: FPDF, role: str) -> str:
     """Font family for ``role`` ("primary" = headings/bold, "secondary" = body) registered on ``pdf``."""
     return getattr(pdf, "agenda_fonts", {}).get(role, "Inter")
+
+
+def set_font(pdf: FPDF, role: str, style: str = "", size: float = 0) -> None:
+    """Select the font of ``role`` in ``style`` at ``size`` pt times the role's size scale.
+
+    Every page picks its font through here, so ``font_primary_size``/``font_secondary_size``
+    and the per-font text colors (``pdfdoc.AgendaPDF``) apply everywhere.
+    """
+    scale = getattr(pdf, "agenda_font_scale", {}).get(role, 1.0)
+    pdf.set_font(font(pdf, role), style, size * scale)
+    use_role = getattr(pdf, "use_font_role", None)
+    if use_role is not None:
+        use_role(role)
 
 
 _DEFAULT = tokens.COLORS  # default (minimal) palette for documents without ``agenda_palette``

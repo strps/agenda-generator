@@ -20,7 +20,7 @@ def test_partition_and_page_ids():
     union = [f for s in T.SECTIONS for f in T.fields_of(s.key, Config.model_fields)]
     assert sorted(union) == sorted(Config.model_fields)
     noncore = [r["id"] for r in catalog_rows() if r["category"] != "core"]
-    core = ("daily", "weekly", "notes", "contacts")
+    core = ("monthly", "daily", "weekly", "notes", "contacts")
     assert sorted(T.TEMPLATE_KEYS) == sorted((*core, *noncore))  # every optional/value-added page
 
 
@@ -131,20 +131,29 @@ def test_groups_partition_sections():
 
 
 def test_tabs():
-    assert T.WHOLE_SECTIONS == (T.GLOBAL, T.PADDING, T.MONTH_START, T.MONTH_END, T.STYLING)
+    assert T.WHOLE_SECTIONS == (T.GLOBAL, T.PADDING, T.STYLING)
     tabbed = [k for _, keys in T.tab_groups() for k in keys]
     assert sorted(tabbed) == sorted(T.TEMPLATE_KEYS) and len(tabbed) == len(set(tabbed))
     assert [g for g, _ in T.tab_groups()] == ["planner", "optional", "value_added"]
-    assert T.tab_groups()[0][1] == ("daily", "weekly", "notes")
+    assert T.tab_groups()[0][1] == (T.MONTHLY, "daily", "weekly", "notes")
     assert T.tab_of("daily") == "daily"
     for key in T.WHOLE_SECTIONS:
         assert T.tab_of(key) == T.GLOBAL
+    assert T.tab_of(T.MONTH_START) == T.tab_of(T.MONTH_END) == T.MONTHLY
+    assert T.tab_sections(T.GLOBAL) == T.WHOLE_SECTIONS
+    assert T.tab_sections("daily") == ("daily",)
+    assert T.tab_sections(T.MONTHLY) == (T.MONTHLY, T.MONTH_START, T.MONTH_END)
+    # every section is shown in exactly one tab
+    shown = [k for tab in (T.GLOBAL, *T.TEMPLATE_KEYS) for k in T.tab_sections(tab)]
+    assert sorted(shown) == sorted(s.key for s in T.SECTIONS)
     with pytest.raises(KeyError):
         T.tab_of("nope")
+    with pytest.raises(KeyError):
+        T.tab_sections(T.MONTH_START)
 
 
 def test_month_sections():
-    """Per-month pages are those with one instance per month; month placement is in Planner pages."""
+    """Per-month pages are those with one instance per month; month placement is in the Month pages tab."""
     cfg = Config()
     monthly = {
         r["id"]
@@ -155,7 +164,7 @@ def test_month_sections():
     assert {p for p in monthly if get_page(p).per_month} == monthly
     assert {"budget", "habits", "monthly_review", "health", "quotes"} == monthly
     planner = next(g.sections for g in T.GROUPS if g.key == "planner")
-    assert planner[0] == T.MONTH_START and T.MONTH_END in planner
+    assert planner[0] == T.MONTHLY and T.MONTH_START in planner and T.MONTH_END in planner
     assert T.group_of("month_start_pages") == T.MONTH_START
     assert "budget" in next(g.sections for g in T.GROUPS if g.key == "optional")
     assert "quotes" in next(g.sections for g in T.GROUPS if g.key == "value_added")

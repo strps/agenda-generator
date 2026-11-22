@@ -311,7 +311,11 @@ block (flat Config names also load), with a CLI flag each. They apply to the exp
 | `weekend_fill` | `color_weekend_fill` | `--color-weekend-fill` | Weekend cells |
 | `holiday_fill` | `color_holiday_fill` | `--color-holiday-fill` | Holiday cells |
 | `primary_font` | `font_primary` | `--font-primary` | Headings, titles and bold text |
+| `primary_color` | `font_primary_color` | `--font-primary-color` | Text color of the primary font (empty = ink) |
+| `primary_size` | `font_primary_size` | `--font-primary-size` | Size of the primary font, % of the designed sizes (50-200, default 100) |
 | `secondary_font` | `font_secondary` | `--font-secondary` | Body text, labels, numbers |
+| `secondary_color` | `font_secondary_color` | `--font-secondary-color` | Text color of the secondary font (empty = ink) |
+| `secondary_size` | `font_secondary_size` | `--font-secondary-size` | Size of the secondary font, % of the designed sizes (50-200, default 100) |
 | `title_padding` | `title_padding` | `--title-padding` | Mm the weekend/holiday fill behind a day page header or week day row extends past the text on each side (default 2; 0 = flush) |
 
 Colors are `#rgb` or `#rrggbb` (the `#` is optional); empty means the theme's color. A font is the
@@ -321,8 +325,14 @@ directory). For a font such as `MyFont-Regular.ttf` the bold and italic styles a
 regular file. The font must contain the glyphs of the agenda language. Make sure you are licensed to
 embed any user font in a PDF you share.
 
+A font color replaces the plain text color (ink) of the text drawn with that font. Text that uses
+the accent or muted color (month titles, holidays, small labels) keeps it, so set `accent` or
+`muted` to recolor those. A font size scales every size that font is drawn at; pages keep their
+layout, so above 100 % text that no longer fits its box is shortened with "…".
+
 In the GUI these are edited in the **PDF colors & fonts** section: a theme combo, color fields with a
-swatch (opens a color dialog) and a clear button, and font fields with a Browse button.
+swatch (opens a color dialog) and a clear button, font fields with a Browse button, and a color and
+a size (%) under each font.
 
 ## GUI
 
@@ -332,10 +342,12 @@ with a progress bar (Export PDF opens the export dialog described under Printing
 options no longer appear in the settings panel). Settings can be opened from and saved to YAML. See
 [docs/architecture/gui.md](docs/architecture/gui.md).
 
-The settings panel groups its sections under flat collapsible headers: **General** (Global and PDF
-colors & fonts), **Planner pages**, **Optional pages** and **Value-added pages** (the last two start
-closed). Global starts open; a section with no settings of its own is a plain header that does not
-collapse. Template sections have an enable checkbox in the
+The settings panel is a tab list. **Whole agenda** holds only the settings that apply to the whole
+agenda (Global, Padding, PDF colors & fonts) with the full preview, section bar and legend. Every
+page template has its own tab with its own preview, grouped under **Planner pages**, **Optional
+pages** and **Value-added pages**. **Month pages** covers the monthly calendar page together with
+Start of each month and End of each month, the per-month pages printed inside each month.
+Template sections have an enable checkbox in the
 header: for `daily` and `weekly` it adds or removes the planner, for every optional and value-added
 page (one section each) it adds or removes the page from `pages`, and for `contacts` it sets the page
 count (0 = off, on = 1); `planners` and `pages` are not edited in Global. The main preview follows the

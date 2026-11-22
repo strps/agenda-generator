@@ -13,7 +13,7 @@ from agenda.draw import (
     color,
     draw_checkbox,
     draw_label_rule,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -76,13 +76,13 @@ class Travel(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("travel.title"))
 
         x, w = g.safe.x, g.safe.w
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
         keys = ("destination", "from", "to", "budget")
         label_w = max(pdf.get_string_width(s(f"travel.{k}")) for k in keys) + g.gutter
         draw_label_rule(pdf, x, w, g.row(1), s("travel.destination"), label_w)
@@ -97,10 +97,10 @@ class Travel(BasePage):
         top = self.FIELD_ROWS + 1
         small = tokens.TYPE_SIZES_PT[0]
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", small)
+        set_font(pdf, "primary", "B", small)
         pdf.set_xy(x, g.row(top))
         pdf.cell(w, g.baseline, s("travel.itinerary"))
-        pdf.set_font(font(pdf, "secondary"), "", small)
+        set_font(pdf, "secondary", "", small)
         day_w = pdf.get_string_width(f"{s('travel.day')} {self.MAX_DAYS}") + g.gutter
         pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
@@ -113,7 +113,7 @@ class Travel(BasePage):
 
         top += days + 2
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", small)
+        set_font(pdf, "primary", "B", small)
         pdf.set_xy(x, g.row(top))
         pdf.cell(w, g.baseline, s("travel.packing"))
         box = g.baseline * self.BOX_RATIO

@@ -7,7 +7,7 @@ from fpdf import FPDF
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, font
+from agenda.draw import color, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx, month_ctxs
@@ -59,7 +59,7 @@ class Budget(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("budget.title", month=s.month_name(ctx["month"]), year=ctx["year"]))
@@ -74,11 +74,11 @@ class Budget(BasePage):
         keys = ("income", "fixed", "variable", "savings")
         for key, n in zip(keys, self.layout(g.rows), strict=True):
             pdf.set_text_color(*color(pdf, "accent"))
-            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
             pdf.set_xy(x, g.row(r))
             pdf.cell(desc_w, g.baseline, s(f"budget.{key}"))
             pdf.set_text_color(*color(pdf, "muted"))
-            pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
             pdf.set_xy(ax, g.row(r))
             pdf.cell(aw, g.baseline, s("budget.amount"))
             for k in range(n):
@@ -87,7 +87,7 @@ class Budget(BasePage):
                 pdf.line(ax, y, ax + aw, y)
             r += n + 2
 
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
         for k, key in enumerate(("total_income", "total_expenses", "balance")):
             pdf.set_text_color(*color(pdf, "accent"))
             pdf.set_xy(x, g.row(r + k))

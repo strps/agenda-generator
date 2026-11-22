@@ -7,7 +7,7 @@ from fpdf import FPDF
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, font
+from agenda.draw import color, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -53,7 +53,7 @@ class Passwords(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("passwords.title"))
@@ -72,7 +72,7 @@ class Passwords(BasePage):
         pdf.line(ix + icon / 2, iy + icon * 0.78, ix + icon / 2, iy + icon * 0.85)
         tx = ix + icon + g.gutter
         pdf.set_text_color(*color(pdf, "ink"))
-        pdf.set_font(font(pdf, "secondary"), "", tokens.TYPE_SIZES_PT[1])
+        set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[1])
         pdf.set_xy(tx, top + g.baseline / 2)
         pdf.multi_cell(
             x + w - g.gutter - tx,
@@ -86,7 +86,7 @@ class Passwords(BasePage):
         col_w = (w - (self.COLUMNS - 1) * g.gutter) / self.COLUMNS
         label_row = self.WARN_ROWS + 1
         labels = (s("passwords.site"), s("passwords.user"), s("passwords.password"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[0])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[0])
         pdf.set_text_color(*color(pdf, "muted"))
         for c, label in enumerate(labels):
             pdf.set_xy(x + c * (col_w + g.gutter), g.row(label_row))

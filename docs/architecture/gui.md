@@ -79,12 +79,14 @@ PyMuPDF would also work for rasterising, but it is AGPL-licensed, which matters 
 
 The settings panel is a tab list (`tab_list`, far left) beside a stack of settings pages
 (`tab_stack`); the main window's `preview_stack` follows the selected tab, so every tab has its own
-settings and its own titled preview. The **Whole agenda** tab (key `GLOBAL`) holds the sections
-without a page of their own (`templates.WHOLE_SECTIONS`: Global, Padding, Start/End of each month,
-PDF colors & fonts, as `CollapsibleSection`s with Global open) and shows the full-agenda preview
-with the section bar, legend and summary under it. Every template section gets a tab of its own:
-its section has no arrow and its settings are always open (`CollapsibleSection.set_static`), with a
-hint when it has none. The tab list groups the template tabs under the `templates.GROUPS` headers
+settings and its own titled preview. The **Whole agenda** tab (key `GLOBAL`) holds only the
+sections that apply to the whole agenda (`templates.WHOLE_SECTIONS`: Global, Padding, PDF colors &
+fonts, as `CollapsibleSection`s with Global open) and shows the full-agenda preview with the
+section bar, legend and summary under it. Every template section gets a tab of its own
+(`templates.tab_sections(key)`): its sections have no arrow and their settings are always open
+(`CollapsibleSection.set_static`), with a hint when the tab has none. A page-less section joins a
+template's tab through `SectionSpec.tab`: the **Month pages** tab (`monthly`, the always-printed
+monthly calendar page, so no enable box) also holds Start of each month and End of each month. The tab list groups the template tabs under the `templates.GROUPS` headers
 that hold templates (`templates.tab_groups()`: Planner, Optional, Value-added pages) and dims and
 italicises templates left out of the agenda. Template headers carry an enable checkbox, a view of
 `templates.is_enabled`. `activate(key)` shows the tab `templates.tab_of(key)` (opening the section
@@ -199,7 +201,10 @@ The UI language (QSettings key "ui_language": system|en|es) is chosen in the sam
 The settings panel section "PDF colors & fonts" (`style:` block) edits the PDF style with editors from
 `agenda/gui/style_editors.py`: `ColorEdit` (text, swatch opening `QColorDialog`, clear button; the
 swatch shows the theme color when the value is empty) and `FontEdit` (built-in names plus Browse for a
-.ttf/.otf). `settings_model` gives them the kinds THEME, COLOR and FONT. The same module has
+.ttf/.otf). `settings_model` gives them the kinds THEME, COLOR and FONT. Each font has a text
+color (`font_*_color`, a COLOR whose swatch falls back to the ink color) and a size scale
+(`font_*_size`, an INT spin box in %); the PDF side is `agenda/pdfdoc.py` (`AgendaPDF`) with
+`draw.set_font(pdf, role, style, size)`, through which every page picks its font. The same module has
 `FileEdit` (path text, Browse opening a CSV `QFileDialog`, clear button), used for every OPT_PATH
 field: the day-extras data files `holidays_file`, `daily_quotes_file` and `daily_extra_file` (CSV,
 parsed by `agenda/day_extras.py`).

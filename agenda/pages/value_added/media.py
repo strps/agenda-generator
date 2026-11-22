@@ -12,7 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_circle,
-    font,
+    set_font,
 )
 from agenda.grid import Grid
 from agenda.i18n import Strings
@@ -95,14 +95,14 @@ class Media(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        pdf.set_font(font(pdf, "primary"), "B", tokens.TYPE_SIZES_PT[3])
+        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
         h = g.header
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, s("media.title"))
 
         x, w = g.safe.x, g.safe.w
         small = tokens.TYPE_SIZES_PT[0]
-        pdf.set_font(font(pdf, "secondary"), "", small)
+        set_font(pdf, "secondary", "", small)
         type_w = max(pdf.get_string_width(s(f"media.{t}")) for t in self.TYPES) + g.gutter / 2
         date_w = g.span_width(self.DATE_COLS)
         lay = self.layout(g.rows, w, type_w, date_w, g.span_width(self.TITLE_COLS), g)
@@ -115,7 +115,7 @@ class Media(BasePage):
         row_h = g.baseline * self.ROW_ROWS
 
         pdf.set_text_color(*color(pdf, "muted"))
-        pdf.set_font(font(pdf, "primary"), "B", small)
+        set_font(pdf, "primary", "B", small)
         for cx, cw, key in (
             (x, type_w, "media.type"),
             (title_x, title_end - title_x, "media.name"),
@@ -127,7 +127,7 @@ class Media(BasePage):
             pdf.set_xy(cx, g.row(0))
             pdf.cell(cw, g.baseline, s(key))
 
-        pdf.set_font(font(pdf, "secondary"), "", small)
+        set_font(pdf, "secondary", "", small)
         pdf.set_draw_color(*color(pdf, "line"))
         pdf.set_line_width(tokens.STROKE_HAIRLINE)
         line_h = row_h / len(self.TYPES)

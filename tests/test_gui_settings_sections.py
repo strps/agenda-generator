@@ -127,7 +127,23 @@ def test_tab_list(panel):
     for key in T.WHOLE_SECTIONS:
         assert panel.tab_pages[T.GLOBAL].isAncestorOf(panel.sections[key])
     for key in T.TEMPLATE_KEYS:
-        assert panel.tab_pages[key].isAncestorOf(panel.sections[key])
+        for sub in T.tab_sections(key):
+            assert panel.tab_pages[key].isAncestorOf(panel.sections[sub]), sub
+
+
+def test_month_pages_tab(panel):
+    assert T.tab_sections(T.MONTHLY) == (T.MONTHLY, T.MONTH_START, T.MONTH_END)
+    assert T.MONTH_START not in T.WHOLE_SECTIONS and T.MONTH_END not in T.WHOLE_SECTIONS
+    assert panel.tab_items[T.MONTHLY].text() == "Month pages"
+    assert panel.sections[T.MONTHLY].enable_box is None  # the monthly page is always printed
+    assert panel.tab_pages[T.MONTHLY].findChild(QLabel, "tab_hint") is None
+    for key in (T.MONTH_START, T.MONTH_END):
+        sec = panel.sections[key]
+        assert not sec.collapsible and sec.body.isVisibleTo(sec), key
+        panel.activate(key)
+        assert panel.current_tab == T.MONTHLY and panel.active_section == key
+    panel.notify_focus(panel.editors["month_end_pages"].findChild(QCheckBox))
+    assert panel.current_tab == T.MONTHLY and panel.active_section == T.MONTH_END
 
 
 def test_tab_list_click_and_focus(panel):
@@ -182,7 +198,7 @@ def test_open_iff_visible_fields(panel):
     hidden = {*EM.export_field_names(), *SECTION_SWITCHED}
     with_fields = {T.group_of(s.name) for s in panel.specs if s.name not in hidden}
     for key, sec in panel.sections.items():
-        if key in T.TEMPLATE_KEYS:  # alone in its tab: settings always open
+        if T.tab_of(key) != T.GLOBAL:  # in a template tab: settings always open
             assert not sec.collapsible and sec.body.isVisibleTo(sec) == (key in with_fields), key
         else:
             assert sec.collapsible == (key in with_fields), key
