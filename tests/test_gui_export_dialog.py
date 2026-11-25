@@ -1,5 +1,5 @@
 import pytest
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QGroupBox
 
 from agenda.gui import export_model as EM
 from agenda.gui import settings_model as M
@@ -131,3 +131,19 @@ def test_dialog_texts_follow_ui_language(qapp):
     assert dlg.findChild(type(dlg.browse_button), "browse_output").text() == "Examinar..."
     assert dlg.ok_button.text() == "Exportar"
     assert dlg.findChild(object, "group_range_output") is not None
+
+
+def test_content_scrolls_and_fits_screen(qapp):
+    from PySide6.QtGui import QGuiApplication
+    from PySide6.QtWidgets import QDialogButtonBox, QScrollArea
+
+    dlg = ExportDialog({})
+    scroll = dlg.findChild(QScrollArea)
+    assert scroll is not None
+    assert scroll.isAncestorOf(dlg.findChild(QGroupBox, "group_layout"))
+    assert not scroll.isAncestorOf(dlg.buttons)
+    assert not scroll.isAncestorOf(dlg.error_label)
+    assert dlg.findChild(QDialogButtonBox) is dlg.buttons
+    avail = QGuiApplication.primaryScreen().availableGeometry()
+    assert dlg.height() <= avail.height()
+    assert dlg.width() <= avail.width()

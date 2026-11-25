@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -14,12 +16,14 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QFormLayout,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
     QRadioButton,
+    QScrollArea,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -59,7 +63,18 @@ class ExportDialog(QDialog):
         self.rows: dict[str, list[QWidget]] = {}
         self.layout_buttons: dict[str, QRadioButton] = {}
 
-        root = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        self.scroll = QScrollArea()
+        self.scroll.setObjectName("export_scroll")
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        body = QWidget()
+        body.setObjectName("export_body")
+        self.scroll.setWidget(body)
+        outer.addWidget(self.scroll, 1)
+        root = QVBoxLayout(body)
+        root.setContentsMargins(0, 0, 0, 0)
         groups: dict[str, QFormLayout] = {}
         for key, (title, fields) in zip(_GROUP_KEYS, EM.EXPORT_FIELDS, strict=True):
             if key == "output":
@@ -132,7 +147,7 @@ class ExportDialog(QDialog):
         self.error_label = QLabel("")
         self.error_label.setObjectName("error_label")
         self.error_label.setWordWrap(True)
-        root.addWidget(self.error_label)
+        outer.addWidget(self.error_label)
 
         self.buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -141,11 +156,26 @@ class ExportDialog(QDialog):
         self.ok_button.setText(tr("export.export_button"))
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
-        root.addWidget(self.buttons)
+        outer.addWidget(self.buttons)
 
         self._load_editors()
         self._loading = False
         self._refresh()
+        self._fit_to_screen()
+
+    def _fit_to_screen(self) -> None:
+        """Cap the initial size at 90% of the screen's available area (natural size if smaller)."""
+        parent = self.parentWidget()
+        screen = parent.screen() if parent is not None else None
+        screen = screen or QGuiApplication.primaryScreen()
+        if screen is None:
+            return
+        avail = screen.availableGeometry()
+        hint = self.sizeHint()
+        self.resize(
+            min(hint.width(), int(avail.width() * 0.9)),
+            min(hint.height(), int(avail.height() * 0.9)),
+        )
 
     # --- construction helpers ---
     @staticmethod

@@ -40,7 +40,15 @@ from agenda.gui.render_cache import Debounce
 from agenda.gui.section_bar import SectionBar
 from agenda.gui.settings_panel import SettingsPanel
 from agenda.pagerange import parse_page_range
-from agenda.templates import GLOBAL, TEMPLATE_KEYS, is_enabled, section_label, tab_of
+from agenda.templates import (
+    GLOBAL,
+    MONTH_END,
+    MONTH_START,
+    TEMPLATE_KEYS,
+    is_enabled,
+    section_label,
+    tab_of,
+)
 from agenda.uitext import tr
 
 DEBOUNCE_S = 0.3  # settings edits settle this long before the preview re-renders
@@ -188,6 +196,7 @@ class MainWindow(QMainWindow):
         self.section_bar.page_requested.connect(self.preview.goto)
         self.legend.section_clicked.connect(self.section_bar.next_page_of)
         self.settings.tab_changed.connect(self.show_preview_for)
+        self.settings.section_activated.connect(self._jump_to_section_pages)
         menu = self.menuBar().addMenu(tr("app.menu_settings"))
         self.preferences_action = QAction(tr("app.preferences"), self)
         self.preferences_action.setObjectName("action_preferences")
@@ -286,6 +295,20 @@ class MainWindow(QMainWindow):
         lay.addWidget(label)
         self.preview_stack.addWidget(page)
         return page, lay
+
+    def _jump_to_section_pages(self, key: str) -> None:
+        """Selecting the month start/end section shows its first page in the monthly preview."""
+        if key not in (MONTH_START, MONTH_END) or self.preview_key not in TEMPLATE_KEYS:
+            return
+        cfg, _ = self.settings.config()
+        if cfg is None:
+            return
+        pv = self.template_previews[self.preview_key]
+        if self.preview_key in self._stale:
+            self._refresh_template(self.preview_key, cfg)
+        index = TM.first_page_index(cfg, self.preview_key, key)
+        if index is not None:
+            pv.goto(index)
 
     def show_preview_for(self, key: str) -> None:
         """Show the preview of the tab holding section ``key``: the whole agenda or a template."""

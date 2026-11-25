@@ -118,3 +118,30 @@ def test_set_inactive_survives_refresh(qapp):
     pv.set_inactive(True)
     pv.refresh()
     assert isinstance(pv.scroll.graphicsEffect(), QGraphicsOpacityEffect)
+
+
+def _ids(plan):
+    return [e.page_class.id for e in plan.entries if e.page_class is not None]
+
+
+def test_monthly_sample_plan_month_pages():
+    from agenda.config import Config
+
+    cfg = Config(month_start_pages=["budget", "habits"], month_end_pages=["monthly_review"])
+    plan = TM.sample_plan(cfg, "monthly")
+    assert _ids(plan) == ["monthly", "budget", "habits", "monthly_review"]
+    assert {e.ctx["month"] for e in plan.entries} == {1}
+    assert TM.first_page_index(cfg, "monthly", "month_start") == 1
+    assert TM.first_page_index(cfg, "monthly", "month_end") == 3
+    assert _ids(TM.sample_plan(Config(), "monthly")) == ["monthly"]
+    assert set(_ids(TM.sample_plan(cfg, "weekly"))) == {"weekly"}
+
+
+def test_month_section_jumps_preview(win):
+    win.settings.activate("monthly")
+    win.settings.editors["month_end_pages"]  # editor exists
+    cfg, _ = win.settings.config()
+    cfg = cfg.model_copy(update={"month_start_pages": ["budget"], "month_end_pages": ["habits"]})
+    pv = win.template_previews["monthly"]
+    pv.set_plan(cfg, TM.sample_plan(cfg, "monthly"))
+    assert len(pv.plan) == 3

@@ -13,6 +13,7 @@ from agenda.gui import preview_model
 from agenda.templates import (
     MONTH_END,
     MONTH_START,
+    MONTHLY,
     PADDING,
     SECTIONS,
     TEMPLATE_KEYS,
@@ -38,8 +39,27 @@ def _ctx(cfg: Config, key: str, instance: int) -> dict[str, Any]:
     return dict(ctxs[max(0, min(instance, len(ctxs) - 1))])
 
 
+def _month_ctx(page_id: str, cfg: Config, month: int) -> dict[str, Any]:
+    """Context of per-month page ``page_id`` for ``month`` (as ``build_plan`` picks it)."""
+    ctxs = get_page(page_id)().instances(cfg)
+    return dict(next((c for c in ctxs if c.get("month") == month), ctxs[0] if ctxs else {}))
+
+
+def _month_placement(cfg: Config, key: str) -> list[tuple[str, str]]:
+    """(page id, section key) printed with the monthly page: start pages, then end pages."""
+    if key != MONTHLY:
+        return []
+    return [(i, MONTH_START) for i in cfg.month_start_pages] + [
+        (i, MONTH_END) for i in cfg.month_end_pages
+    ]
+
+
 def sample_plan(cfg: Config, key: str, instance: int = 0) -> PagePlan:
-    """A small valid plan holding one instance of template ``key`` (a disabled one still works)."""
+    """A small valid plan holding one instance of template ``key`` (a disabled one still works).
+
+    The monthly template also holds that month's start pages and end pages after the monthly
+    page (a sample has no weeks between them), like ``build_plan`` places them.
+    """
     if key not in TEMPLATE_KEYS:
         raise ValueError(f"no sample plan for section {key!r}; valid: {', '.join(TEMPLATE_KEYS)}")
     cls = get_page(section(key).page_id)
@@ -48,11 +68,34 @@ def sample_plan(cfg: Config, key: str, instance: int = 0) -> PagePlan:
     want = cls.starts_on
     if want != "any" and side_for_page(1) != want:
         entries.append(make_entry(None, {}, 1, cls.section, booklet_index=1, kind="filler"))
-    for k in range(cls.pages):
-        entries.append(
-            make_entry(cls, ctx, len(entries) + 1, cls.section, booklet_index=1, page_in_instance=k)
-        )
+    placed = [(cls, ctx)] + [
+        (get_page(i), _month_ctx(i, cfg, ctx["month"])) for i, _ in _month_placement(cfg, key)
+    ]
+    for page, page_ctx in placed:
+        for k in range(page.pages):
+            entries.append(
+                make_entry(
+                    page,
+                    page_ctx,
+                    len(entries) + 1,
+                    cls.section,
+                    booklet_index=1,
+                    page_in_instance=k,
+                )
+            )
     return PagePlan(tuple(entries))
+
+
+def first_page_index(cfg: Config, key: str, sec: str) -> int | None:
+    """Index in ``sample_plan(cfg, key)`` of the first page placed for section ``sec``."""
+    plan = sample_plan(cfg, key)
+    start = next(i for i, e in enumerate(plan.entries) if e.page_class is not None)
+    index = start + get_page(section(key).page_id).pages
+    for page_id, owner in _month_placement(cfg, key):
+        if owner == sec:
+            return index
+        index += get_page(page_id).pages
+    return None
 
 
 def preview_mode(key: str) -> str:
