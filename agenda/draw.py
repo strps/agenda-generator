@@ -15,7 +15,7 @@ from agenda.calendar import holidays_for, month_grid
 from agenda.config import Config
 from agenda.grid import Grid, Rect
 from agenda.i18n import Strings
-from agenda.textfit import fit_text
+from agenda.textfit import FitResult, fit_text
 
 _INNER_FILL = (200, 220, 255)  # blue: inner (binding) margin
 _OUTER_FILL = (255, 225, 190)  # orange: outer margin
@@ -214,7 +214,7 @@ def fit_cell(
     style: str = "",
     size_pt: float,
     align: str = "L",
-) -> None:
+) -> FitResult | None:
     """Draw ``text`` in the box (x, y, w, h) in font ``role``/``style`` at ``size_pt``, fitted by ``mode``.
 
     ``mode`` is a ``textfit.FIT_MODES`` value. "overflow" is exactly one plain ``pdf.cell`` (never
@@ -225,7 +225,7 @@ def fit_cell(
     pdf.set_xy(x, y)
     if mode == "overflow":
         pdf.cell(w, h, text, align=align)
-        return
+        return None
     actual = pdf.font_size_pt
     mm = 25.4 / 72
     res = fit_text(
@@ -249,10 +249,51 @@ def fit_cell(
             pdf.cell(w, lh, line, align=align)
     if res.size_pt != actual:
         pdf.set_font_size(actual)
+    if res.cut:
+        log_cut(pdf, region, text)
+    return res
+
+
+def log_cut(pdf: FPDF, region: str, text: str) -> None:
+    """Record a shortened ``text`` for the current page in ``pdf.agenda_cut_log`` (if set)."""
     log = getattr(pdf, "agenda_cut_log", None)
-    if res.cut and log is not None:
+    if log is not None:
         page = pdf.page
         log.add(getattr(pdf, "agenda_page_numbers", {}).get(page, page), region, text)
+
+
+def draw_header_title(
+    pdf: FPDF,
+    g: Grid,
+    text: str,
+    config: Config,
+    size_pt: float,
+    align: str = "L",
+    *,
+    width: float | None = None,
+    role: str = "primary",
+    style: str = "B",
+) -> FitResult | None:
+    """Draw a page header title in the header band, fitted by ``config.header_text_fit``.
+
+    ``width`` narrows the band (e.g. to leave room for a right-hand label). The caller sets the
+    text color. Under "overflow" this is one plain ``pdf.cell`` and nothing is logged.
+    """
+    h = g.header
+    return fit_cell(
+        pdf,
+        h.x,
+        h.y,
+        h.w if width is None else width,
+        h.h,
+        text,
+        region="header",
+        mode=config.header_text_fit,
+        role=role,
+        style=style,
+        size_pt=size_pt,
+        align=align,
+    )
 
 
 _DEFAULT = tokens.COLORS  # default (minimal) palette for documents without ``agenda_palette``

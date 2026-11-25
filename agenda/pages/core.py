@@ -17,11 +17,13 @@ from agenda.draw import (
     color,
     dated_entries,
     day_style_for,
+    draw_header_title,
     draw_mini_month,
     draw_pattern,
     fill_title_band,
     fit_cell,
     holiday_name_for,
+    log_cut,
     quotes_for,
     set_font,
     switch_page,
@@ -29,6 +31,7 @@ from agenda.draw import (
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
+from agenda.textfit import fit_text
 
 
 def _cover_panel(pdf: FPDF, g: Grid, title: str, year: str) -> None:
@@ -142,10 +145,7 @@ class Yearly(BasePage):
         g = grids[0]
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[4])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, str(config.year))
+        draw_header_title(pdf, g, str(config.year), config, tokens.TYPE_SIZES_PT[4])
 
         day_style = day_style_for(config, pdf)
         span = g.columns // self.MONTH_COLS
@@ -177,10 +177,13 @@ class Monthly(BasePage):
         x, w = g.col(0, g.columns)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[4])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("month.title", month=s.month_name(month), year=config.year))
+        draw_header_title(
+            pdf,
+            g,
+            s("month.title", month=s.month_name(month), year=config.year),
+            config,
+            tokens.TYPE_SIZES_PT[4],
+        )
 
         day_style = day_style_for(config, pdf)
         weeks = month_grid(config.year, month, config.week_start)
@@ -267,6 +270,7 @@ class Weekly(BasePage):
             style_of,
             name_of,
             title_pad=config.title_padding,
+            config=config,
         )
         switch_page(pdf, last)
         months = []
@@ -288,6 +292,7 @@ class Weekly(BasePage):
             name_of,
             notes=True,
             title_pad=config.title_padding,
+            config=config,
         )
 
     def _page(
@@ -301,14 +306,13 @@ class Weekly(BasePage):
         name_of: Callable[[date], str | None],
         notes: bool = False,
         title_pad: float = 0.0,
+        *,
+        config: Config,
     ) -> None:
         x, w = g.col(0, g.columns)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, title)
+        draw_header_title(pdf, g, title, config, tokens.TYPE_SIZES_PT[3])
 
         per = g.rows // self.BLOCKS  # rows per block: label row + write-in lines
         pad = tokens.SPACING[0]
@@ -391,24 +395,59 @@ class Daily(BasePage):
             day=d.day,
             month=s.month_name(d.month),
         )
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, title)
-        pdf.set_text_color(*color(pdf, "muted"))
-        set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[1])
+        mode = config.header_text_fit
         right = s("week.number", n=ctx["week"])
         holiday = holiday_name_for(config)(d) if config.daily_holidays else None
-        if holiday:
-            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
+        sec = tokens.TYPE_SIZES_PT[1]
+        if mode == "overflow":
+            pdf.set_xy(h.x, h.y)
+            pdf.cell(h.w, h.h, title)
             title_w = pdf.get_string_width(title)
-            set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[1])
+        else:  # fit the title first, leaving room for the week label
+            set_font(pdf, "secondary", "", sec)
+            week_w = pdf.get_string_width(right)
+            set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
+            res = draw_header_title(
+                pdf, g, title, config, tokens.TYPE_SIZES_PT[3], width=max(h.w - week_w - 4, 0)
+            )
+            title_w = 0.0
+            if res is not None:
+                if res.size_pt != pdf.font_size_pt:
+                    pdf.set_font_size(res.size_pt)
+                title_w = max(pdf.get_string_width(line) for line in res.lines)
+        pdf.set_text_color(*color(pdf, "muted"))
+        set_font(pdf, "secondary", "", sec)
+        size = pdf.font_size_pt
+        if holiday:
+            if mode == "overflow":
+                set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
+                title_w = pdf.get_string_width(title)
+                set_font(pdf, "secondary", "", sec)
+            full = f"{holiday}{JOIN}{right}"
+            if mode == "shrink":
+                fitted = fit_text(
+                    full,
+                    h.w - title_w - 4,
+                    h.h,
+                    size,
+                    "shrink",
+                    pdf.get_string_width,
+                    lambda pt: pt * 25.4 / 72,
+                )
+                pdf.set_font_size(fitted.size_pt)
             room = h.w - title_w - 4 - pdf.get_string_width(f"{JOIN}{right}")
-            holiday = truncate(holiday, max(room, 0), pdf.get_string_width) if room > 0 else None
-            if holiday == "…":
-                holiday = None
+            shown = truncate(holiday, max(room, 0), pdf.get_string_width) if room > 0 else None
+            if shown == "…":
+                shown = None
+            if shown != holiday:
+                log_cut(pdf, "header", holiday)
+            holiday = shown
         if holiday:
             right = f"{holiday}{JOIN}{right}"
         pdf.set_xy(h.x, h.y)
         pdf.cell(h.w, h.h, right, align="R")
+        if pdf.font_size_pt != size:
+            pdf.set_font_size(size)
         self._footer(pdf, g, d, config)
 
         gap = 1
@@ -518,10 +557,7 @@ class Notes(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("notes.title"))
+        draw_header_title(pdf, g, s("notes.title"), config, tokens.TYPE_SIZES_PT[3])
         draw_pattern(pdf, g.content, config.notes_pattern, g.baseline)
 
 
@@ -558,10 +594,7 @@ class Contacts(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("contacts.title"))
+        draw_header_title(pdf, g, s("contacts.title"), config, tokens.TYPE_SIZES_PT[3])
 
         ncols = 2 if g.safe.w >= self.WIDE_MM and g.columns >= 2 else 1
         span = g.columns // ncols
