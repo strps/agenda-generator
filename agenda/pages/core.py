@@ -452,7 +452,9 @@ class Daily(BasePage):
         width = f.w / 2 if quote and extra else f.w
         pdf.set_text_color(*color(pdf, "muted"))
         if quote:
-            set_font(pdf, "secondary", "I", tokens.TYPE_SIZES_PT[0])
+            set_font(
+                pdf, "secondary", "I", tokens.TYPE_SIZES_PT[0] * config.daily_quotes_size / 100
+            )
             pdf.set_xy(f.x, f.y)
             pdf.cell(width, f.h, truncate(quote, width, pdf.get_string_width))
         if extra:

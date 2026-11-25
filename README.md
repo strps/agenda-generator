@@ -169,7 +169,7 @@ Each section can be written as a block (`padding:`, `month_start:`, `month_end:`
 ```yaml
 padding:    {pad_with: notes, extra_padding: 0}
 notes:      {pattern: dotted, pages: 1}
-daily:      {months: "1-12", hour_start: 6, hour_end: 21, holidays: true, quotes: false, filler: blank}
+daily:      {months: "1-12", hour_start: 6, hour_end: 21, holidays: true, quotes: false, quotes_size: 100, filler: blank}
 weekly:     {filler: blank}
 month_start: {pages: [budget, habits]}    # printed right after each monthly page
 month_end:  {pages: [monthly_review]}     # printed after each month's last week
@@ -228,7 +228,8 @@ Day pages can show, besides the date:
   `holiday_country` library merged with `holidays_file`, the same on every page that uses holidays.
 - **A rotating phrase** (`daily_quotes`, off by default): in the footer, one per day of the year,
   cycling through the list (day 1 uses the first phrase). `daily_quotes_file` gives your own list;
-  otherwise the built-in phrases are used.
+  otherwise the built-in phrases are used. `daily_quotes_size` scales the phrase text, in % of its
+  designed size (50-200, default 100), on top of `font_secondary_size`.
 - **Extra data** (`daily_extra_file`): shown right of the footer; several on one date are joined
   with " · ".
 

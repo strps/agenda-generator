@@ -287,6 +287,14 @@ EXPECTED_PARAMS = {
         "multiple": False,
         "type": "path",
     },
+    "daily_quotes_size": {
+        "opts": ["--daily-quotes-size"],
+        "secondary_opts": [],
+        "default": None,
+        "is_flag": False,
+        "multiple": False,
+        "type": "int",
+    },
     "daily_extra_file": {
         "opts": ["--daily-extra-file"],
         "secondary_opts": [],
@@ -660,6 +668,7 @@ FIELD_TO_PARAMS = {
     "daily_holidays": ["daily_holidays"],
     "daily_quotes": ["daily_quotes"],
     "daily_quotes_file": ["daily_quotes_file"],
+    "daily_quotes_size": ["daily_quotes_size"],
     "daily_extra_file": ["daily_extra_file"],
     "year": ["year"],
     "week_start": ["week_start"],

@@ -84,3 +84,27 @@ def test_truncate():
     assert truncate("abc", 5, w) == "abc"
     out = truncate("abcdefghij", 5, w)
     assert out.endswith("…") and len(out) <= 5
+
+
+def _font_sizes(pdf: bytes) -> list[float]:
+    """Every Tf size in the page content stream."""
+    import re
+
+    content = PdfReader(io.BytesIO(pdf)).pages[0].get_contents().get_data().decode("latin-1")
+    return [float(s) for s in re.findall(r"/F\d+ ([\d.]+) Tf", content)]
+
+
+def test_quotes_size_scales_only_the_phrase(tmp_path):
+    f = tmp_path / "q.txt"
+    f.write_text("Short\n", encoding="utf-8")
+    d = date(2027, 1, 5)
+    base = _font_sizes(day_pdf(cfg_of(daily_quotes=True, daily_quotes_file=f), d))
+    big = _font_sizes(
+        day_pdf(cfg_of(daily_quotes=True, daily_quotes_file=f, daily_quotes_size=150), d)
+    )
+    assert len(base) == len(big)
+    changed = [(a, b) for a, b in zip(base, big, strict=True) if a != b]
+    assert len(changed) == 1 and changed[0][1] == changed[0][0] * 1.5
+    assert "Short" in day_text(
+        cfg_of(daily_quotes=True, daily_quotes_file=f, daily_quotes_size=50), d
+    )

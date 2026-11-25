@@ -43,6 +43,7 @@ pages:
 #   holidays: true              # print the holiday name in the header
 #   quotes: false               # print a rotating phrase in the footer
 #   quotes_file: examples/daily_quotes.csv   # CSV, one phrase per row (default: built-in)
+#   quotes_size: 100            # phrase size, % of the default (50-200)
 #   extra_file: examples/daily_extra.csv     # CSV month,day,text[,year] shown in the footer
 #   filler: blank               # page after a week's day pages: blank, none or a page id
 # weekly:

@@ -619,6 +619,22 @@ class Config(BaseModel):
             "cli": {},
         },
     )  # one phrase per row; None = built-in quotes
+    daily_quotes_size: int = Field(
+        100,
+        ge=FONT_SIZE_MIN,
+        le=FONT_SIZE_MAX,
+        description="Size of the daily phrases, in % of the default.",
+        json_schema_extra={
+            "detail": (
+                "Scales the text of the rotating phrase in the footer of the "
+                "day pages, in percent of its designed size: 100 (the default) "
+                "keeps it, 80 is smaller, 120 larger (50-200). It applies on "
+                "top of font_secondary_size. A phrase that no longer fits is "
+                "shortened with an ellipsis. Used only with daily_quotes."
+            ),
+            "cli": {},
+        },
+    )
     daily_extra_file: Path | None = Field(
         None,
         description="CSV file of dated notes shown on day pages.",

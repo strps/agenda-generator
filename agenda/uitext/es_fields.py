@@ -294,6 +294,14 @@ FIELDS: dict[str, tuple[str, str, str]] = {
         "frases rotan, una por día del año, de forma cíclica. Vacío significa las frases "
         "incluidas del idioma elegido. Solo se usa con daily_quotes.",
     ),
+    "daily_quotes_size": (
+        "tamaño de las frases",
+        "Tamaño de las frases diarias, en % del predeterminado.",
+        "Escala el texto de la frase rotativa del pie de las páginas diarias, en porcentaje de "
+        "su tamaño diseñado: 100 (por defecto) lo mantiene, 80 es más pequeño, 120 más grande "
+        "(50-200). Se aplica además de font_secondary_size. Una frase que ya no cabe se acorta "
+        "con puntos suspensivos. Solo se usa con daily_quotes.",
+    ),
     "daily_extra_file": (
         "archivo de notas con fecha",
         "Archivo CSV de notas con fecha mostradas en las páginas diarias.",

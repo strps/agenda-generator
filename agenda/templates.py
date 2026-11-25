@@ -65,6 +65,7 @@ SECTIONS: tuple[SectionSpec, ...] = (
             "holidays": "daily_holidays",
             "quotes": "daily_quotes",
             "quotes_file": "daily_quotes_file",
+            "quotes_size": "daily_quotes_size",
             "extra_file": "daily_extra_file",
             "filler": "daily_filler",
         },
