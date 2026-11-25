@@ -14,6 +14,7 @@ from agenda.config import Config
 from agenda.draw import color, draw_debug_grid, set_font
 from agenda.grid import Grid
 from agenda.pdfdoc import AgendaPDF
+from agenda.textfit import CutLog
 
 if TYPE_CHECKING:
     from agenda.assembler import PagePlan
@@ -123,6 +124,9 @@ def add_page(pdf: FPDF, cfg: Config, page_number: int | None = None) -> Grid:
     number = page_number or pdf.page + 1
     grid = Grid.for_page(cfg, number)
     pdf.add_page()
+    numbers = getattr(pdf, "agenda_page_numbers", None)
+    if numbers is not None:
+        numbers[pdf.page] = number
     pdf.set_left_margin(grid.left)
     pdf.set_right_margin(grid.right)
     if cfg.debug_grid:
@@ -175,6 +179,7 @@ def _render_plan(
     plan: PagePlan,
     indices: Iterable[int] | None = None,
     progress: Callable[[int, int], None] | None = None,
+    cuts: CutLog | None = None,
 ) -> FPDF:
     """Draw plan entries into a new document; ``indices`` (0-based, ascending) or all.
 
@@ -187,6 +192,7 @@ def _render_plan(
     chosen = range(len(plan)) if indices is None else indices
     todo = sorted({j for i in chosen for j in _instance_range(plan, i)})
     pdf = new_document(cfg)
+    pdf.agenda_cut_log = cuts
     grids: list[Grid] = []
     for i in todo:
         entry = plan[i]
@@ -204,12 +210,15 @@ def _render_plan(
     return pdf
 
 
-def render_pages(cfg: Config, plan: PagePlan, indices: Iterable[int]) -> bytes:
+def render_pages(
+    cfg: Config, plan: PagePlan, indices: Iterable[int], cuts: CutLog | None = None
+) -> bytes:
     """PDF bytes with only the plan entries at ``indices`` (0-based), in plan order.
 
     Duplicates are ignored; no index raises ValueError; an out-of-range index raises IndexError. Pages keep their real
     page number (margins, left/right side). Rendering every index gives the same document
-    as ``export_agenda``.
+    as ``export_agenda``. ``cuts`` collects the cut header/footer texts of the requested pages
+    (numbered as agenda pages).
     """
     wanted = sorted(set(indices))
     if not wanted:
@@ -217,7 +226,13 @@ def render_pages(cfg: Config, plan: PagePlan, indices: Iterable[int]) -> bytes:
     for i in wanted:
         if not 0 <= i < len(plan):
             raise IndexError(f"page index {i} out of range (0..{len(plan) - 1})")
-    pdf = _render_plan(cfg, plan, wanted)
+    own = CutLog() if cuts is not None else None
+    pdf = _render_plan(cfg, plan, wanted, cuts=own)
+    if cuts is not None and own is not None:
+        keep = {plan[i].page_number for i in wanted}
+        for e in own.entries:
+            if e.page in keep:
+                cuts.add(e.page, e.region, e.text)
     data = bytes(pdf.output())
     todo = sorted({j for i in wanted for j in _instance_range(plan, i)})
     if len(todo) == len(wanted):
@@ -246,6 +261,7 @@ def export_agenda(
     path: str | Path = DEFAULT_OUTPUT,
     progress: Callable[[int, int], None] | None = None,
     pages: Sequence[int] | None = None,
+    cuts: CutLog | None = None,
 ) -> Path:
     """Render the full agenda by iterating ``build_plan(cfg)`` (see ``_render_plan``).
 
@@ -254,6 +270,7 @@ def export_agenda(
     (``agenda.imposition.impose_booklets``); with ``cfg.spreads`` as reader spreads (``impose_spreads``);
     both with crop marks if ``cfg.crop_marks`` and the sheet from ``cfg.sheet_size``. Otherwise the output is untouched.
     ``pages`` (1-based) writes only those pages as single pages (ValueError with imposition/spreads).
+    ``cuts`` collects header/footer texts that were shortened, with their agenda pages.
     """
     from agenda.assembler import build_plan
 
@@ -265,9 +282,9 @@ def export_agenda(
             progress(len(plan), len(plan))
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(render_pages(cfg, plan, [p - 1 for p in pages]))
+        path.write_bytes(render_pages(cfg, plan, [p - 1 for p in pages], cuts=cuts))
         return path
-    pdf = _render_plan(cfg, plan, progress=progress)
+    pdf = _render_plan(cfg, plan, progress=progress, cuts=cuts)
     if not (cfg.imposition or cfg.spreads):
         return write_pdf(pdf, path)
     from agenda.imposition import impose_booklets, impose_spreads, sheet_for

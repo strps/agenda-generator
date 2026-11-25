@@ -20,6 +20,7 @@ from agenda.draw import (
     draw_mini_month,
     draw_pattern,
     fill_title_band,
+    fit_cell,
     holiday_name_for,
     quotes_for,
     set_font,
@@ -451,16 +452,35 @@ class Daily(BasePage):
             return
         width = f.w / 2 if quote and extra else f.w
         pdf.set_text_color(*color(pdf, "muted"))
+        mode = config.footer_text_fit
         if quote:
-            set_font(
-                pdf, "secondary", "I", tokens.TYPE_SIZES_PT[0] * config.daily_quotes_size / 100
+            fit_cell(
+                pdf,
+                f.x,
+                f.y,
+                width,
+                f.h,
+                quote,
+                region="footer",
+                mode=mode,
+                role="secondary",
+                style="I",
+                size_pt=tokens.TYPE_SIZES_PT[0] * config.daily_quotes_size / 100,
             )
-            pdf.set_xy(f.x, f.y)
-            pdf.cell(width, f.h, truncate(quote, width, pdf.get_string_width))
         if extra:
-            set_font(pdf, "secondary", "", tokens.TYPE_SIZES_PT[0])
-            pdf.set_xy(f.x2 - width, f.y)
-            pdf.cell(width, f.h, truncate(extra, width, pdf.get_string_width), align="R")
+            fit_cell(
+                pdf,
+                f.x2 - width,
+                f.y,
+                width,
+                f.h,
+                extra,
+                region="footer",
+                mode=mode,
+                role="secondary",
+                size_pt=tokens.TYPE_SIZES_PT[0],
+                align="R",
+            )
 
     @staticmethod
     def _label(pdf: FPDF, g: Grid, text: str, x: float, w: float, row: int) -> None:

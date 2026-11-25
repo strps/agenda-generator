@@ -15,6 +15,7 @@ from agenda.calendar import holidays_for, month_grid
 from agenda.config import Config
 from agenda.grid import Grid, Rect
 from agenda.i18n import Strings
+from agenda.textfit import fit_text
 
 _INNER_FILL = (200, 220, 255)  # blue: inner (binding) margin
 _OUTER_FILL = (255, 225, 190)  # orange: outer margin
@@ -194,6 +195,64 @@ def set_font(pdf: FPDF, role: str, style: str = "", size: float = 0) -> None:
     use_role = getattr(pdf, "use_font_role", None)
     if use_role is not None:
         use_role(role)
+
+
+_LINE_FACTOR = 1.2  # line height of wrapped text, times the font size
+
+
+def fit_cell(
+    pdf: FPDF,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    text: str,
+    *,
+    region: str,
+    mode: str,
+    role: str,
+    style: str = "",
+    size_pt: float,
+    align: str = "L",
+) -> None:
+    """Draw ``text`` in the box (x, y, w, h) in font ``role``/``style`` at ``size_pt``, fitted by ``mode``.
+
+    ``mode`` is a ``textfit.FIT_MODES`` value. "overflow" is exactly one plain ``pdf.cell`` (never
+    logged). Otherwise the text is shortened, shrunk or wrapped (lines centered vertically in
+    ``h``); a shortened text is added to ``pdf.agenda_cut_log`` (if set) with its agenda page.
+    """
+    set_font(pdf, role, style, size_pt)
+    pdf.set_xy(x, y)
+    if mode == "overflow":
+        pdf.cell(w, h, text, align=align)
+        return
+    actual = pdf.font_size_pt
+    mm = 25.4 / 72
+    res = fit_text(
+        text,
+        w,
+        h,
+        actual,
+        mode,
+        pdf.get_string_width,
+        lambda s: s * mm * _LINE_FACTOR,
+    )
+    if res.size_pt != actual:
+        pdf.set_font_size(res.size_pt)
+    if len(res.lines) == 1:
+        pdf.cell(w, h, res.lines[0], align=align)
+    else:
+        lh = min(res.size_pt * mm * _LINE_FACTOR, h / len(res.lines))
+        top = y + (h - lh * len(res.lines)) / 2
+        for i, line in enumerate(res.lines):
+            pdf.set_xy(x, top + i * lh)
+            pdf.cell(w, lh, line, align=align)
+    if res.size_pt != actual:
+        pdf.set_font_size(actual)
+    log = getattr(pdf, "agenda_cut_log", None)
+    if res.cut and log is not None:
+        page = pdf.page
+        log.add(getattr(pdf, "agenda_page_numbers", {}).get(page, page), region, text)
 
 
 _DEFAULT = tokens.COLORS  # default (minimal) palette for documents without ``agenda_palette``

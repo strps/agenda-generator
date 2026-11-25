@@ -18,6 +18,7 @@ from typing import Any
 from fpdf import FPDF
 
 from agenda.day_extras import truncate
+from agenda.textfit import CutLog
 
 RGB = tuple[int, int, int]
 
@@ -38,6 +39,8 @@ class AgendaPDF(FPDF):
         self.agenda_font_colors: dict[str, RGB] = {}
         self.agenda_ink: RGB = (0, 0, 0)
         self.agenda_font_role: str | None = None
+        self.agenda_page_numbers: dict[int, int] = {}  # document page -> real agenda page
+        self.agenda_cut_log: CutLog | None = None  # collects header/footer text that was cut
         self._default_text = self.text_color
         self._asked_text: Any = None  # color the page last asked for (None = never: default)
 
