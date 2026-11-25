@@ -18,7 +18,7 @@ def captured(monkeypatch, tmp_path):
     """Replace the exporter so a CLI call only records the validated Config."""
     seen = {}
 
-    def fake(cfg, path):
+    def fake(cfg, path, **_kw):
         seen["cfg"], seen["path"] = cfg, path
         return Path(path)
 
@@ -197,3 +197,38 @@ def test_page_range_flag(tmp_path, capsys):
     )
     assert "page range" in capsys.readouterr().err
     assert main([*base, "--page-range", "999", "--output", str(out)]) == 2
+
+
+def _long_phrase_args(tmp_path, phrase="Very long phrase " * 12):
+    f = tmp_path / "q.txt"
+    f.write_text(f"Hi\n{phrase}\nHi\nHi\n", encoding="utf-8")
+    return [
+        "--year", "2027", "--planners", "daily", "--daily-months", "1",
+        "--daily-quotes", "--daily-quotes-file", str(f), "--no-daily-holidays",
+        "--output", str(tmp_path / "o.pdf"),
+    ]  # fmt: skip
+
+
+def test_cli_reports_footer_cuts_on_stderr(tmp_path, capsys):
+    from datetime import date
+
+    from agenda.assembler import build_plan
+    from agenda.config import Config
+
+    args = _long_phrase_args(tmp_path)
+    assert main(args) == 0
+    err = capsys.readouterr().err
+    cfg = Config(year=2027, planners=["daily"], daily_months=[1])
+    pages = sorted(
+        e.page_number
+        for e in build_plan(cfg)
+        if e.ctx.get("date") is not None and (e.ctx["date"] - date(2027, 1, 2)).days % 4 == 0
+    )
+    from agenda.textfit import format_ranges
+
+    assert f"Footer text was shortened on {len(pages)} agenda pages: {format_ranges(pages)}" in err
+
+
+def test_cli_no_cut_prints_no_report(tmp_path, capsys):
+    assert main(_long_phrase_args(tmp_path, phrase="Short")) == 0
+    assert "shortened" not in capsys.readouterr().err

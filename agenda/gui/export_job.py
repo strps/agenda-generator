@@ -3,12 +3,14 @@
 from PySide6.QtCore import QObject, QRunnable, Signal
 
 from agenda.config import Config
+from agenda.cutreport import cut_report_lines, cut_status
 from agenda.exporter import export_agenda
+from agenda.textfit import CutLog
 
 
 class ExportSignals(QObject):
     progress = Signal(int, int)  # pages done, total
-    done = Signal(str)  # written path
+    done = Signal(str, str, str)  # written path, cut status suffix, full cut report ('' = no cuts)
     failed = Signal(str)
 
 
@@ -26,7 +28,11 @@ class ExportJob(QRunnable):
     def run(self) -> None:
         try:
             kw = {"pages": self.pages} if self.pages else {}
-            out = export_agenda(self.cfg, self.path, progress=self.signals.progress.emit, **kw)
-            self.signals.done.emit(str(out))
+            cuts = CutLog()
+            out = export_agenda(
+                self.cfg, self.path, progress=self.signals.progress.emit, cuts=cuts, **kw
+            )
+            report = "\n".join(cut_report_lines(cuts)) if cuts else ""
+            self.signals.done.emit(str(out), cut_status(cuts), report)
         except Exception as exc:  # noqa: BLE001 - reported to the user instead of killing the thread
             self.signals.failed.emit(str(exc))

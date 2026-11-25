@@ -1,6 +1,6 @@
 # STATE: agenda-generator        (working memory of the active plan, rewritten each phase, max 40 lines)
 Plan: 2026-11-25-text-fit-warnings
-Last phase: 03
+Last phase: 04
 ADRs: docs/adr/README.md (long-lived decisions; read the index, open an ADR only when your phase touches it)
 
 ## Decisions (this plan)
@@ -10,11 +10,13 @@ ADRs: docs/adr/README.md (long-lived decisions; read the index, open an ADR only
 - fit_cell sets the font itself (role/style/unscaled size_pt), measures at pdf.font_size_pt; wrap line height = 1.2 * size; "overflow" = one plain pdf.cell (byte-identical); footer ellipsis stays byte-identical to old truncate+cell (text-fit-warnings/03)
 - render_pages logs into a private CutLog and copies only requested pages' entries (multi-page instances are drawn whole) (text-fit-warnings/03)
 - Text that fits on one line at size_pt returns unchanged in every mode (text-fit-warnings/01)
+- Cut report: agenda/cutreport.py (Qt-free, tr() keys cuts.*); CLI echoes it to stderr after "wrote" (exit 0); ExportSignals.done is now (path, status suffix, full report); MainWindow.export_result = text + report, status bar gets the short suffix, interactive box is a Warning with detailed text (text-fit-warnings/04)
 
 ## Contracts (between this plan's phases)
 - Fitting: agenda/textfit.py::fit_text -> FitResult(lines, size_pt, cut); FIT_MODES, FOOTER_FIT_MODES
 - Cut collection: agenda/textfit.py::CutLog (add(page, region, text), entries, pages(region), bool, len); format_ranges(pages) -> "3, 5, 14-20"
 - Renderer: agenda/draw.py::fit_cell(pdf,x,y,w,h,text,*,region,mode,role,style,size_pt,align); AgendaPDF.agenda_page_numbers / agenda_cut_log (pdfdoc.py); export_agenda/render_pages(cuts=CutLog|None) (exporter.py)
+- Report text: agenda/cutreport.py::cut_report_lines(log), cut_status(log) (phase 08 may reuse)
 - Region ids: "header", "footer"
 - Options: agenda/config.py::Config.header_text_fit / footer_text_fit (Literal types; CLI --header-text-fit/--footer-text-fit)
 

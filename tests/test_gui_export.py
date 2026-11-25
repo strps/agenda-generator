@@ -147,3 +147,33 @@ def test_gui_export_matches_cli_styled(qapp, tmp_path):
     cli_pdf = tmp_path / "cli.pdf"
     assert main(["--config", str(yaml_path), "--output", str(cli_pdf)]) == 0
     assert _sig(gui_pdf) == _sig(cli_pdf)
+
+
+@pytest.mark.gui
+def test_gui_export_reports_cuts(qapp, tmp_path):
+    from agenda.gui.app import MainWindow
+
+    q = tmp_path / "q.txt"
+    q.write_text("Hi\n" + "Very long phrase " * 12 + "\nHi\nHi\n", encoding="utf-8")
+    win = MainWindow()
+    try:
+        win.settings.set_values(
+            {
+                "year": 2027,
+                "planners": ["daily"],
+                "daily_months": [1],
+                "daily_quotes": True,
+                "daily_quotes_file": str(q),
+                "daily_holidays": False,
+            }
+        )
+        win.flush_preview()
+        assert win.start_export(str(tmp_path / "g.pdf"))
+        assert win.wait_export()
+        assert win.export_result.startswith("Exported")
+        assert "Footer text was shortened on" in win.export_result
+        assert "agenda pages" in win.export_result
+        assert "shortened text" in win.export_status.text()
+    finally:
+        win.preview.wait_idle()
+        win.close()

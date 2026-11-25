@@ -29,7 +29,7 @@ pages: [cover, personal_info, yearly, monthly, weekly, habits, health, qr, notes
 def captured(monkeypatch):
     seen = {}
 
-    def fake(cfg, path):
+    def fake(cfg, path, **_kw):
         seen["cfg"], seen["path"] = cfg, path
         return Path(path)
 

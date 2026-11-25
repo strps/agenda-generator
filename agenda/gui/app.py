@@ -405,20 +405,26 @@ class MainWindow(QMainWindow):
     def _on_export_progress(self, done: int, total: int) -> None:
         self.export_progress.setValue(EM.progress_percent(done, total))
 
-    def _finish_export(self, text: str, ok: bool) -> None:
+    def _finish_export(self, text: str, ok: bool, report: str = "", status: str = "") -> None:
         self.export_running = False
         self.export_progress.hide()
-        self.export_status.setText(text)
-        self.export_result = text
+        self.export_status.setText(f"{text}  {status}" if status else text)
+        self.export_result = f"{text}\n{report}" if report else text
         cfg, _ = self.settings.config()
         self._sync_export_button(valid=cfg is not None)
         if self._export_interactive:
-            box = QMessageBox.information if ok else QMessageBox.warning
-            box(self, tr("app.export_pdf"), text)
+            if report:
+                dlg = QMessageBox(QMessageBox.Icon.Warning, tr("app.export_pdf"), text, parent=self)
+                dlg.setDetailedText(report)
+                dlg.exec()
+            else:
+                box = QMessageBox.information if ok else QMessageBox.warning
+                box(self, tr("app.export_pdf"), text)
 
-    def _on_export_done(self, path: str) -> None:
+    def _on_export_done(self, path: str, status: str = "", report: str = "") -> None:
         self.export_progress.setValue(100)
-        self._finish_export(tr("app.exported", path=path), True)
+        text = tr("app.exported", path=path)
+        self._finish_export(text, not report, report, status)
         if self._export_interactive and self._open_after:
             self.open_file(path)
 

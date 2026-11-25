@@ -14,8 +14,10 @@ import typer
 from agenda import __version__
 from agenda.config import Config
 from agenda.configfile import load_yaml, merge
+from agenda.cutreport import cut_report_lines
 from agenda.exporter import DEFAULT_OUTPUT, FontsMissingError, export_agenda, export_blank
 from agenda.fields import cli_meta, field_names, short_help
+from agenda.textfit import CutLog
 from agenda.uitext import tr
 
 app = typer.Typer(add_completion=False, help=tr("cli.help"))
@@ -251,18 +253,22 @@ def run(**opts: Any) -> None:
             pages = parse_page_range(page_range, len(build_plan(cfg)))
         except ValueError as exc:
             raise _fail(tr("cli.page_range_error", message=exc), 2) from None
+    cuts = CutLog()
     try:
         if blank_pages is None:
             out = (
-                export_agenda(cfg, target)
+                export_agenda(cfg, target, cuts=cuts)
                 if pages is None
-                else export_agenda(cfg, target, pages=pages)
+                else export_agenda(cfg, target, pages=pages, cuts=cuts)
             )
         else:
             out = export_blank(cfg, blank_pages, target)
     except FontsMissingError as exc:
         raise _fail(str(exc), 1) from None
     typer.echo(tr("cli.wrote", path=out))
+    if cuts:
+        for line in cut_report_lines(cuts):
+            typer.echo(line, err=True)
 
 
 _first, _last = _hand_params()
