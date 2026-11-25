@@ -71,6 +71,8 @@ pages:
 #   secondary_color: ""             # text color of the secondary font
 #   secondary_size: 100
 #   title_padding: 2                # mm of fill on each side of a title background
+#   header_text_fit: overflow       # overflow | ellipsis | shrink | wrap (title too long for the header)
+#   footer_text_fit: ellipsis       # ellipsis | shrink | wrap (footer text too long)
 # imposition: false
 # crop_marks: false
 # output: agenda.pdf

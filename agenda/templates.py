@@ -176,6 +176,8 @@ SECTIONS: tuple[SectionSpec, ...] = (
             "secondary_color": "font_secondary_color",
             "secondary_size": "font_secondary_size",
             "title_padding": "title_padding",
+            "header_text_fit": "header_text_fit",
+            "footer_text_fit": "footer_text_fit",
         },
     ),
 )

@@ -917,6 +917,37 @@ class Config(BaseModel):
             "cli": {},
         },
     )  # mm
+    header_text_fit: Literal["overflow", "ellipsis", "shrink", "wrap"] = Field(
+        "overflow",
+        description="How a page title too long for the header is fitted.",
+        json_schema_extra={
+            "detail": (
+                "What to do with a page header title that is too long for its "
+                'band: "overflow" (the default) draws the title unchanged even '
+                'past the band and never warns; "ellipsis" shortens it with "…"; '
+                '"shrink" lowers the font size down to 60 % and then shortens it; '
+                '"wrap" uses up to 2 lines and then shortens it. Text shortened '
+                "under ellipsis, shrink or wrap is reported with its pages after "
+                "the export."
+            ),
+            "cli": {"type": "str"},
+        },
+    )
+    footer_text_fit: Literal["ellipsis", "shrink", "wrap"] = Field(
+        "ellipsis",
+        description="How footer text too long for the footer is fitted.",
+        json_schema_extra={
+            "detail": (
+                "What to do with footer text (the daily phrase and the dated "
+                'note) that is too long for the footer band: "ellipsis" (the '
+                'default) shortens it with "…"; "shrink" lowers the font size '
+                'down to 60 % and then shortens it; "wrap" uses up to 2 lines and '
+                "then shortens it. Text that was shortened is reported with its "
+                "pages after the export."
+            ),
+            "cli": {"type": "str"},
+        },
+    )
     imposition: bool = Field(
         False,
         description="Export in booklet print order.",

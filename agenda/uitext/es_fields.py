@@ -446,6 +446,23 @@ FIELDS: dict[str, tuple[str, str, str]] = {
         "la página semanal). El texto sigue alineado con el resto de la página; solo el relleno "
         "crece hacia afuera. 0 deja el relleno al ras del texto.",
     ),
+    "header_text_fit": (
+        "ajuste del título de página",
+        "Cómo se ajusta un título de página demasiado largo para el encabezado.",
+        'Qué hacer con un título de encabezado demasiado largo para su banda: "overflow" (por '
+        'defecto) lo dibuja sin cambios aunque sobrepase la banda y nunca avisa; "ellipsis" lo '
+        'acorta con "…"; "shrink" reduce el tamaño de letra hasta el 60 % y luego lo acorta; '
+        '"wrap" usa hasta 2 líneas y luego lo acorta. El texto acortado con ellipsis, shrink o '
+        "wrap se informa con sus páginas después de exportar.",
+    ),
+    "footer_text_fit": (
+        "ajuste del texto del pie",
+        "Cómo se ajusta el texto del pie demasiado largo para el pie de página.",
+        "Qué hacer con el texto del pie (la frase diaria y la nota con fecha) demasiado largo para "
+        'su banda: "ellipsis" (por defecto) lo acorta con "…"; "shrink" reduce el tamaño de '
+        'letra hasta el 60 % y luego lo acorta; "wrap" usa hasta 2 líneas y luego lo acorta. El '
+        "texto acortado se informa con sus páginas después de exportar.",
+    ),
     "imposition": (
         "imposición",
         "Exportar en orden de impresión de cuadernillo.",

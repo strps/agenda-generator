@@ -184,6 +184,7 @@ style:                     # all keys optional; omitted = theme / built-in defau
   primary_font: inter      # inter or a .ttf/.otf path (headings, bold text)
   secondary_font: inter    # body text, labels, numbers
   title_padding: 2         # mm of fill on each side of a title background
+  header_text_fit: overflow  # overflow | ellipsis | shrink | wrap
 holidays_file: examples/holidays.csv
 ```
 
@@ -318,6 +319,8 @@ block (flat Config names also load), with a CLI flag each. They apply to the exp
 | `secondary_color` | `font_secondary_color` | `--font-secondary-color` | Text color of the secondary font (empty = ink) |
 | `secondary_size` | `font_secondary_size` | `--font-secondary-size` | Size of the secondary font, % of the designed sizes (50-200, default 100) |
 | `title_padding` | `title_padding` | `--title-padding` | Mm the weekend/holiday fill behind a day page header or week day row extends past the text on each side (default 2; 0 = flush) |
+| `header_text_fit` | `header_text_fit` | `--header-text-fit` | Page title too long for the header: `overflow` (default, drawn unchanged, never reported), `ellipsis`, `shrink` (down to 60 %, then shortened) or `wrap` (up to 2 lines, then shortened); shortened text is reported with its pages after export |
+| `footer_text_fit` | `footer_text_fit` | `--footer-text-fit` | Footer text (daily phrase, dated note) too long for the footer: `ellipsis` (default), `shrink` or `wrap`; shortened text is reported with its pages after export |
 
 Colors are `#rgb` or `#rrggbb` (the `#` is optional); empty means the theme's color. A font is the
 built-in `inter` or a path to a `.ttf`/`.otf` file (relative paths resolve against the working
