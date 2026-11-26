@@ -11,3 +11,5 @@ its area. A changed decision gets a NEW ADR; the old one is marked superseded.
 - [0005](0005-ui-catalog.md) GUI and CLI text goes through a Qt-free catalog (agenda/uitext), separate from PDF strings — Accepted — area: agenda/uitext, agenda/fields.py, agenda/templates.py, agenda/gui, agenda/cli.py
 - [0006](0006-ui-language-selection.md) The UI language is chosen per user, at startup, separately from the agenda language — Accepted — area: agenda/uitext, agenda/gui/app.py, agenda/gui/prefs_dialog.py, agenda/cli.py
 - [0007](0007-ui-string-rules.md) Rules for user-visible UI text — Accepted — area: agenda/gui, agenda/uitext, tests/test_ui_strings_lint.py
+- [0008](0008-header-footer-text-fit.md) Header and footer text fitting, and reporting cut text by agenda page — Accepted — area: agenda/textfit.py, agenda/cutreport.py, agenda/draw.py, agenda/exporter.py, agenda/pdfdoc.py, agenda/pages/
+- [0009](0009-back-cover-optional.md) The back cover is optional and off by default — Accepted — area: agenda/config, agenda/assembler.py
