@@ -7,7 +7,7 @@ from fpdf import FPDF
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, merged_holidays, set_font
+from agenda.draw import color, draw_header_title, merged_holidays, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -52,10 +52,13 @@ class Holidays(BasePage):
             found = []
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, f"{s('holidays.title')} {config.year} {config.holiday_country}".strip())
+        draw_header_title(
+            pdf,
+            g,
+            f"{s('holidays.title')} {config.year} {config.holiday_country}".strip(),
+            config,
+            tokens.TYPE_SIZES_PT[3],
+        )
 
         cols, shown, per_col = self.layout(g.rows, len(found))
         rh = self.ROW_BASELINES

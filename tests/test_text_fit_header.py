@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from agenda.assembler import build_plan
 from agenda.config import Config
 from agenda.exporter import export_agenda, render_pages
@@ -99,3 +101,34 @@ def test_overflow_streams_equal_plain_cell(tmp_path):
     ra = render_pages(a, build_plan(a), range(4))
     rb = render_pages(b, build_plan(b), range(4))
     assert ra == rb
+
+
+OPTIONAL_IDS = (
+    "goals",
+    "important_dates",
+    "todo",
+    "projects",
+    "budget",
+    "habits",
+    "monthly_review",
+    "schedule",
+    "holidays",
+    "passwords",
+)
+
+
+@pytest.mark.parametrize("page_id", OPTIONAL_IDS)
+def test_optional_header_cut_logged_with_agenda_page(page_id, tmp_path):
+    from agenda.catalog import get_page
+
+    cfg = _narrow("ellipsis", pages=[page_id])
+    own = {e.page_number for e in build_plan(cfg) if e.page_class is get_page(page_id)}
+    log = _log(cfg, tmp_path)
+    assert own
+    assert own <= set(log.pages("header"))
+    assert {e.region for e in log.entries} == {"header"}
+
+
+@pytest.mark.parametrize("page_id", OPTIONAL_IDS)
+def test_optional_header_overflow_logs_nothing(page_id, tmp_path):
+    assert not _log(_narrow("overflow", pages=[page_id], daily_holidays=False), tmp_path)

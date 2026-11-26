@@ -7,7 +7,7 @@ from fpdf import FPDF
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, draw_checkbox, draw_label_rule, set_font
+from agenda.draw import color, draw_checkbox, draw_header_title, draw_label_rule, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -48,10 +48,7 @@ class Goals(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("goals.title"))
+        draw_header_title(pdf, g, s("goals.title"), config, tokens.TYPE_SIZES_PT[3])
 
         goals, steps = self.layout(g.rows)
         block = steps + 3

@@ -7,7 +7,7 @@ from fpdf import FPDF
 from agenda import tokens
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, set_font
+from agenda.draw import color, draw_header_title, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -53,10 +53,7 @@ class Passwords(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("passwords.title"))
+        draw_header_title(pdf, g, s("passwords.title"), config, tokens.TYPE_SIZES_PT[3])
 
         # Warning box: rows 0..WARN_ROWS, border, triangle icon, wrapped text.
         x, w = g.safe.x, g.safe.w

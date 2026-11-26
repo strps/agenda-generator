@@ -10,7 +10,7 @@ from agenda import tokens
 from agenda.calendar import days_in_month
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, draw_circle, set_font
+from agenda.draw import color, draw_circle, draw_header_title, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx, month_ctxs
@@ -55,10 +55,13 @@ class Habits(BasePage):
         month, year = ctx["month"], ctx["year"]
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("habits.title", month=s.month_name(month), year=year))
+        draw_header_title(
+            pdf,
+            g,
+            s("habits.title", month=s.month_name(month), year=year),
+            config,
+            tokens.TYPE_SIZES_PT[3],
+        )
 
         x = g.safe.x
         days = days_in_month(year, month)

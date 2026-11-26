@@ -8,7 +8,7 @@ from agenda import tokens
 from agenda.calendar import weekday_order
 from agenda.catalog import register
 from agenda.config import Config
-from agenda.draw import color, set_font
+from agenda.draw import color, draw_header_title, set_font
 from agenda.grid import Grid
 from agenda.i18n import Strings
 from agenda.pages.base import BasePage, Ctx
@@ -53,10 +53,7 @@ class Schedule(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("schedule.title"))
+        draw_header_title(pdf, g, s("schedule.title"), config, tokens.TYPE_SIZES_PT[3])
 
         max_hours = config.schedule_last_hour - config.schedule_first_hour + 1
         hours, rh = self.layout(g.rows, max_hours)
