@@ -71,3 +71,42 @@ def test_header_localized():
     en = PdfReader(io.BytesIO(render_subset(Config(year=2026, language="en"), (0,))))
     assert "Jueves 1 de" in es.pages[0].extract_text()
     assert "Thursday, " in en.pages[0].extract_text()
+
+
+@pytest.mark.parametrize("lang", ["es", "en"])
+@pytest.mark.parametrize("size", ["a5", "b6"])
+def test_section_titles_have_top_margin(size, lang, monkeypatch):
+    from agenda import tokens
+    from agenda.pdfdoc import AgendaPDF
+
+    calls: list[tuple[str, float, float]] = []
+    orig = AgendaPDF.cell
+
+    def spy(self, w=None, h=None, text="", *args, **kwargs):
+        calls.append((text, self.get_y(), h))
+        return orig(self, w, h, text, *args, **kwargs)
+
+    monkeypatch.setattr(AgendaPDF, "cell", spy)
+    cfg = Config(language=lang, page_size=size, year=2026)
+    page = Daily()
+    pdf = new_document(cfg)
+    g = add_page(pdf, cfg)
+    page.draw(pdf, page.instances(cfg)[0], cfg, [g])
+
+    s = Strings(lang)
+    gap = tokens.SPACING[1]
+    half = g.rows // 2
+    n_hours = min(cfg.daily_hour_end - cfg.daily_hour_start + 1, g.rows - 1)
+    per = (g.rows - 1) // n_hours
+    expected = {
+        s("schedule"): (g.header.y + g.header.h + gap, 0),
+        s("priorities"): (g.header.y + g.header.h + gap, 0),
+        s("notes.title"): (g.row(half) + gap, half),
+    }
+    for text, (min_y, r0) in expected.items():
+        (_, y, h) = next(c for c in calls if c[0] == text)
+        assert y >= min_y - 1e-6
+        assert y + h <= g.row(r0 + 1) + 1e-6
+    hours = [c for c in calls if len(c[0]) == 5 and c[0].endswith(":00")]
+    assert len(hours) == n_hours
+    assert per >= 1

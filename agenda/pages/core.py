@@ -370,6 +370,7 @@ class Daily(BasePage):
 
     HOUR_START = 6
     HOUR_END = 21
+    LABEL_TOP_GAP = tokens.SPACING[1]  # space above the Schedule/Priorities/Notes titles
 
     def instances(self, config: Config) -> list[Ctx]:
         out = []
@@ -521,12 +522,12 @@ class Daily(BasePage):
                 align="R",
             )
 
-    @staticmethod
-    def _label(pdf: FPDF, g: Grid, text: str, x: float, w: float, row: int) -> None:
+    @classmethod
+    def _label(cls, pdf: FPDF, g: Grid, text: str, x: float, w: float, row: int) -> None:
         pdf.set_text_color(*color(pdf, "accent"))
         set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
-        pdf.set_xy(x, g.row(row))
-        pdf.cell(w, g.baseline, text)
+        pdf.set_xy(x, g.row(row) + cls.LABEL_TOP_GAP)
+        pdf.cell(w, g.baseline - cls.LABEL_TOP_GAP, text)
 
 
 @register
