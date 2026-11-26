@@ -12,6 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_checkbox,
+    draw_header_title,
     draw_label_rule,
     set_font,
 )
@@ -76,10 +77,7 @@ class Travel(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("travel.title"))
+        draw_header_title(pdf, g, s("travel.title"), config, tokens.TYPE_SIZES_PT[3])
 
         x, w = g.safe.x, g.safe.w
         set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])

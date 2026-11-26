@@ -132,3 +132,38 @@ def test_optional_header_cut_logged_with_agenda_page(page_id, tmp_path):
 @pytest.mark.parametrize("page_id", OPTIONAL_IDS)
 def test_optional_header_overflow_logs_nothing(page_id, tmp_path):
     assert not _log(_narrow("overflow", pages=[page_id], daily_holidays=False), tmp_path)
+
+
+VALUE_ADDED_IDS = (
+    "niche_fitness",
+    "niche_student",
+    "niche_entrepreneur",
+    "challenges30",
+    "physical_extras",
+    "gratitude",
+    "health",
+    "ideas",
+    "meals",
+    "media_log",
+    "quotes",
+    "qr",
+    "travel",
+    "vision_board",
+)
+
+
+@pytest.mark.parametrize("page_id", VALUE_ADDED_IDS)
+def test_value_added_header_cut_logged_with_agenda_page(page_id, tmp_path):
+    from agenda.catalog import get_page
+
+    cfg = _narrow("ellipsis", pages=[page_id], qr_urls=["https://example.com"])
+    own = {e.page_number for e in build_plan(cfg) if e.page_class is get_page(page_id)}
+    log = _log(cfg, tmp_path)
+    assert own
+    assert own <= set(log.pages("header"))
+    assert {e.region for e in log.entries} == {"header"}
+
+
+@pytest.mark.parametrize("page_id", VALUE_ADDED_IDS)
+def test_value_added_header_overflow_logs_nothing(page_id, tmp_path):
+    assert not _log(_narrow("overflow", pages=[page_id], daily_holidays=False), tmp_path)

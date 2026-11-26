@@ -11,6 +11,7 @@ from agenda.catalog import register
 from agenda.config import Config
 from agenda.draw import (
     color,
+    draw_header_title,
     draw_label_rule,
     set_font,
 )
@@ -91,10 +92,7 @@ class QRCodes(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("qr.title"))
+        draw_header_title(pdf, g, s("qr.title"), config, tokens.TYPE_SIZES_PT[3])
 
         c = g.content
         lay = self.layout(c.w, c.h, g.baseline, g.gutter)

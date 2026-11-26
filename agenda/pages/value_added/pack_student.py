@@ -54,7 +54,7 @@ class PackStudent(_Counted):
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         g = grids[0]
         s = Strings(config.language)
-        self._header(pdf, g, s("student.title"))
+        self._header(pdf, g, s("student.title"), config)
         x, w = g.safe.x, g.safe.w
         table, study = self.layout(g.rows)
         for col, span, key in self.COLS:

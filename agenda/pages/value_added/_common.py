@@ -8,6 +8,7 @@ from agenda import tokens
 from agenda.config import Config
 from agenda.draw import (
     color,
+    draw_header_title,
     set_font,
 )
 from agenda.grid import Grid
@@ -40,12 +41,10 @@ class _Counted(BasePage):
         return [{} for _ in range(n)]
 
     @staticmethod
-    def _header(pdf: FPDF, g: Grid, title: str) -> None:
+    def _header(pdf: FPDF, g: Grid, title: str, config: Config) -> None:
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        pdf.set_xy(g.header.x, g.header.y)
-        pdf.cell(g.header.w, g.header.h, title)
+        draw_header_title(pdf, g, title, config, tokens.TYPE_SIZES_PT[3])
 
     @staticmethod
     def _label(pdf: FPDF, g: Grid, x: float, w: float, row: int, text: str) -> None:

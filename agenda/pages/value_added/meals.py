@@ -12,6 +12,7 @@ from agenda.config import Config
 from agenda.draw import (
     color,
     draw_checkbox,
+    draw_header_title,
     set_font,
 )
 from agenda.grid import Grid
@@ -66,10 +67,7 @@ class Meals(BasePage):
         s = Strings(config.language)
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("meals.title"))
+        draw_header_title(pdf, g, s("meals.title"), config, tokens.TYPE_SIZES_PT[3])
 
         day_rows, per_col, ncols = self.layout(g.rows)
         x = g.safe.x

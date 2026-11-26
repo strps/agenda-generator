@@ -1,6 +1,6 @@
 # STATE: agenda-generator        (working memory of the active plan, rewritten each phase, max 40 lines)
 Plan: 2026-11-25-text-fit-warnings
-Last phase: 06
+Last phase: 07
 ADRs: docs/adr/README.md (long-lived decisions; read the index, open an ADR only when your phase touches it)
 
 ## Decisions (this plan)
@@ -13,13 +13,13 @@ ADRs: docs/adr/README.md (long-lived decisions; read the index, open an ADR only
 - Cut report: agenda/cutreport.py (Qt-free, tr() keys cuts.*); CLI echoes it to stderr after "wrote" (exit 0); ExportSignals.done is now (path, status suffix, full report); MainWindow.export_result = text + report, status bar gets the short suffix, interactive box is a Warning with detailed text (text-fit-warnings/04)
 - Daily header: overflow mode keeps today's drawing but logs a shortened/dropped holiday name as a header cut; other modes fit the title in header width minus week label (-4 mm gap), then the holiday (shrink: size from fit_text on the whole right string, then truncate) (text-fit-warnings/05)
 - Weekly._page takes keyword-only `config` (needed for header_text_fit) (text-fit-warnings/05)
-- Optional pages: draw_header_title replaces set_font+set_xy+cell (it sets the font itself; caller sets color) (text-fit-warnings/06)
+- Optional and value-added pages: draw_header_title replaces set_font+set_xy+cell (it sets the font itself; caller sets color); _Counted._header now takes `config` as 4th arg (text-fit-warnings/06, 07)
 
 ## Contracts (between this plan's phases)
 - Fitting: agenda/textfit.py::fit_text -> FitResult(lines, size_pt, cut); FIT_MODES, FOOTER_FIT_MODES
 - Cut collection: agenda/textfit.py::CutLog (add(page, region, text), entries, pages(region), bool, len); format_ranges(pages) -> "3, 5, 14-20"
 - Renderer: agenda/draw.py::fit_cell(pdf,x,y,w,h,text,*,region,mode,role,style,size_pt,align); AgendaPDF.agenda_page_numbers / agenda_cut_log (pdfdoc.py); export_agenda/render_pages(cuts=CutLog|None) (exporter.py)
-- Headers: agenda/draw.py::draw_header_title(pdf,g,text,config,size_pt,align,*,width,role,style) (core + optional pages use it; phase 07 reuses; caller sets text color); fit_cell now returns FitResult|None; draw.py::log_cut(pdf,region,text)
+- Headers: agenda/draw.py::draw_header_title(pdf,g,text,config,size_pt,align,*,width,role,style) (core, optional, value-added pages use it; caller sets text color); fit_cell now returns FitResult|None; draw.py::log_cut(pdf,region,text)
 - Report text: agenda/cutreport.py::cut_report_lines(log), cut_status(log) (phase 08 may reuse)
 - Region ids: "header", "footer"
 - Options: agenda/config.py::Config.header_text_fit / footer_text_fit (Literal types; CLI --header-text-fit/--footer-text-fit)

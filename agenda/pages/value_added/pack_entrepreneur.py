@@ -61,7 +61,7 @@ class PackEntrepreneur(_Counted):
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         g = grids[0]
         s = Strings(config.language)
-        self._header(pdf, g, s("entre.title"))
+        self._header(pdf, g, s("entre.title"), config)
         x, w = g.safe.x, g.safe.w
         metric, pipe, dec = self.layout(g.rows)
         set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])

@@ -15,6 +15,7 @@ from agenda.draw import (
     color,
     draw_checkbox,
     draw_circle,
+    draw_header_title,
     draw_mood,
     set_font,
 )
@@ -73,10 +74,13 @@ class HealthTracker(BasePage):
         month, year = ctx["month"], ctx["year"]
         pdf.c_margin = 0
         pdf.set_text_color(*color(pdf, "accent"))
-        set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[3])
-        h = g.header
-        pdf.set_xy(h.x, h.y)
-        pdf.cell(h.w, h.h, s("health.title", month=s.month_name(month), year=year))
+        draw_header_title(
+            pdf,
+            g,
+            s("health.title", month=s.month_name(month), year=year),
+            config,
+            tokens.TYPE_SIZES_PT[3],
+        )
 
         x = g.safe.x
         days = days_in_month(year, month)

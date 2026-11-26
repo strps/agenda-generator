@@ -59,7 +59,7 @@ class PackFitness(_Counted):
     def draw(self, pdf: FPDF, ctx: Ctx, config: Config, grids: list[Grid]) -> None:
         g = grids[0]
         s = Strings(config.language)
-        self._header(pdf, g, s("fitness.title"))
+        self._header(pdf, g, s("fitness.title"), config)
         x, w = g.safe.x, g.safe.w
         ex, notes = self.layout(g.rows)
         set_font(pdf, "primary", "B", tokens.TYPE_SIZES_PT[1])
