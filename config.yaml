@@ -58,6 +58,7 @@ pages:
 # page_number_position: outer       # outer | center | inner
 # page_number_placement: margin     # margin | footer
 # page_number_format: "{n}"         # {n} and optionally {total}
+# back_cover: false                # add a back cover page at the end
 # spreads: false                    # 2-up reader spreads (not with imposition)
 # sheet_size: auto                  # auto | letter | a4 (spreads and imposition)
 # style:                            # PDF colors and fonts (flat keys theme, color_*, font_* also work)

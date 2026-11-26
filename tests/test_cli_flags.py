@@ -111,6 +111,14 @@ EXPECTED_PARAMS = {
         "multiple": False,
         "type": "str",
     },
+    "back_cover": {
+        "opts": ["--back-cover"],
+        "secondary_opts": ["--no-back-cover"],
+        "default": None,
+        "is_flag": True,
+        "multiple": False,
+        "type": "boolean",
+    },
     "separate_covers": {
         "opts": ["--separate-covers"],
         "secondary_opts": ["--no-separate-covers"],
@@ -652,6 +660,7 @@ FIELD_TO_PARAMS = {
     "booklet_folded": ["booklet_folded"],
     "num_booklets": ["num_booklets"],
     "pad_with": ["pad_with"],
+    "back_cover": ["back_cover"],
     "separate_covers": ["separate_covers"],
     "creep_mm": ["creep_mm"],
     "planners": ["planners"],

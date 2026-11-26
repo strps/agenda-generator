@@ -79,7 +79,7 @@ MESSAGES: dict[str, str] = {
     "export.disabled_reason": "Export is disabled because the current settings are invalid. Fix the "
     "highlighted settings to enable it.",
     "section_desc.front_back": "front and back matter: cover, personal info, goals, yearly overview, "
-    "notes, contacts and back cover.",
+    "notes, contacts and back cover (when back_cover is on).",
     "section_desc.monthly": "monthly overview pages, one per month.",
     "section_desc.weekly": "weekly planner pages.",
     "section_desc.daily": "daily planner pages, one per day.",

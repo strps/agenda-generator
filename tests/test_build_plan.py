@@ -17,6 +17,7 @@ from agenda.pages.core import (
 
 
 def _cfg(**kw):
+    kw.setdefault("back_cover", True)
     return Config(year=kw.pop("year", 2026), **kw)
 
 

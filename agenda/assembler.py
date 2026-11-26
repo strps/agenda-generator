@@ -187,10 +187,11 @@ def build_plan(config: Any) -> PagePlan:
     (dates inside ``config.year`` and in ``config.daily_months``), then that month's
     ``config.month_end_pages`` (both in the monthly section) -> optional ->
     value-added -> back matter (notes and contacts, ``config.notes_pages``/``contacts_pages`` each; padding of at
-    least ``config.extra_padding`` units; back cover). With
-    ``config.separate_covers`` the cover is page 1 followed by a blank inside-cover filler, and a
-    blank inside-back filler precedes the back cover; those 4 pages have ``booklet_index`` None and
-    padding/booklets are computed on the inner block (pages 3..N-2, which starts on a right page). A multi-page instance is
+    least ``config.extra_padding`` units; back cover only when ``config.back_cover``). With
+    ``config.separate_covers`` the cover is page 1 followed by a blank inside-cover filler, and (with
+    a back cover) a blank inside-back filler precedes the back cover; those pages have
+    ``booklet_index`` None and padding/booklets are computed on the inner block (pages 3..N-2, or
+    3..N without a back cover; it starts on a right page). A multi-page instance is
     ``cls.pages`` entries sharing one ctx. One blank filler (``kind="filler"``, section of the
     page it precedes) is inserted before an instance whose ``starts_on`` side doesn't match. For a
     week spread it follows ``config.daily_filler`` after a day page, else ``weekly_filler``:
@@ -304,7 +305,7 @@ def build_plan(config: Any) -> PagePlan:
     pad_ctxs = pad_cls().instances(config) or [{}]
 
     def try_padding(units: int, blank: bool) -> int:
-        """Rebuild the tail with ``units`` padding units + back cover; return total pages."""
+        """Rebuild the tail with ``units`` padding units (+ back cover); return total pages."""
         entries[:] = base
         for u in range(units):
             if blank:
@@ -312,11 +313,14 @@ def build_plan(config: Any) -> PagePlan:
             else:
                 put(pad_cls, dict(pad_ctxs[u % len(pad_ctxs)]), kind="padding")
         inner = len(entries) - lead  # pages counted in booklets
-        if sep:  # inside back cover (blank), then the cover; neither is in a booklet
+        if sep and config.back_cover:  # inside back cover (blank), then the cover; not in a booklet
             entries.append(make_entry(None, {}, len(entries) + 1, BackCover.section, kind="filler"))
             put(BackCover, {})
             return inner
-        put(BackCover, {})
+        if sep:
+            return inner
+        if config.back_cover:
+            put(BackCover, {})
         return len(entries)
 
     # Padding goes BEFORE the back cover so the cover stays the last page. The count comes from
@@ -341,7 +345,8 @@ def build_plan(config: Any) -> PagePlan:
             break
     if not done:
         try_padding(start, False)
-    inner_end = len(entries) - 2 if sep else len(entries)  # last inner page number
+    outside_tail = 2 if sep and config.back_cover else 0  # inside-back filler + back cover
+    inner_end = len(entries) - outside_tail  # last inner page number
     if config.booklet_folded and plan_booklets(inner_end - lead, per, nb).overflow == 0:
         # Invariant (not user-facing): a folded booklet block is whole sheets of 4 pages.
         assert (inner_end - lead) % 4 == 0, (

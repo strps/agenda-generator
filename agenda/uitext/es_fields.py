@@ -76,12 +76,18 @@ FIELDS: dict[str, tuple[str, str, str]] = {
         "secciones. Por defecto es notes. La página se configura en su propia sección (p. ej. el "
         "patrón de Notas), que lleva la insignia de relleno.",
     ),
+    "back_cover": (
+        "contraportada",
+        "Añadir una contraportada al final.",
+        "Activado: la agenda termina con una página de contraportada, después del relleno. "
+        "Desactivado por defecto: la agenda termina con su última página de final o de relleno.",
+    ),
     "separate_covers": (
         "portadas aparte",
         "Mantener las portadas separadas de los cuadernillos.",
-        "Activado: la portada y la contraportada se excluyen del conteo de cuadernillos, el "
-        "relleno va antes de la contraportada y las portadas pueden imprimirse aparte en "
-        "cartulina.",
+        "Activado: la portada (y la contraportada, si back_cover está activado) se excluyen del "
+        "conteo de cuadernillos, el relleno va antes de la contraportada y las portadas pueden "
+        "imprimirse aparte en cartulina.",
     ),
     "creep_mm": (
         "deslizamiento (mm)",
@@ -269,7 +275,7 @@ FIELDS: dict[str, tuple[str, str, str]] = {
         "relleno extra",
         "Número mínimo de páginas de relleno a añadir (0-200).",
         "Número mínimo de unidades de relleno (copias de la página pad_with, o páginas en "
-        "blanco) puestas antes de la contraportada, 0-200 (por defecto 0). La agenda puede "
+        "blanco) puestas antes de la contraportada (si back_cover está activado), 0-200 (por defecto 0). La agenda puede "
         "recibir más relleno del pedido, para completar el último cuadernillo y que los "
         "cuadernillos queden enteros.",
     ),

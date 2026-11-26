@@ -110,7 +110,7 @@ def test_impose_pads_partial_booklet_and_keeps_plain_pages():
 
 
 def test_export_imposed_has_one_sheet_side_per_four_pages(tmp_path):
-    base = Config(year=2025, booklet_size=2, num_booklets=1)
+    base = Config(year=2025, booklet_size=2, num_booklets=1, back_cover=True)
     plain = export_agenda(base, tmp_path / "a.pdf")
     imp = export_agenda(base.model_copy(update={"imposition": True}), tmp_path / "b.pdf")
     n = len(PdfReader(plain).pages)

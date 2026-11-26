@@ -1,6 +1,6 @@
 # STATE: agenda-generator        (working memory of the active plan, rewritten each phase, max 40 lines)
 Plan: 2026-11-25-text-fit-warnings
-Last phase: 08
+Last phase: 09
 ADRs: docs/adr/README.md (long-lived decisions; read the index, open an ADR only when your phase touches it)
 
 ## Decisions (this plan)
@@ -15,6 +15,7 @@ ADRs: docs/adr/README.md (long-lived decisions; read the index, open an ADR only
 - Weekly._page takes keyword-only `config` (needed for header_text_fit) (text-fit-warnings/05)
 - Optional and value-added pages: draw_header_title replaces set_font+set_xy+cell (it sets the font itself; caller sets color); _Counted._header now takes `config` as 4th arg (text-fit-warnings/06, 07)
 - Preview: RenderSignals.done is now (id, images, CutLog); PreviewWidget keeps per-config CutLog of pages rendered so far (reset on config hash change), shows `warning` label for visible pages, emits cuts_changed(report) which MainWindow appends to the summary tooltip (text-fit-warnings/08)
+- back_cover (default False) is the single switch for BackCover in build_plan; `pages` membership ignored. Intentional exception to "existing config.yaml loads to same Config": configs without the key now get no back cover. With separate_covers and no back cover only cover + inside-cover filler are outside booklets (outside_tail = 2 only with back cover) (text-fit-warnings/09)
 
 ## Contracts (between this plan's phases)
 - Fitting: agenda/textfit.py::fit_text -> FitResult(lines, size_pt, cut); FIT_MODES, FOOTER_FIT_MODES
@@ -23,6 +24,7 @@ ADRs: docs/adr/README.md (long-lived decisions; read the index, open an ADR only
 - Headers: agenda/draw.py::draw_header_title(pdf,g,text,config,size_pt,align,*,width,role,style) (core, optional, value-added pages use it; caller sets text color); fit_cell now returns FitResult|None; draw.py::log_cut(pdf,region,text)
 - Report text: agenda/cutreport.py::cut_report_lines(log), cut_status(log) 
 - Preview: agenda/gui/preview_model.py::cut_warning(log, plan indices), cuts_tooltip(log); preview.py::PreviewWidget.warning / cuts
+- Back cover: agenda/config.py::Config.back_cover; agenda/assembler.py::build_plan try_padding/outside_tail
 - Region ids: "header", "footer"
 - Options: agenda/config.py::Config.header_text_fit / footer_text_fit (Literal types; CLI --header-text-fit/--footer-text-fit)
 

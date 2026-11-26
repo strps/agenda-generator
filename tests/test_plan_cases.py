@@ -91,19 +91,19 @@ def check_plan(cfg):
 
 @pytest.mark.parametrize("name", CASES)
 def test_invariants(name):
-    check_plan(Config(year=2026, **CASES[name]))
+    check_plan(Config(year=2026, back_cover=True, **CASES[name]))
 
 
 def test_minimal_contents():
-    plan, s = check_plan(Config(year=2026, **MINIMAL))
+    plan, s = check_plan(Config(year=2026, back_cover=True, **MINIMAL))
     assert not any(e.page_class in (Daily, Weekly) for e in plan)
     assert len(plan) < 30
     assert s.booklets == 1 or s.booklets * s.pages_per_booklet == len(plan)
 
 
 def test_one_sheet_booklets():
-    folded = check_plan(Config(year=2026, **CASES["sheet_folded"]))[1]
-    flat = check_plan(Config(year=2026, **CASES["sheet_flat"]))[1]
+    folded = check_plan(Config(year=2026, back_cover=True, **CASES["sheet_folded"]))[1]
+    flat = check_plan(Config(year=2026, back_cover=True, **CASES["sheet_flat"]))[1]
     assert (folded.pages_per_booklet, flat.pages_per_booklet) == (4, 2)
     assert folded.sheets_per_booklet == flat.sheets_per_booklet == 1
     assert folded.booklets == folded.total_pages // 4
@@ -111,8 +111,8 @@ def test_one_sheet_booklets():
 
 
 def test_weekly_and_daily_only_counts():
-    w = build_plan(Config(year=2026, planners=["weekly"]))
-    d = build_plan(Config(year=2026, planners=["daily"]))
+    w = build_plan(Config(year=2026, back_cover=True, planners=["weekly"]))
+    d = build_plan(Config(year=2026, back_cover=True, planners=["daily"]))
     assert sum(e.page_class is Daily for e in w) == 0
     assert sum(e.page_class is Weekly for e in d) == 0
     assert sum(e.page_class is Daily for e in d) == 365
@@ -121,30 +121,30 @@ def test_weekly_and_daily_only_counts():
 @pytest.mark.parametrize("year", range(2021, 2031))
 @pytest.mark.parametrize("week_start", ["monday", "sunday"])
 def test_every_day_has_one_daily_in_order(year, week_start):
-    plan = build_plan(Config(year=year, week_start=week_start))
+    plan = build_plan(Config(year=year, back_cover=True, week_start=week_start))
     dates = [e.ctx["date"] for e in plan if e.page_class is Daily]
     assert dates == days_of_year(year)
 
 
 def test_orphan_placement_2027_and_2024():
-    plan = build_plan(Config(year=2027))  # Jan 1-3 are in ISO week 53 of 2026
+    plan = build_plan(Config(year=2027, back_cover=True))  # Jan 1-3 are in ISO week 53 of 2026
     i = next(i for i, e in enumerate(plan) if e.page_class is Daily)
     assert plan[i].ctx["date"] == date(2027, 1, 1)
     assert plan[i - 1].section == "monthly" and plan[i + 3].page_class is Weekly
     assert plan[i + 2].ctx["date"] == date(2027, 1, 3)
-    plan = build_plan(Config(year=2024))  # Dec 30-31 are in ISO week 1 of 2025
+    plan = build_plan(Config(year=2024, back_cover=True))  # Dec 30-31 are in ISO week 1 of 2025
     ds = [e.ctx["date"] for e in plan if e.page_class is Daily]
     assert ds[-2:] == [date(2024, 12, 30), date(2024, 12, 31)]
     assert ds[-1] - ds[0] == timedelta(days=365)
 
 
 def test_orphans_respect_daily_months():
-    plan = build_plan(Config(year=2027, daily_months=[1]))
+    plan = build_plan(Config(year=2027, back_cover=True, daily_months=[1]))
     ds = [e.ctx["date"] for e in plan if e.page_class is Daily]
     assert len(ds) == 31 and ds[0] == date(2027, 1, 1)
 
 
 def test_export_agenda_pdf_matches_plan(tmp_path):
-    cfg = Config(year=2026, daily_months=[1])
+    cfg = Config(year=2026, back_cover=True, daily_months=[1])
     out = export_agenda(cfg, tmp_path / "a.pdf")
     assert len(PdfReader(out).pages) == len(build_plan(cfg))

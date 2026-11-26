@@ -181,14 +181,27 @@ class Config(BaseModel):
             "cli": {"type": "str"},
         },
     )  # catalog page id used to fill the last booklet (see _check_pad_with)
+    back_cover: bool = Field(
+        False,
+        description="Add a back cover page at the end.",
+        json_schema_extra={
+            "detail": (
+                "When on, the agenda ends with a back cover page, after any "
+                "padding. Off by default: the agenda ends with its last "
+                "back-matter or padding page."
+            ),
+            "cli": {},
+        },
+    )
     separate_covers: bool = Field(
         False,
         description="Keep the covers apart from the booklets.",
         json_schema_extra={
             "detail": (
-                "When on, the cover and back cover are excluded from the "
-                "booklet count, so padding goes before the back cover and the "
-                "covers can be printed separately on card stock."
+                "When on, the cover (and the back cover, when back_cover is "
+                "on) are excluded from the booklet count, so padding goes "
+                "before the back cover and the covers can be printed "
+                "separately on card stock."
             ),
             "cli": {},
         },
@@ -572,7 +585,7 @@ class Config(BaseModel):
         json_schema_extra={
             "detail": (
                 "Minimum number of padding units (copies of the pad_with "
-                "page, or blank pages) put before the back cover, 0-200 "
+                "page, or blank pages) put before the back cover (when back_cover is on), 0-200 "
                 "(default 0). The agenda may get more padding than asked, to "
                 "complete the last booklet, so booklets stay whole."
             ),

@@ -144,6 +144,7 @@ Common flags:
 | `--preset essential\|complete\|premium` | Ready-made page selection (used when `pages` is empty) |
 | `--booklet-size`, `--booklet-unit`, `--folded/--flat` | Booklet layout |
 | `--pad-with`, `--separate-covers`, `--creep-mm` | Booklet padding, covers, creep |
+| `--back-cover` / `--no-back-cover` | Add a back cover page (off by default) |
 | `--imposition`, `--crop-marks`, `--bleed` | Print-ready 2-up sheets |
 | `--qr-url URL` | Content for the QR page (repeatable) |
 | `--notes-pattern`, `--page-numbers` | Page details |
@@ -201,7 +202,7 @@ Values that used to be fixed in the pages are now settings; the defaults reprodu
 ### Padding
 
 A padding unit is one copy of the `pad_with` page (a catalog id, default `notes`), placed before
-the back cover. `extra_padding` (default 0) is the minimum number of units; the count is rounded
+the back cover (if `back_cover` is on). `extra_padding` (default 0) is the minimum number of units; the count is rounded
 up so the last booklet is whole, so you may get more than asked. `notes_pages` are separate,
 regular back-matter pages and are not padding.
 
@@ -256,7 +257,7 @@ is re-read only when its timestamp changes; if the preview looks stale, touch th
 `agenda-gen --list` prints the catalog with categories, value scores and presets:
 
 - **core**: cover, personal info, yearly calendar, monthly, weekly (two-page spread), daily,
-  notes, contacts, back cover
+  notes, contacts, back cover (only when `back_cover` is on)
 - **optional**: goals, important dates, to-do, projects, budget, habit tracker, monthly review,
   schedule, holidays, passwords
 - **value_added**: quotes, vision board, health tracker, meals, gratitude, media log, travel,

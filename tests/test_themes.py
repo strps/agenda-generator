@@ -30,7 +30,7 @@ def _text(reader):
 
 def test_default_fingerprint_unchanged(tmp_path):
     expected = json.loads((ROOT / "tests/data/default_style_fingerprint.json").read_text())
-    assert _streams(_export(tmp_path)) == expected
+    assert _streams(_export(tmp_path, back_cover=True)) == expected
 
 
 def test_theme_registry():

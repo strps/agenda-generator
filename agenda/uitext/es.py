@@ -91,7 +91,7 @@ MESSAGES: dict[str, str] = {
     "export.disabled_reason": "La exportación está desactivada porque los ajustes actuales no son "
     "válidos. Corrige los ajustes resaltados para activarla.",
     "section_desc.front_back": "portada y contraportada y páginas preliminares: portada, datos "
-    "personales, metas, resumen anual, notas, contactos y contraportada.",
+    "personales, metas, resumen anual, notas, contactos y contraportada (si back_cover está activado).",
     "section_desc.monthly": "páginas de resumen mensual, una por mes.",
     "section_desc.weekly": "páginas del planificador semanal.",
     "section_desc.daily": "páginas del planificador diario, una por día.",

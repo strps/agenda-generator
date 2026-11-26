@@ -20,7 +20,7 @@ def _kinds(plan, kind):
 
 @pytest.mark.parametrize("year,pad", [(2026, 10), (2025, 12)])
 def test_defaults_fingerprint(year, pad):
-    plan = build_plan(Config(year=year))
+    plan = build_plan(Config(year=year, back_cover=True))
     assert len(plan) == 540
     assert len(_kinds(plan, "padding")) == pad
     assert len(_kinds(plan, "filler")) == 41
