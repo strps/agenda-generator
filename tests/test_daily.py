@@ -80,7 +80,15 @@ def test_section_titles_have_top_margin(size, lang, monkeypatch):
     from agenda.pdfdoc import AgendaPDF
 
     calls: list[tuple[str, float, float]] = []
+    lines: list[tuple] = []
     orig = AgendaPDF.cell
+    orig_line = AgendaPDF.line
+
+    def line_spy(self, *a, **k):
+        lines.append(a)
+        return orig_line(self, *a, **k)
+
+    monkeypatch.setattr(AgendaPDF, "line", line_spy)
 
     def spy(self, w=None, h=None, text="", *args, **kwargs):
         calls.append((text, self.get_y(), h))
@@ -110,3 +118,6 @@ def test_section_titles_have_top_margin(size, lang, monkeypatch):
     hours = [c for c in calls if len(c[0]) == 5 and c[0].endswith(":00")]
     assert len(hours) == n_hours
     assert per >= 1
+    # Unchanged by the label gap: one rule per hour, then write-in lines under each title.
+    write_in = (half - 2 + 1) + (g.rows - (half + 2) + 1)
+    assert len(lines) == n_hours + write_in
