@@ -8,6 +8,7 @@ from pypdf import PdfReader
 from agenda.assembler import build_plan
 from agenda.catalog import get_page, pages_by_category
 from agenda.config import QR_MAX_CHARS, QR_MAX_COUNT, Config
+from agenda.exporter import export_agenda
 from agenda.grid import Grid
 from agenda.pages.value_added import QRCodes
 
@@ -115,3 +116,13 @@ def test_plan_includes_qr_only_when_listed():
     assert count(Config(pages=["qr"], qr_urls=_urls(k + 1))) == 2
     assert count(Config(pages=["qr"])) == 0  # listed with no URLs: plan still builds
     assert count(Config(qr_urls=_urls(3))) == 0
+
+
+@pytest.mark.parametrize("field", ["pad_with", "weekly_filler", "daily_filler"])
+def test_qr_as_pad_or_filler_needs_urls(field, tmp_path):
+    # Regression: an empty qr page used to reach draw() with ctx {} -> KeyError 'urls' on export.
+    with pytest.raises(ValidationError, match=f"{field}=qr needs at least one qr_urls entry"):
+        Config(**{field: "qr"})
+    cfg = Config(daily_months=[1], qr_urls=["https://a.org"], **{field: "qr"})
+    out = export_agenda(cfg, tmp_path / "a.pdf")
+    assert len(PdfReader(out).pages) > 0

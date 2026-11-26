@@ -1197,6 +1197,18 @@ class Config(BaseModel):
         return self
 
     @model_validator(mode="after")
+    def _check_qr_slot_has_urls(self) -> Config:
+        """The ``qr`` page prints nothing without ``qr_urls``, so it cannot fill a slot."""
+        if not self.qr_urls:
+            for name in ("pad_with", "weekly_filler", "daily_filler"):
+                if getattr(self, name) == "qr":
+                    raise ValueError(
+                        f"{name}=qr needs at least one qr_urls entry (the QR page is empty "
+                        "without URLs); add a URL or pick another page"
+                    )
+        return self
+
+    @model_validator(mode="after")
     def _check_booklet_rules(self) -> Config:
         if self.imposition and not self.booklet_folded:
             raise ValueError("imposition requires booklet_folded=true")

@@ -24,7 +24,10 @@ def _checks(log) -> None:
 
     tmp = Path(tempfile.mkdtemp())
     pages = [str(r["id"]) for r in catalog_rows()]
-    cfg = Config(year=2027, pages=pages, qr_urls=["https://example.com"], imposition=True)
+    # pad_with=qr: the padding path draws a page with a non-empty ctx (KeyError "urls" before)
+    cfg = Config(
+        year=2027, pages=pages, qr_urls=["https://example.com"], pad_with="qr", imposition=True
+    )
     out = export_agenda(cfg, tmp / "agenda.pdf")
     log(f"export: {out.stat().st_size} bytes")
 
