@@ -100,7 +100,15 @@ def test_overflow_streams_equal_plain_cell(tmp_path):
     b = Config(header_text_fit="ellipsis", **base)
     ra = render_pages(a, build_plan(a), range(4))
     rb = render_pages(b, build_plan(b), range(4))
-    assert ra == rb
+    # The Info dict carries a second-resolution CreationDate (and the trailer /ID hashes it).
+    assert _strip_meta(ra) == _strip_meta(rb)
+
+
+def _strip_meta(data: bytes) -> bytes:
+    import re
+
+    data = re.sub(rb"/CreationDate \(D:[^)]*\)", b"", data)
+    return re.sub(rb"/ID \[[^\]]*\]", b"", data)
 
 
 OPTIONAL_IDS = (
