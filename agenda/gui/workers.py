@@ -9,6 +9,7 @@ from agenda.config import Config
 from agenda.exporter import render_pages
 from agenda.gui import preview_model as M
 from agenda.gui.render_cache import LatestGate
+from agenda.textfit import CutLog
 
 
 def rasterise(pdf_bytes: bytes, scale: float) -> list[QImage]:
@@ -26,7 +27,7 @@ def rasterise(pdf_bytes: bytes, scale: float) -> list[QImage]:
 
 
 class RenderSignals(QObject):
-    done = Signal(int, object)  # request id, {plan index: QImage}
+    done = Signal(int, object, object)  # request id, {plan index: QImage}, CutLog
     failed = Signal(int, str)
 
 
@@ -52,7 +53,8 @@ class RenderJob(QRunnable):
         if not self.gate.is_current(self.request_id):
             return  # superseded while queued
         try:
-            pdf = render_pages(self.cfg, self.plan, self.indices)
+            cuts = CutLog()
+            pdf = render_pages(self.cfg, self.plan, self.indices, cuts=cuts)
             doc = pdfium.PdfDocument(pdf)
             try:
                 size = doc[0].get_size()
@@ -60,6 +62,8 @@ class RenderJob(QRunnable):
                 doc.close()
             rows, cols, avail = self.grid
             images = rasterise(pdf, M.zoom_scale(self.zoom, size, rows, cols, avail))
-            self.signals.done.emit(self.request_id, dict(zip(self.indices, images, strict=True)))
+            self.signals.done.emit(
+                self.request_id, dict(zip(self.indices, images, strict=True)), cuts
+            )
         except Exception as exc:  # noqa: BLE001 - shown in the preview instead of crashing the thread
             self.signals.failed.emit(self.request_id, str(exc))

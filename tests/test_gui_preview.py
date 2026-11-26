@@ -259,3 +259,36 @@ def test_main_window_debounces_settings_changes(qapp):
     win.flush_preview()
     assert not win.debounce.pending and win.preview.cfg.year == 2032
     assert win.preview.wait_idle()
+
+
+@pytest.mark.gui
+def test_preview_shows_cut_warning_for_affected_page(qapp, tmp_path):
+    from agenda.assembler import build_plan
+    from agenda.config import Config
+    from agenda.gui.app import MainWindow
+
+    f = tmp_path / "q.txt"
+    f.write_text("Hi\n" + "Very long phrase " * 12 + "\nHi\nHi\n", encoding="utf-8")
+    cfg = Config(
+        year=2027, planners=["daily"], daily_months=[1], daily_quotes=True,
+        daily_quotes_file=f, daily_holidays=False,
+    )  # fmt: skip
+    plan = build_plan(cfg)
+    bad = next(i for i, e in enumerate(plan) if e.ctx.get("date") and e.ctx["date"].day == 2)
+    good = bad - 1
+    win = MainWindow()
+    try:
+        w = win.preview
+        w.set_mode(M.SINGLE)
+        w.set_plan(cfg, plan)
+        w.goto(bad)
+        assert w.wait_idle()
+        assert "Footer text was shortened" in w.warning.text()
+        assert w.warning.isVisibleTo(w)
+        assert str(bad + 1) in win.summary_label.toolTip()
+        w.goto(good)
+        assert w.wait_idle()
+        assert w.warning.text() == "" and not w.warning.isVisibleTo(w)
+    finally:
+        win.preview.wait_idle()
+        win.close()

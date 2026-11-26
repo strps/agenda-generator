@@ -193,6 +193,7 @@ class MainWindow(QMainWindow):
         self._timer.timeout.connect(self.update_preview)
         self.settings.changed.connect(self._on_settings_changed)
         self.preview.page_changed.connect(self.section_bar.set_position)
+        self.preview.cuts_changed.connect(self._on_preview_cuts)
         self.section_bar.page_requested.connect(self.preview.goto)
         self.legend.section_clicked.connect(self.section_bar.next_page_of)
         self.settings.tab_changed.connect(self.show_preview_for)
@@ -261,12 +262,18 @@ class MainWindow(QMainWindow):
         info = summarize(plan, cfg)
         self.legend.set_entries(LM.legend_entries(plan))
         self.summary_label.setText(LM.summary_text(info))
-        self.summary_label.setToolTip(LM.summary_tooltip(info))
+        self._summary_tip = LM.summary_tooltip(info)
+        self.summary_label.setToolTip(self._summary_tip)
         self.section_bar.set_plan(plan)
         self.preview.set_plan(cfg, plan)
         self.section_bar.set_position(self.preview.index)
         self._update_templates(cfg)
         self._sync_export_button(valid=True)
+
+    def _on_preview_cuts(self, report: str) -> None:
+        """Append the shortened-text report of the rendered pages to the summary tooltip."""
+        tip = getattr(self, "_summary_tip", "")
+        self.summary_label.setToolTip("\n".join(t for t in (tip, report) if t))
 
     def _update_templates(self, cfg) -> None:
         """Refresh enable state of all template previews, and the plan of the visible one."""

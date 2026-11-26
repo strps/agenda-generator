@@ -6,6 +6,8 @@ are (2,3), (4,5), ...; page 1 and an even last page stand alone.
 
 from collections.abc import Sequence
 
+from agenda.cutreport import MAX_TEXT, cut_report_lines
+from agenda.textfit import CutLog
 from agenda.uitext import tr
 
 SINGLE, SPREAD, SHEET = "single", "spread", "sheet"
@@ -162,3 +164,22 @@ def label(rows: Sequence[Sequence[int]], total: int, mode: str) -> str:
 def _check(index: int, total: int) -> None:
     if not 0 <= index < total:
         raise IndexError(f"page index {index} out of range (0..{total - 1})")
+
+
+def cut_warning(log: CutLog, indices: Sequence[int]) -> str:
+    """Warning text (one line per shortened text) for the plan ``indices``; '' when none."""
+    pages = {i + 1 for i in indices}  # entry i is agenda page i + 1
+    lines = []
+    for e in log.entries:
+        if e.page in pages:
+            key = f"cuts.page.{e.region}" if e.region in ("header", "footer") else "cuts.page.other"
+            text = " ".join(e.text.split())
+            if len(text) > MAX_TEXT:
+                text = text[: MAX_TEXT - 1] + "…"
+            lines.append(tr(key, text=text))
+    return "\n".join(lines)
+
+
+def cuts_tooltip(log: CutLog) -> str:
+    """Report for every page rendered so far ('' when nothing was shortened)."""
+    return "\n".join(cut_report_lines(log))

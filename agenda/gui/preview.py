@@ -25,6 +25,7 @@ from agenda.gui import preview_model as M
 from agenda.gui.help_text import TOOLTIPS
 from agenda.gui.render_cache import LatestGate, LruCache, cache_key, config_hash
 from agenda.gui.workers import RenderJob, RenderSignals, rasterise
+from agenda.textfit import CutLog
 from agenda.uitext import tr
 
 __all__ = ["PreviewWidget", "rasterise"]
@@ -37,6 +38,7 @@ class PreviewWidget(QFrame):
     """Navigation bar (mode, prev/label/next, zoom) above a scroll area with the pages."""
 
     page_changed = Signal(int)  # current 0-based plan index
+    cuts_changed = Signal(str)  # report for all pages rendered so far ('' = none)
 
     def __init__(self) -> None:
         super().__init__()
@@ -56,6 +58,9 @@ class PreviewWidget(QFrame):
         self._signals.failed.connect(self._on_failed)
         self.busy = False
         self.inactive = False
+        self.cuts = CutLog()  # cuts of the pages rendered so far (this config)
+        self._cut_seen: set[int] = set()
+        self._cut_hash = ""
 
         bar = QHBoxLayout()
         self.prev_button = QPushButton("◀")
@@ -98,11 +103,17 @@ class PreviewWidget(QFrame):
         self.message = QLabel("")
         self.message.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.message.setWordWrap(True)
+        self.warning = QLabel("")
+        self.warning.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.warning.setWordWrap(True)
+        self.warning.setStyleSheet("color: #b45309;")
+        self.warning.hide()
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(4, 4, 4, 4)
         lay.addLayout(bar)
         lay.addWidget(self.message)
+        lay.addWidget(self.warning)
         lay.addWidget(self.scroll, 1)
 
         self.prev_button.clicked.connect(lambda: self.move(-1))
@@ -182,6 +193,9 @@ class PreviewWidget(QFrame):
         avail = (view.width(), view.height())
         self._zkey = (self.zoom, avail, len(rows), cols) if self.zoom == M.FIT else self.zoom
         self._hash = config_hash(self.cfg)
+        if self._hash != self._cut_hash:
+            self._cut_hash, self.cuts, self._cut_seen = self._hash, CutLog(), set()
+            self.cuts_changed.emit("")
         missing = [i for i in need if cache_key(self._hash, i, self._zkey) not in self.cache]
         if not missing:
             self._gate.issue()  # drop any render still in flight
@@ -203,11 +217,18 @@ class PreviewWidget(QFrame):
             time.sleep(0.005)
         return not self.busy
 
-    def _on_done(self, request_id: int, images: dict[int, QImage]) -> None:
+    def _on_done(self, request_id: int, images: dict[int, QImage], cuts: CutLog) -> None:
         if not self._gate.is_current(request_id):
             return  # result for an outdated request
         for i, img in images.items():
             self.cache.put(cache_key(self._hash, i, self._zkey), img)
+        fresh = [i for i in images if i not in self._cut_seen]
+        self._cut_seen.update(fresh)
+        for e in cuts.entries:
+            if e.page - 1 in fresh:
+                self.cuts.add(e.page, e.region, e.text)
+        if cuts:
+            self.cuts_changed.emit(M.cuts_tooltip(self.cuts))
         self.busy = False
         self._show(self._rows)
 
@@ -231,6 +252,9 @@ class PreviewWidget(QFrame):
                 pic = QLabel()
                 pic.setPixmap(QPixmap.fromImage(img))
                 self.grid.addWidget(pic, r, c)
+        text = M.cut_warning(self.cuts, M.render_indices(rows))
+        self.warning.setText(text)
+        self.warning.setVisible(bool(text))
         self.page_changed.emit(self.index)
 
     def _clear(self) -> None:
